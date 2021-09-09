@@ -14,6 +14,8 @@ import { getDefaultGotchi, getPreviewGotchi } from "helpers/aavegotchi";
 import gotchiLoading from "assets/gifs/loading.gif";
 import { playSound } from "helpers/hooks/useSound";
 import styles from "./styles.module.css";
+import { RotateIcon } from "assets";
+
 
 const Home = () => {
   const {
@@ -28,6 +30,7 @@ const Home = () => {
   } = useWeb3();
   const { highscores } = useServer();
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [gotchiSide, setGotchiSide] = useState<0 | 1 | 2 | 3>(0);
 
   const useDefaultGotchi = () => {
     dispatch({
@@ -42,11 +45,16 @@ const Home = () => {
         const gotchi1 = await getPreviewGotchi(provider, {
           name: "GotchiDev",
           id: "OG",
-          collateral: "aWETH",
-          wearables: [117, 55, 0, 0, 0, 0 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          numericTraits: [50, 50, 50, 50, 40, 40]
+          collateral: "aLINK",
+          wearables: [0, 0, 73, 72, 0, 0 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          numericTraits: [10, 50, 50, 100, 40, 40]
         });
         const gotchi2 = await getPreviewGotchi(provider, {
+          name: "Mascot",
+          id: "None",
+          numericTraits: [50, 50, 50, 0, 40, 40]
+        })
+        const gotchi3 = await getPreviewGotchi(provider, {
           name: "H4cker",
           id: "l33T",
           collateral: "aUSDT",
@@ -55,7 +63,7 @@ const Home = () => {
         });
         dispatch({
           type: "SET_USERS_AAVEGOTCHIS",
-            usersAavegotchis: [gotchi1, gotchi2],
+            usersAavegotchis: [gotchi1, gotchi2, gotchi3],
         }); 
       } catch (err) {
         dispatch({
@@ -65,6 +73,27 @@ const Home = () => {
       }
     }
   };
+
+  const rotateGotchi = () => {
+    const currentPos = gotchiSide;
+    switch (currentPos) {
+      case 0:
+        setGotchiSide(1);
+        break;
+      case 1:
+        setGotchiSide(3);
+        break;
+      case 2:
+        setGotchiSide(0);
+        break;
+      case 3:
+        setGotchiSide(2);
+        break;
+      default:
+        setGotchiSide(0);
+        break;
+    }
+  }
 
   /**
    * Updates global state with selected gotchi
@@ -153,8 +182,16 @@ const Home = () => {
       {showRulesModal && (
         <Modal onHandleClose={() => setShowRulesModal(false)}>
           <div className={styles.modalContent}>
-            <h1>Minigame Template</h1>
-            <p>Just a modal example. You can put your game rules in here.</p>
+            <h1>Congotchi!!!</h1>
+            <p>Oh no frens! Gotchis from all over the Reaalm are lost! It is up to you to find and locate them and bring them back to the warm chambers of the Citaadel!</p>
+            <p>MOVE gotchis into lines so that they can conga back into portals</p>
+            <p>ROTATE gotchis if needed for better angles</p>
+            <p>Disarm GRENADES to avoid hurting your conga line</p>
+            <p>Remove stubborn CACTI to make movement easier</p>
+            <p>Collect MILKSHAKES while moving for extra points</p>
+            <p>Summon PORTALS to bring gotchis home and get points</p> 
+            <p>RESHUFFLE the board if needed for a fresh look</p>
+            <p>And the more BONUS you have, the more points you get!</p>
           </div>
         </Modal>
       )}
@@ -168,8 +205,12 @@ const Home = () => {
             />
           </div>
           <div className={styles.gotchiContainer}>
+            <button className={styles.rotateButton}>
+              <RotateIcon width={32} height={24} onClick={rotateGotchi} />
+            </button>
             {selectedAavegotchiId ? (
               <GotchiSVG
+                side={gotchiSide}
                 tokenId={selectedAavegotchiId}
                 options={{ animate: true, removeBg: true }}
               />
