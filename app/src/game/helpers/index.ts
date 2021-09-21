@@ -11,3 +11,7 @@ export const getGameHeight = (scene: Phaser.Scene): number => scene.game.scale.h
  * @returns {number} Number representing the fixed size relative to the games dimensions
  */
 export const getRelative = (size: number, scene: Phaser.Scene): number => getGameHeight(scene) * size / 1080;
+
+
+
+

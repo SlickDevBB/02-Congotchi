@@ -1,4 +1,6 @@
 import { BLACK_CIRCLE_SHADED, BONUS_ICON, M67_GRENADE, MILKSHAKE, MOVE_ICON, PORTAL_OPEN, ROTATE_ICON, SHUFFLE_ICON, UNCOMMON_CACTI } from "game/assets";
+import { getGameHeight, getGameWidth } from "game/helpers";
+import { DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { AavegotchiGameObject } from "types";
 import { AarcIcon } from ".";
 
@@ -52,6 +54,12 @@ export class Player extends Phaser.GameObjects.Sprite {
   public bonusIcon;
   public gotchi;
 
+  // levelNumber variable stores what level our gotchi is on
+  public levelNumber = 0;
+
+  // direction variable
+  private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
+
   constructor({ scene, x, y, key, width, height, gotchi }: Props) {
     super(scene, x, y, key);
 
@@ -73,9 +81,15 @@ export class Player extends Phaser.GameObjects.Sprite {
     // sprite
     this.setOrigin(0, 0);
 
+    // a basic nothing anim
+    this.anims.create({
+      key: 'still',
+      frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 0 }),
+    })
+
     // Add animations
     this.anims.create({
-      key: 'idle',
+      key: 'front',
       frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 1 }),
       frameRate: 2,
       repeat: -1,
@@ -91,7 +105,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       frames: this.anims.generateFrameNumbers(key || '', { frames: [ 4 ]}),
     });
     this.anims.create({
-      key: 'up',
+      key: 'back',
       frames: this.anims.generateFrameNumbers(key || '', { frames: [ 6 ]}),
     });
 
@@ -114,7 +128,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.rotate?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.moveIcon = new AarcIcon ({
       scene: this.scene,
@@ -125,7 +139,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.move?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.grenadeIcon = new AarcIcon ({
       scene: this.scene,
@@ -136,7 +150,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.grenade?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.cactiIcon = new AarcIcon ({
       scene: this.scene,
@@ -147,7 +161,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.cacti?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.milkshakeIcon = new AarcIcon ({
       scene: this.scene,
@@ -158,7 +172,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.milkshake?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.portalIcon = new AarcIcon ({
       scene: this.scene,
@@ -169,7 +183,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.portal?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.reshuffleIcon = new AarcIcon ({
       scene: this.scene,
@@ -180,7 +194,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.reshuffle?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
     this.bonusIcon = new AarcIcon ({
       scene: this.scene,
@@ -191,8 +205,34 @@ export class Player extends Phaser.GameObjects.Sprite {
       radius: iconRadius,
       useBadge: true,
       numBadge: this.bonus?.current,
-    })
+    }).setDepth(DEPTH_PLAYER_ICONS);
 
+  }
+
+
+  // setStatsVisible()
+  public setStatsVisible(visible: boolean) {
+    this.rotateIcon.setVisible(visible);
+    this.moveIcon.setVisible(visible);
+    this.grenadeIcon.setVisible(visible);
+    this.cactiIcon.setVisible(visible);
+    this.milkshakeIcon.setVisible(visible);
+    this.portalIcon.setVisible(visible);
+    this.reshuffleIcon.setVisible(visible);
+    this.bonusIcon.setVisible(visible);
+
+    const cam = new Phaser.Math.Vector2(this.scene.cameras.main.scrollX, this.scene.cameras.main.scrollY);
+    const circle = new Phaser.Geom.Circle(cam.x+getGameWidth(this.scene)*.5, cam.y+getGameHeight(this.scene), getGameWidth(this.scene)*0.32);
+    const a = 1/16;
+    const b = 1/32;
+    this.rotateIcon.setPosition(circle.getPoint(0.75-b).x, circle.getPoint(0.75-b).y);
+    this.moveIcon.setPosition(circle.getPoint(0.75+b).x, circle.getPoint(0.75+b).y);
+    this.grenadeIcon.setPosition(circle.getPoint(0.75-1.5*a).x, circle.getPoint(0.75-1.5*a).y);
+    this.cactiIcon.setPosition(circle.getPoint(0.75+1.5*a).x, circle.getPoint(0.75+1.5*a).y);
+    this.milkshakeIcon.setPosition(circle.getPoint(0.75-2.5*a).x, circle.getPoint(0.75-2.5*a).y);
+    this.portalIcon.setPosition(circle.getPoint(0.75+2.5*a).x, circle.getPoint(0.75+2.5*a).y);
+    this.reshuffleIcon.setPosition(circle.getPoint(0.75-3.5*a).x, circle.getPoint(0.75+3.5*a).y);
+    this.bonusIcon.setPosition(circle.getPoint(0.75+3.5*a).x, circle.getPoint(0.75+3.5*a).y);
   }
 
   // create stat adjustment
@@ -278,35 +318,21 @@ export class Player extends Phaser.GameObjects.Sprite {
     }
   }
 
+  public setDirection(direction: 'UP' | 'LEFT' | 'DOWN' | 'RIGHT') {
+    this.direction = direction;
+
+    switch (this.direction) {
+      case 'UP': this.anims.play('back', true); break;
+      case 'LEFT': this.anims.play('left', true); break;
+      case 'RIGHT': this.anims.play('right', true); break;
+      case 'DOWN': this.anims.play('front', true); break;
+      default: break;
+    }
+  }
+
   update(): void {
-    // Every frame, we create a new velocity for the sprite based on what keys the player is holding down.
-    const velocity = new Phaser.Math.Vector2(0, 0);
-    // Horizontal movement
-    switch (true) {
-      case this.cursorKeys?.left.isDown:
-        velocity.x -= 1;
-        this.anims.play('left', true);
-        break;
-      case this.cursorKeys?.right.isDown:
-        velocity.x += 1;
-        this.anims.play('right', true);
-        break;
-    }
-
-    // Vertical movement
-    switch (true) {
-      case this.cursorKeys?.down.isDown:
-        velocity.y += 1;
-        this.anims.play('idle', false);
-        break;
-      case this.cursorKeys?.up.isDown:
-        velocity.y -= 1;
-        this.anims.play('up', true);
-        break;
-    }
-
-    // We normalize the velocity so that the player is always moving at the same speed, regardless of direction.
-    const normalizedVelocity = velocity.normalize();
-    (this.body as Phaser.Physics.Arcade.Body).setVelocity(normalizedVelocity.x * this.speed, normalizedVelocity.y * this.speed);
+    // play idle anims
+    
+    
   }
 }

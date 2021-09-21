@@ -1,16 +1,17 @@
+// grid-level.ts
+
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
-import { GridObject, Player } from 'game/objects';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, M67_GRENADE, MILKSHAKE, PORTAL_OPEN, UNCOMMON_CACTI } from 'game/assets';
-import reportWebVitals from 'reportWebVitals';
+import { GridObject, LevelConfig, Player } from 'game/objects';
+import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, GUI_SCORE_PANEL, M67_GRENADE, MILKSHAKE, PORTAL_OPEN, UNCOMMON_CACTI } from 'game/assets';
+import '../helpers/constants';
+import { DEPTH_GRID_LEVEL, DEPTH_GRID_OBJECTS } from '../helpers/constants';
 
 interface Props {
   scene: Phaser.Scene;
-  x: number;
-  y: number;
-  gridSize: number;
-  numberRows: number;
-  numberCols: number;
-  player: Player | undefined;
+  player: Player;
+  levelConfig: LevelConfig;
+  x: number,
+  y: number,
 }
 
 // going to number rows and columns start from 1
@@ -19,6 +20,7 @@ export interface GridPosition {
   col: number;
 }
 
+// note row and column numbering start from 0
 export interface GridCell {
   row: number;
   col: number;
@@ -30,59 +32,106 @@ export class GridLevel {
   public x;
   public y;
   private scene: Phaser.Scene;
+  private gridRectangles: Phaser.GameObjects.Rectangle[] = [];
   private gridSize;
   private numberRows;
   private numberCols;
-  private gotchiObjects: GridObject[] = [];
-  private grenadeObjects: GridObject[] = [];
-  private milkshakeObjects: GridObject[] = [];
-  private cactiObjects: GridObject[] = [];
-  private portalObjects: GridObject[] = [];
+  private scorePanel: Phaser.GameObjects.Image;
   private score = 0;
   private scoreText;
-  private player;
+  private player?: Player;
   private gridCells: Array<GridCell>[] = [];
+  private levelConfig: LevelConfig; 
 
-  constructor({ scene, x, y, gridSize, numberRows, numberCols, player }: Props) {
+  constructor({ scene, player, levelConfig, x, y }: Props) {
+    // store our scene, player and levelConfig
     this.scene = scene;
-    this.x = x;
-    this.y = y;
-    this.gridSize = gridSize;
-    this.numberRows = numberRows;
-    this.numberCols = numberCols;
+    this.player = player;
+    this.levelConfig = this.getTransposedLevelConfig(levelConfig);
+
+    // create the grid level
+    this.numberRows = levelConfig.gridObjectLayout.length;
+    this.numberCols = levelConfig.gridObjectLayout[0].length;
+    const padGrid = 0.1;
+    this.gridSize = getGameWidth(this.scene)/(this.numberCols + padGrid*2);
+    this.x = x+this.gridSize*padGrid;
+    this.y = y+3*this.gridSize;
     this.score = 0;
 
-    this.player = player;
-
-    // fill out the gridCells member
+    // fill out the gridCells member based on the config file
     for (let i = 0; i < this.numberRows; i++) {
       this.gridCells[i] = [];
       for (let j = 0; j < this.numberCols; j++) {
-        this.gridCells[i][j] = { row: i, col: j, isActive: true, gridObject: 0}
+        switch (levelConfig.gridObjectLayout[i][j]) {
+          case 0: {
+            this.gridCells[i][j] = { row: i, col: j, isActive: false, gridObject: 0}
+            break;
+          }
+          case 1: {
+            this.gridCells[i][j] = { row: i, col: j, isActive: true, gridObject: 0}
+            break;
+          }
+          case 2: {
+            this.gridCells[i][j] = { row: i, col: j, isActive: true, 
+              gridObject: new GridObject({
+                scene: this.scene,
+                gridLevel: this,
+                gridRow: i,
+                gridCol: j,
+                key: GOTCHI_FRONT,
+                gridSize: this.gridSize,
+                objectType: 'GOTCHI',
+              })
+              .setDepth(DEPTH_GRID_OBJECTS),
+            }
+            const rgo = this.gridCells[i][j].gridObject;
+            // set random direction, interactive and make draggable.
+            if (rgo) {
+              rgo.setRandomDirection();
+              rgo.setInteractive();
+              this.scene.input.setDraggable(rgo);
+            }
+            break;
+          }
+          default: break;
+        }
+
+        // draw a rectangle for each non 0 element
+        if (levelConfig.gridObjectLayout[i][j] !== 0) {
+          this.gridRectangles.push(
+            this.scene.add.rectangle(
+              this.x + this.gridSize*i, this.y + this.gridSize*j, 
+              this.gridSize, this.gridSize
+              )
+              .setStrokeStyle(1, 0xffffff)
+              .setFillStyle(0x000000, 0.8)
+              .setOrigin(0,0)
+              .setDepth(DEPTH_GRID_LEVEL)
+          );
+        }
       }
     }
 
+    // add the scorePanel
+    this.scorePanel = this.scene.add.image(
+      this.scene.cameras.main.scrollX + getGameWidth(this.scene)*0.05,
+      this.scene.cameras.main.scrollY + getGameWidth(this.scene)*0.05,
+      GUI_SCORE_PANEL,
+    )
+    .setOrigin(0,0)
+
     // add the scoring text
     this.scoreText = this.scene.add.text(
-      getGameWidth(this.scene)*0.65,
-      getGameHeight(this.scene)*0.1,
-        'SCORE: 00000000',)
+      this.scene.cameras.main.scrollX + getGameWidth(this.scene)*0.21,
+      this.scene.cameras.main.scrollY + getGameWidth(this.scene)*0.095,
+        '000000',)
         .setVisible(true)
         .setStyle({
             fontFamily: 'Arial', 
             fontSize: Math.trunc(getGameHeight(this.scene)*0.03).toString() + 'px', 
           })
-        .setOrigin(0.5,0.5)
+        .setOrigin(0,0)
         .setStroke('0x000000', 3);
-
-    // add the main grid, we want to go for a 5x5
-    this.gridSize = getGameWidth(this.scene)/(numberCols+2);
-    const g1 = this.scene.add.grid(x, y, gridSize*numberCols, gridSize*numberRows, gridSize, gridSize, 0x000000, 0.5);
-    g1.setOrigin(0,0);
-    g1.setOutlineStyle(0x808080, 0.3);
-    // const square = this.scene.add.rectangle(gridSize, gridSize*3,gridSize*numberCols,gridSize*numberRows);
-    // square.setStrokeStyle(2, 0x808080, 0.6);
-    // square.setOrigin(0,0);
 
   }
 
@@ -98,87 +147,29 @@ export class GridLevel {
     return this.numberCols;
   }
 
-  public getGridObjects(object: 'GOTCHIS' | 'GRENADES' | 'MILKSHAKES' | 'CACTI' | 'PORTALS') {
-    switch (object) {
-      case 'GOTCHIS': return this.gotchiObjects; break;
-      case 'GRENADES': return this.grenadeObjects; break;
-      case 'MILKSHAKES': return this.milkshakeObjects; break;
-      case 'CACTI': return this.cactiObjects; break;
-      case 'PORTALS': return this.portalObjects; break;
-    }
-  }
-  
-  // this is probably the function to get overidden in children classes
-  public generateLevel(numberRescueGotchis: number, numberGrenades: number, numberMilkshakes: number, numberCacti: number) {
-    // NEED TO ADD ERROR CHECKS TO ENSURE WE DON'T MAKE TOO MANY!!!
-    for (let i = 0; i < numberRescueGotchis; i++) {
-      const rgp = this.getRandomEmptyGridPosition();
-      // console.log(randGridPosition);
-      this.gridCells[rgp.row][rgp.col].gridObject = new GridObject({
-        scene: this.scene,
-        gridLevel: this,
-        gridRow: rgp.row,
-        gridCol: rgp.col,
-        key: GOTCHI_FRONT,
-        gridSize: this.gridSize,
-        objectType: 'GOTCHI',
-      });
-
-      const rgo = this.gridCells[rgp.row][rgp.col].gridObject;
-
-      // set random direction, interactive and make draggable.
-      if (rgo) {
-        rgo.setRandomDirection();
-        rgo.setInteractive();
-        this.scene.input.setDraggable(rgo);
+  public getTransposedLevelConfig(levelConfig: LevelConfig): LevelConfig {
+    for (let i = 0; i < levelConfig.gridObjectLayout.length; i++) {
+      for (let j = 0; j < i; j++) {
+          const tmp = levelConfig.gridObjectLayout[i][j];
+          levelConfig.gridObjectLayout[i][j] = levelConfig.gridObjectLayout[j][i];
+          levelConfig.gridObjectLayout[j][i] = tmp;
       }
-      
     }
-
-    // generate grenades
-    for (let i = 0; i < numberGrenades; i++) {
-      const rgp = this.getRandomEmptyGridPosition();
-      this.gridCells[rgp.row][rgp.col].gridObject = new GridObject({
-        scene: this.scene,
-        gridLevel: this,
-        gridRow: rgp.row,
-        gridCol: rgp.col,
-        key: M67_GRENADE,
-        gridSize: this.gridSize,
-        objectType: 'GRENADE',
-      });
-    }
-
-    // generate milkshakes
-    for (let i = 0; i < numberMilkshakes; i++) {
-      const rgp = this.getRandomEmptyGridPosition();
-      this.gridCells[rgp.row][rgp.col].gridObject = new GridObject({
-        scene: this.scene,
-        gridLevel: this,
-        gridRow: rgp.row,
-        gridCol: rgp.col,
-        key: MILKSHAKE,
-        gridSize: this.gridSize,
-        objectType: 'MILKSHAKE',
-      });
-    }
-
-    // generate cacti
-    for (let i = 0; i < numberCacti; i++) {
-      const rgp = this.getRandomEmptyGridPosition();
-      this.gridCells[rgp.row][rgp.col].gridObject = new GridObject({
-        scene: this.scene,
-        gridLevel: this,
-        gridRow: rgp.row,
-        gridCol: rgp.col,
-        key: UNCOMMON_CACTI,
-        gridSize: this.gridSize,
-        objectType: 'CACTI',
-      });
-    }
-
+    return levelConfig;
   }
 
+  public setGridObject(row: number, col: number, gridObj: GridObject) {
+    this.gridCells[row][col] = { row: row, col: col, isActive: true, gridObject: gridObj }
+  }
+
+
+  public getGridObject(row: number, col: number) : GridObject | 0 {
+    if (this.gridCells[row][col].gridObject) {
+      return this.gridCells[row][col].gridObject;
+    } else {
+      return 0;
+    }
+  }
 
 
   public getRandomEmptyGridPosition(): GridPosition {
@@ -191,7 +182,7 @@ export class GridLevel {
       const randRow = Math.floor(Math.random()*this.numberRows);
       const randCol = Math.floor(Math.random()*this.numberCols);
 
-      if (this.isGridPositionEmpty(randRow, randCol)) {
+      if (this.gridCells[randRow][randCol].gridObject === 0) {
         emptyGridPosition = { row: randRow, col: randCol };
         foundEmpty = true;
       }
@@ -208,9 +199,9 @@ export class GridLevel {
     return emptyGridPosition;
   }
 
-  public isGridPositionEmpty(row: number, col: number): boolean {
-    console.log(this.gridCells[row][col]);
-    return true;
+  public isGridPositionEmpty(row: number, col: number) {
+    if (this.gridCells[row][col].gridObject === 0) return true;
+    else return false;
   }
 
   public getGridPositionFromXY(x: number, y: number): GridPosition {
@@ -220,16 +211,30 @@ export class GridLevel {
     return { row: Math.floor(offsetY/this.gridSize), col: Math.floor(offsetX/this.gridSize) }
   }
 
-  public setCongaLines() {
-    // go through each gotchi object and see if it is a leader
-    this.gotchiObjects.map( go => {
-      // check above, right, below and left for potential gotchis looking at us
-      const gogp = go.getGridPosition();
-
-    
-    });
+  public isCoordWithinGrid(x: number, y: number) {
+    const gp = this.getGridPositionFromXY(x,y);
+    if (this.gridCells[gp.row][gp.col]) {
+      if (this.gridCells[gp.row][gp.col].isActive) return true;
+      else return false;
+    } else {
+      return false;
+    }
   }
-  
+
+  public destroy() {
+    this.gridRectangles.map(gr => gr.destroy());
+    this.scorePanel.destroy();
+    this.scoreText.destroy();
+
+    this.gridCells.map( gc => {
+      gc.map( gcc => {
+        if (gcc.gridObject) {
+          gcc.gridObject.destroy();
+        }
+      })
+    })
+  }
+
   update(): void {
     const a = 0;
   }

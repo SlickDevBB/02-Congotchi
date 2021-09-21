@@ -84,8 +84,8 @@ export const DetailsPanel = ({ selectedGotchi }: Props) => {
                 </p>
                 <p>{selectedGotchi?.withSetsNumericTraits[1]}</p>
               </div>
-              {renderModifier('Cacti Smashes: ' + cactiStat.toString(), calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
-              {renderModifier('Grenade Diffusions: ' + grenadeStat.toString(), calculatePercentage(100 - (selectedGotchi?.withSetsNumericTraits[i] as number)))}
+              {renderModifier('Grumpy Actions: ' + cactiStat.toString(), calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
+              {renderModifier('Stealthy Actions: ' + grenadeStat.toString(), calculatePercentage(100 - (selectedGotchi?.withSetsNumericTraits[i] as number)))}
             </>
           );
         }
@@ -101,7 +101,7 @@ export const DetailsPanel = ({ selectedGotchi }: Props) => {
                 <p>{selectedGotchi?.withSetsNumericTraits[2]}</p>
               </div>
               {renderModifier('Portal Summons: ' + portalStat.toString(), calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
-              {renderModifier('Milkshake Spawns: ' + milkshakeStat.toString(), calculatePercentage(100 - (selectedGotchi?.withSetsNumericTraits[i] as number)))}
+              {renderModifier('Happy Actions: ' + milkshakeStat.toString(), calculatePercentage(100 - (selectedGotchi?.withSetsNumericTraits[i] as number)))}
             </>
           );
         }

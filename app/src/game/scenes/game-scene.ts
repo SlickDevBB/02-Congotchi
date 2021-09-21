@@ -1,9 +1,9 @@
 import {
-  LEFT_CHEVRON, BG, CLICK, ARROW_DOWN,
+  LEFT_CHEVRON, BG, CLICK, ARROW_DOWN, GUI_BUTTON_CROSS,
 } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
-import { GridLevel, Player, InputHandler } from 'game/objects';
+import { GridLevel, Player, WorldMap } from 'game/objects';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -17,12 +17,9 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 export class GameScene extends Phaser.Scene {
   private player?: Player;
   private selectedGotchi?: AavegotchiGameObject;
-  private gridLevel: GridLevel | 0 = 0;
-  private gridSize = 0;
-  private inputHandler?: InputHandler;
-
-  // Sounds
-  private back?: Phaser.Sound.BaseSound;
+  private worldMap?: WorldMap;
+  private backButton?: Phaser.GameObjects.Image;
+  private backSound?: Phaser.Sound.BaseSound;
 
   constructor() {
     super(sceneConfig);
@@ -33,69 +30,56 @@ export class GameScene extends Phaser.Scene {
   };
 
   public create(): void {
-    // Add layout
-    const bg = this.add.image(getGameWidth(this) / 2, getGameHeight(this) / 2, BG).setDisplaySize(getGameWidth(this), getGameHeight(this));
-    bg.setAlpha(0.5);
-    this.back = this.sound.add(CLICK, { loop: false });
-    this.createBackButton();
 
-    // create the grid level
-    const numRows = 6;
-    const numCols = 6;
-    const padGrid = 1;
-    const gridSize = getGameWidth(this)/(numRows + padGrid*2);
-    const mainGridX = gridSize;
-    const mainGridY = 3*gridSize;
-    this.gridSize = gridSize;
-
-    // Add a player to display at bottom of screen
+    // create our player
     this.player = new Player({
       scene: this,
-      x: getGameWidth(this)*0.5,
-      y: (getGameHeight(this) + mainGridY + this.gridSize*numRows) / 2,
+      x: getGameWidth(this)*0.25,
+      y: getGameHeight(this)*0.87,
       key: this.selectedGotchi?.spritesheetKey || '',
-      width: getGameWidth(this) * 0.25,
-      height: getGameWidth(this) * 0.25,
+      width: getGameWidth(this) * 0.2,
+      height: getGameWidth(this) * 0.2,
       gotchi: this.selectedGotchi,
-    }).setOrigin(0.5,0.5);
-
-    this.gridLevel = new GridLevel({
-      scene: this,
-      x: mainGridX,
-      y: mainGridY,
-      gridSize: gridSize,
-      numberRows: numRows,
-      numberCols: numCols,
-      player: this.player,
-    });
-
-    this.gridLevel.generateLevel(6, 2, 1, 3);
-
-    this.inputHandler = new InputHandler({
-      scene: this,
-      gridLevel: this.gridLevel,
-      player: this.player,
     })
-    
+      .setOrigin(0.5,0.5)
+      .setDepth(10);
+
+    // create the world map
+    this.worldMap = new WorldMap({
+      scene: this,
+      x: 0,
+      y: 0,
+      key: BG,
+      player: this.player,
+    }).setDepth(0);
+
+    // create the back button
+    this.backSound = this.sound.add(CLICK, { loop: false });
+    this.createBackButton();
 
   }
 
   private createBackButton = () => {
-    this.add
-      .image(getRelative(54, this), getRelative(54, this), LEFT_CHEVRON)
-      .setOrigin(0)
+    this.backButton = this.add
+      .sprite(getGameWidth(this)-getGameWidth(this)*0.05, getGameWidth(this)*0.05, GUI_BUTTON_CROSS)
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
-      .setDisplaySize(getRelative(94, this), getRelative(94, this))
+      .setDisplaySize(getGameWidth(this)*0.1, getGameWidth(this)*0.1)
       .on('pointerdown', () => {
-        this.back?.play();
+        this.backSound?.play();
         window.history.back();
-      });
+      })
+      .setScrollFactor(0);
   };
 
-  public update(): void {
+  update(): void {
     // Every frame, we update the player
     this.player?.update();
 
-    this.inputHandler?.update();
+    this.worldMap?.update();
+
+    this.backButton?.update();
+
   }
+
 }

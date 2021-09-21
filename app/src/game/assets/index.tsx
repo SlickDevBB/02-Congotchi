@@ -35,13 +35,24 @@ export const MOVE_ICON = 'move_icon';
 export const ROTATE_ICON = 'rotate_icon';
 export const SHUFFLE_ICON = 'shuffle_icon';
 export const BONUS_ICON = 'bonus_icon';
+export const RED_BUTTON = 'red_button';
+export const PURPLE_BUTTON = 'purple_button';
+export const GREEN_BUTTON = 'green_button';
+export const GUI_PANEL_5 = 'gui_panel_5';
+export const GUI_LEVEL_SELECT_RIBBON = 'gui_level_select_ribbon';
+export const GUI_BUTTON_CROSS = 'gui_button_cross';
+export const GUI_BUTTON_TICK = 'gui_button_tick';
+export const GUI_BUTTON_PLAY = 'gui_button_play';
+export const GUI_BUTTON_FORWARD = 'gui_button_foward';
+export const GUI_BUTTON_BACK = 'gui_button_back';
+export const GUI_SCORE_PANEL = 'gui_score_panel';
 
 
 // Save all in game assets in the public folder
 export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: BG,
-    src: 'assets/bg/lava_lounge2.png',
+    src: 'assets/bg/map_reaalm_nolabels.png',
     type: 'IMAGE',
   },
   {
@@ -127,6 +138,61 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: BONUS_ICON,
     src: 'assets/icons/bonus.png',
+    type: 'IMAGE',
+  },
+  {
+    key: RED_BUTTON,
+    src: 'assets/images/level-button-small-red.png',
+    type: 'IMAGE',
+  },
+  {
+    key: PURPLE_BUTTON,
+    src: 'assets/images/level-button-small-purple.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GREEN_BUTTON,
+    src: 'assets/images/level-button-small-green.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_PANEL_5,
+    src: 'assets/gui/panel-5.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_LEVEL_SELECT_RIBBON,
+    src: 'assets/gui/level-select-ribbon.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_CROSS,
+    src: 'assets/gui/cross.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_TICK,
+    src: 'assets/gui/tick.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_PLAY,
+    src: 'assets/gui/play-button.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_FORWARD,
+    src: 'assets/gui/forward-button-1.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_BACK,
+    src: 'assets/gui/back-button-1.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_SCORE_PANEL,
+    src: 'assets/gui/score-panel.png',
     type: 'IMAGE',
   },
 ];

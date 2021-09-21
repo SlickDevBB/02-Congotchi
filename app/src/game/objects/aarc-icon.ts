@@ -53,6 +53,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
         this.icon = this.scene.add.image(x, y, keyIcon);
         this.icon.displayHeight = 2*radius*this.iconToCircleRatio;
         this.icon.displayWidth = this.icon.displayHeight * (this.initWidth/this.initHeight);
+        this.icon.setDepth(3);
 
         // add a badge if set to true in constructor
         if (useBadge) {
@@ -148,6 +149,14 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     // define function to change badge number
     public setBadge(value: number) {
         if (this.badgeText) this.badgeText.text = Math.trunc(value).toString()
+    }
+
+    public setDepth(depth: number) {
+        super.setDepth(depth);
+        this.icon.setDepth(depth+1);
+        if (this.badgeBG) this.badgeBG.setDepth(depth+2);
+        if (this.badgeText) this.badgeText.setDepth(depth+3);
+        return this;
     }
 
 }
