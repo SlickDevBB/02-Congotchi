@@ -12,6 +12,8 @@ export const DEPTH_GUI_LEVEL_SELECT = 7;
 
 export const DEPTH_GRID_LEVEL = 10;
 export const DEPTH_GRID_OBJECTS = 11;
+export const DEPTH_GO_PORTAL = 11;
+export const DEPTH_GO_GOTCHI = 12;
 
 export const DEPTH_PLAYER_ICONS = 20;
 export const DEPTH_PLAYER_ICON_IMAGES = 21;

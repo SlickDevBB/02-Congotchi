@@ -44,7 +44,7 @@ export class GridLevel {
   private levelConfig: LevelConfig; 
 
   // define a gotchi array to make it easier to go through gotchis
-  private gotchiObjects: GO_Gotchi[] = [];
+  // private gotchiObjects: GO_Gotchi[] = [];
 
   constructor({ scene, player, levelConfig, }: Props) {
     // store our scene, player and levelConfig
@@ -93,8 +93,6 @@ export class GridLevel {
             if (rgo) { 
               rgo.setDirection('DOWN'); 
             }
-            console.log('try add a down gotchi object');
-            this.gotchiObjects.push(rgo);
             break;
           }
           case 3: {
@@ -109,8 +107,6 @@ export class GridLevel {
             if (rgo) {
               rgo.setDirection('LEFT');
             }
-            console.log('try add a left gotchi object');
-            this.gotchiObjects.push(rgo);
             break;
           }
           case 4: {
@@ -125,8 +121,6 @@ export class GridLevel {
             if (rgo) {
               rgo.setDirection('UP');
             }
-            console.log('try add an up gotchi object');
-            this.gotchiObjects.push(rgo);
             break;
           }
           case 5: {
@@ -141,8 +135,6 @@ export class GridLevel {
             if (rgo) {
               rgo.setDirection('RIGHT');
             }
-            console.log('try add a right gotchi object');
-            this.gotchiObjects.push(rgo);
             break;
           }
           case 6: {
@@ -174,31 +166,44 @@ export class GridLevel {
       .setScrollFactor(0)
   }
 
-  public drawCongaLines() {
-    // go through all the gotchis and if they have a leader, colour in their grid 
-    this.gotchiObjects?.map( go => {
-      if (go.hasLeader() || go.hasFollower()) {
-        const gr = this.gridCells[go.gridPosition.row][go.gridPosition.col].gridRectangle;
-        if (gr !== 'INACTIVE') {
-          gr.setFillStyle(0x770077);
-        }
-      }
-      else {
-        const gr = this.gridCells[go.gridPosition.row][go.gridPosition.col].gridRectangle;
-        if (gr !== 'INACTIVE') {
-          gr.setFillStyle(0x000000);
-        }
-      }
-    });
-  }
-
   // set all the leader/follower relationships
   public setupCongaLines() {
-    // for each gotchi object check whats around it
-    this.gotchiObjects?.map( go => {
-      go.findLeader();
-    });
+    // for every gotchi in level check what's around it
+    this.gridCells.map(row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI') {
+        (cell.gridObject as GO_Gotchi).findLeader();
+        (cell.gridObject as GO_Gotchi).findFollowers();
+      }
+    }));
   }
+
+  // drawCongaLines() --- shades in all grids with a gotchi thats part of a line
+  public drawCongaLines() {
+    // find all gotchis with a leader or follower and colour their grid
+    this.gridCells.map( row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI') {
+        const gr = cell.gridRectangle;
+        const go = cell.gridObject as GO_Gotchi;
+        if (gr !== 'INACTIVE') {
+          gr.setFillStyle(go.hasLeader() || go.hasFollower() ? 0x770077 : 0x000000);
+        }
+      }
+    }))
+
+  }
+
+  // portalConga() --- checks for gotchis near open portals and congas them in
+  public portalConga() {
+    // first look for any open portals
+    this.gridCells.map( row => row.map( cell => {
+      if (cell.gridObject.getType() === 'PORTAL' && (cell.gridObject as GO_Portal).getStatus() === 'OPEN') {
+        // find any conga gotchis and then start conga'ring them
+        (cell.gridObject as GO_Portal).findCongaGotchis();
+        (cell.gridObject as GO_Portal).startCongaChains();
+      }
+    }));
+  }
+
 
   public getGridSize() {
     return this.gridSize;
@@ -231,6 +236,18 @@ export class GridLevel {
     // now make new object
     if (gridObj.getType() === 'INACTIVE') this.gridCells[row][col] = { row: row, col: col, gridObject: gridObj, gridRectangle: 'INACTIVE' }
     else this.gridCells[row][col] = { row: row, col: col, gridObject: gridObj, gridRectangle: this.makeRectangle(row,col) }
+  }
+
+  public emptyGridObject(row: number, col: number) {
+    // first destroy old rectangle at this location
+    (this.gridCells[row][col].gridRectangle as Phaser.GameObjects.Rectangle)?.destroy();
+
+    // now make a new empty grid object at this location
+    this.gridCells[row][col] = { 
+      row: row, 
+      col: col, 
+      gridObject: new GO_Empty({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: '', gridSize: this.gridSize, objectType: 'EMPTY',}),
+      gridRectangle: this.makeRectangle(row,col)}
   }
 
 
@@ -302,12 +319,14 @@ export class GridLevel {
   }
 
   update(): void {
-    // do stuff
-    // setup all the conga lines (i.e. set gotchi leaders)
+    // setup all the conga lines (i.e. set gotchi leaders/followers)
     this.setupCongaLines();
 
-    // draw any conga lines
+    // shade in gotchi cells that are part of conga lines
     this.drawCongaLines();
+
+    // conga gotchi lines next to any open portals
+    this.portalConga();
   }
 
 

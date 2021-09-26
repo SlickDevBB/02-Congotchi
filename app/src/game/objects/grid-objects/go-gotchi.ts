@@ -1,9 +1,10 @@
 // grid-object-base-class.ts - base class for all grid objects
 
-import { GO_Props, GridLevel, GridObject } from 'game/objects';
+import { GO_Empty, GO_Props, GridLevel, GridObject } from 'game/objects';
 import { GridPosition } from '../grid-level';
 import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
+import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
 
 // Grid objects will consist of 5 different types (action types will have sub types)
 // 1) Gotchis
@@ -30,9 +31,9 @@ import { GameScene } from 'game/scenes/game-scene';
 //   }
   
   export class GO_Gotchi extends GridObject {
-    private direction: 'DOWN' | 'LEFT' | 'RIGHT' | 'UP' = 'DOWN';
+    private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
     private leader: GridObject | 0 = 0;
-    private follower: GridObject | 0 = 0;
+    private followers: Array<GridObject | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
 
     // define variables for dragging object
     private timer = 0;
@@ -61,6 +62,9 @@ import { GameScene } from 'game/scenes/game-scene';
   
         // set to size of grids from game
         this.setDisplaySize(gridSize, gridSize);
+
+        // set a specific depth
+        this.setDepth(DEPTH_GO_GOTCHI);
     
         // add to the scene
         this.scene.add.existing(this);
@@ -71,8 +75,6 @@ import { GameScene } from 'game/scenes/game-scene';
 
         // set behaviour for pointer click down
         this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            console.log('pointer down');
-
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
             this.pointerDownGridPosition = this.gridLevel.getGridPositionFromXY(pointer.x, pointer.y);
@@ -111,10 +113,6 @@ import { GameScene } from 'game/scenes/game-scene';
                     // only drag objects into grids they have space for
                     const gp = this.getGridPosition();
                     const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
-                    console.log(aboveEmpty);
-                    console.log(gp.row);
-                    console.log(gp.col);
-                    console.log(this.gridLevel.getGridObject(gp.row-1, gp.col));
                     const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
                     const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
                     const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
@@ -187,18 +185,34 @@ import { GameScene } from 'game/scenes/game-scene';
                 case 'RIGHT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'LEFT') lookingAtUs = true; break;
                 default: break;
             }
-            if (!lookingAtUs) this.setLeader(potentialLeader);
+            if (!lookingAtUs) this.setLeader(potentialLeader as GO_Gotchi);
             else this.setLeader(0);
-        } else if (potentialLeader?.getType() === 'PORTAL') {
-            this.setLeader(potentialLeader);
         } else {
             this.setLeader(0);
         }
     }
 
-    public setLeader(leader: GridObject | 0) {
+    public findFollowers() {
+        // check each direction to see if there is a gotchi looking at us
+        const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
+        this.followers[0] = (downGotchi && downGotchi.getType() === 'GOTCHI' && (downGotchi as GO_Gotchi).getDirection() === 'UP') ? 
+            downGotchi : 0;
+
+        const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
+        this.followers[1] = (leftGotchi && leftGotchi.getType() === 'GOTCHI' && (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') ? 
+            leftGotchi : 0;
+
+        const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
+        this.followers[2] = (upGotchi && upGotchi.getType() === 'GOTCHI' && (upGotchi as GO_Gotchi).getDirection() === 'DOWN') ? 
+            upGotchi : 0;
+
+        const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
+        this.followers[3] = (rightGotchi && rightGotchi.getType() === 'GOTCHI' && (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') ? 
+            rightGotchi : 0;
+    }
+
+    public setLeader(leader: GO_Gotchi | 0) {
         this.leader = leader;
-        if (leader && leader.getType() === 'GOTCHI') (leader as GO_Gotchi).follower = this;
         return this;
     }
 
@@ -211,19 +225,14 @@ import { GameScene } from 'game/scenes/game-scene';
         else return false;
     }
 
-    // to avoid confusion we never allow an external class to set the follower
-    // public setFollower(follower: GridObject) {
-    //     this.follower = follower;
-    //     return this;
-    // }
-
-    public getFollower() {
-        return this.follower;
+    public getFollowers() {
+        return this.followers;
     }
 
     public hasFollower() {
-        if (this.follower) return true;
-        else return false;
+        let haveFollower = false;
+        this.followers.map( follower => { if (follower) haveFollower = true; });
+        return haveFollower;
     }
 
     public getDirection() {
@@ -280,9 +289,45 @@ import { GameScene } from 'game/scenes/game-scene';
         else this.setDirection('UP');
         return this;
     }
+
+    public congaIntoPortal(row: number, col: number) {
+        // let the gridlevel know old position needs to be set to empty
+        this.gridLevel.emptyGridObject(
+          this.gridPosition.row, 
+          this.gridPosition.col);
+
+        // set our new grid position
+        this.gridPosition = { row: row, col: col };
+
+        // now set the position in actual space with a tween
+        const newX = this.gridLevel.x + (this.gridPosition.col)*this.gridSize + 0.5*this.gridSize;
+        const newY = this.gridLevel.y + (this.gridPosition.row)*this.gridSize + 0.5*this.gridSize;
+        this.scene.add.tween({
+            targets: this,
+            x: newX,
+            y: newY,
+            duration: 150,
+            // on complete spin the gotchi into the portal
+            onComplete: () => {
+                (this.scene as GameScene).getGui()?.adjustScore(20);
+                this.scene.add.tween({
+                    targets: this,
+                    scale: 0,
+                    angle: 720,
+                    duration: 500,
+                    onComplete: () => {
+                        this.destroy();
+                    }
+                });
+            }
+        });
+
+        return this;
+
+    }
   
     update(): void {
-      const a = '';
+      // do something
     }
   }
   

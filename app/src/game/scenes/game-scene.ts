@@ -111,6 +111,10 @@ export class GameScene extends Phaser.Scene {
     return this.player;
   }
 
+  public getGui() {
+    return this.gui;
+  }
+
   update(): void {
     // update all our objects
     this.gridLevel?.update();

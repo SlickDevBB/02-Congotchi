@@ -1,36 +1,14 @@
 // grid-object-base-class.ts - base class for all grid objects
 
-import { GO_Props, GridLevel, GridObject, Player } from 'game/objects';
+import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
 import { GridPosition } from '../grid-level';
 import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, PORTAL_OPEN } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
-
-// Grid objects will consist of 5 different types (action types will have sub types)
-// 1) Gotchis
-// 2) Portals
-// 3) Stealth Action Objects (BLUE) - Gotchis can perform a stealth action on these items if dragged into them and player has enough stealth
-//      a) Grenade - These can be diffused if gotchi dragged into them
-//      b) Galaxy Brain - Gotchi will run to end of nearest available line
-// 4) Aggro Action Objects (RED) - Gotchis can perform an aggressive action is dragged into them and player has enough aggro stat
-//      a) Cacti - These can be destroyed if gotchis dragged into them
-//      b) Coffee - Gotchi will randomly run around like crazy until it finds a new location
-// 5) Fun Action Objects (GREEN) - Gotchis can perform a fun action if dragged into them and player has enough fun stat
-//      a) Milkshake - These grant bonus points if gotchis dragged into them
-//      b) Lil Pump Drank - Grants additional Movement points
-
-// interface Props {
-//     scene: Phaser.Scene;
-//     gridLevel: GridLevel;
-//     gridRow: number;
-//     gridCol: number;
-//     key: string;
-//     frame?: number;
-//     gridSize: number;
-//     objectType: 'GOTCHI' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'PORTAL',
-//   }
+import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
   
-  export class GO_Portal extends GridObject {
+export class GO_Portal extends GridObject {
     private status: 'OPEN' | 'CLOSED' = 'CLOSED';
+    private congaGotchis: Array<GO_Gotchi | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
 
     // define variables for dragging object
     private timer = 0;
@@ -42,6 +20,9 @@ import { GameScene } from 'game/scenes/game-scene';
         // enable draggable input
         this.setInteractive();
 
+        // set a specific depth
+        this.setDepth(DEPTH_GO_PORTAL);
+
         // set behaviour for pointer click down
         this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             console.log('pointer down');
@@ -49,7 +30,7 @@ import { GameScene } from 'game/scenes/game-scene';
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
             this.pointerDownGridPosition = this.gridLevel.getGridPositionFromXY(pointer.x, pointer.y);
- 
+
         });
 
         // set behaviour for pointer up event
@@ -70,9 +51,34 @@ import { GameScene } from 'game/scenes/game-scene';
                 }
             }
         });
+    }
 
-        
+    public findCongaGotchis() {
+        // check each direction to see if there is a gotchi looking at us
+        const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col) as GO_Gotchi;
+        this.congaGotchis[0] = (downGotchi && downGotchi.getType() === 'GOTCHI' && downGotchi.getDirection() === 'UP') ? 
+            downGotchi : 0;
 
+        const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1) as GO_Gotchi;
+        this.congaGotchis[1] = (leftGotchi && leftGotchi.getType() === 'GOTCHI' && leftGotchi.getDirection() === 'RIGHT') ? 
+            leftGotchi : 0;
+
+        const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col) as GO_Gotchi;
+        this.congaGotchis[2] = (upGotchi && upGotchi.getType() === 'GOTCHI' && upGotchi.getDirection() === 'DOWN') ? 
+            upGotchi : 0;
+
+        const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1) as GO_Gotchi;
+        this.congaGotchis[3] = (rightGotchi && rightGotchi.getType() === 'GOTCHI' && rightGotchi.getDirection() === 'LEFT') ? 
+            rightGotchi : 0;
+    }
+
+    public startCongaChains() {
+        // go through each of our possible conga gotchis and if they're looking at the portal start up conga chains
+        this.congaGotchis.map( cg => {
+            if (cg) {
+                cg.congaIntoPortal(this.gridPosition.row, this.gridPosition.col);
+            }
+        })
     }
 
     public getStatus() {
@@ -84,9 +90,9 @@ import { GameScene } from 'game/scenes/game-scene';
         if (status === 'OPEN') this.setTexture(PORTAL_OPEN);
         return this;
     }
-  
+
     update(): void {
-      const a = '';
+        const a = '';
     }
-  }
+}
   

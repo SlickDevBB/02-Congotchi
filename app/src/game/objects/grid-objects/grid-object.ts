@@ -66,7 +66,7 @@ export interface GO_Props {
       this.setDepth(DEPTH_GRID_OBJECTS);
     }
 
-    public setGridPosition(row: number, col: number) {
+    public setGridPosition(row: number, col: number, customTween?: () => any) {
         // let the gridlevel know old position needs to be set to empty
         this.gridLevel.setGridObject(
           this.gridPosition.row, 
@@ -79,12 +79,16 @@ export interface GO_Props {
         // now set the position in actual space with a tween
         const newX = this.gridLevel.x + (this.gridPosition.col)*this.gridSize + 0.5*this.gridSize;
         const newY = this.gridLevel.y + (this.gridPosition.row)*this.gridSize + 0.5*this.gridSize;
-        this.scene.add.tween({
-            targets: this,
-            x: newX,
-            y: newY,
-            duration: 100,
-        });
+        if (customTween) {
+          customTween();
+        } else {
+          this.scene.add.tween({
+              targets: this,
+              x: newX,
+              y: newY,
+              duration: 100,
+          });
+        }
 
         // now set the new grilevel object
         this.gridLevel.setGridObject(row, col, this);

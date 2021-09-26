@@ -25,6 +25,7 @@ export class Gui {
     private exitButton: Phaser.GameObjects.Image;
     private scorePanel: Phaser.GameObjects.Image;
     private scoreText;
+    private score = 0;
     private mainMenuButton?: Phaser.GameObjects.Image;
     private clickSound?: Phaser.Sound.BaseSound;
     
@@ -166,6 +167,11 @@ export class Gui {
 
         // create the back button click sound
         this.clickSound = this.scene.sound.add(CLICK, { loop: false });
+    }
+
+    public adjustScore(delta: number) {
+        this.score += delta;
+        this.scoreText.text = this.score.toString().padStart(7,'0');
     }
 
     public onStartLevel() {
