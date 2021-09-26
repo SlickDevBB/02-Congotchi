@@ -2,13 +2,14 @@ import { BLACK_CIRCLE_SHADED, BONUS_ICON, M67_GRENADE, MILKSHAKE, MOVE_ICON, POR
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { AavegotchiGameObject } from "types";
-import { AarcIcon } from ".";
+import { AarcIcon, WorldMap } from ".";
 
 interface Props {
   scene: Phaser.Scene;
   x: number;
   y: number;
   key: string;
+  world: WorldMap;
   frame?: number;
   width: number;
   height: number;
@@ -54,32 +55,29 @@ export class Player extends Phaser.GameObjects.Sprite {
   public bonusIcon;
   public gotchi;
 
+  // store some variables for when we leave the map toplay the level
+  private playerSavedPos = new Phaser.Math.Vector2(0,0);
+  private playerSavedScaleX = 1;
+  private playerSavedScaleY= 1;
+  private world;
+
   // levelNumber variable stores what level our gotchi is on
-  public levelNumber = 0;
+  private levelNumber = 1;
 
   // direction variable
   private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
 
-  constructor({ scene, x, y, key, width, height, gotchi }: Props) {
+  constructor({ scene, x, y, key, world, width, height, gotchi }: Props) {
     super(scene, x, y, key);
 
     this.gotchi = gotchi;
-
-    // set all the stats
-    if (gotchi) {
-      this.rotate.current = ROTATE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(ROTATE_MAX-ROTATE_MIN));
-      this.move.current = MOVE_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_MAX-MOVE_MIN));
-      this.grenade.current = GRENADE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[1])/100*(GRENADE_MAX-GRENADE_MIN));
-      this.cacti.current = CACTI_MIN + Math.floor(gotchi.withSetsNumericTraits[1]/100*(CACTI_MAX-CACTI_MIN));
-      this.milkshake.current = MILKSHAKE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[2])/100*(MILKSHAKE_MAX-MILKSHAKE_MIN));
-      this.portal.current = PORTAL_MIN + Math.floor(gotchi.withSetsNumericTraits[2]/100*(PORTAL_MAX-PORTAL_MIN));
-      this.reshuffle.current = RESHUFFLE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[3])/100*(RESHUFFLE_MAX-RESHUFFLE_MIN));
-      this.bonus.current = BONUS_MIN + Math.floor(gotchi.withSetsNumericTraits[3]/100*(BONUS_MAX-BONUS_MIN));
-
-    }
+    this.world = world;
 
     // sprite
     this.setOrigin(0, 0);
+
+    // init stats
+    this.initStats();
 
     // a basic nothing anim
     this.anims.create({
@@ -108,6 +106,8 @@ export class Player extends Phaser.GameObjects.Sprite {
       key: 'back',
       frames: this.anims.generateFrameNumbers(key || '', { frames: [ 6 ]}),
     });
+
+    this.anims.play('front');
 
     // physics
     this.scene.physics.world.enable(this);
@@ -207,6 +207,35 @@ export class Player extends Phaser.GameObjects.Sprite {
       numBadge: this.bonus?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
+    // start off with all stats invisible
+    this.setStatsVisible(false);
+  }
+
+  private initStats() {
+    const gotchi = this.gotchi;
+    // set all the stats
+    if (gotchi) {
+      this.rotate.current = ROTATE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(ROTATE_MAX-ROTATE_MIN));
+      this.move.current = MOVE_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_MAX-MOVE_MIN));
+      this.grenade.current = GRENADE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[1])/100*(GRENADE_MAX-GRENADE_MIN));
+      this.cacti.current = CACTI_MIN + Math.floor(gotchi.withSetsNumericTraits[1]/100*(CACTI_MAX-CACTI_MIN));
+      this.milkshake.current = MILKSHAKE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[2])/100*(MILKSHAKE_MAX-MILKSHAKE_MIN));
+      this.portal.current = PORTAL_MIN + Math.floor(gotchi.withSetsNumericTraits[2]/100*(PORTAL_MAX-PORTAL_MIN));
+      this.reshuffle.current = RESHUFFLE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[3])/100*(RESHUFFLE_MAX-RESHUFFLE_MIN));
+      this.bonus.current = BONUS_MIN + Math.floor(gotchi.withSetsNumericTraits[3]/100*(BONUS_MAX-BONUS_MIN));
+
+      if (this.rotateIcon && this.moveIcon && this.grenadeIcon && this.cactiIcon && this.milkshakeIcon && this.portalIcon && this.reshuffleIcon && this.bonusIcon) {
+        this.rotateIcon.setBadge(this.rotate.current);
+        this.moveIcon.setBadge(this.move.current);
+        this.grenadeIcon.setBadge(this.grenade.current);
+        this.cactiIcon.setBadge(this.cacti.current);
+        this.milkshakeIcon.setBadge(this.milkshake.current);
+        this.portalIcon.setBadge(this.portal.current);
+        this.reshuffleIcon.setBadge(this.reshuffle.current);
+        this.bonusIcon.setBadge(this.bonus.current);
+      }
+    }
+    
   }
 
 
@@ -222,7 +251,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.bonusIcon.setVisible(visible);
 
     const cam = new Phaser.Math.Vector2(this.scene.cameras.main.scrollX, this.scene.cameras.main.scrollY);
-    const circle = new Phaser.Geom.Circle(cam.x+getGameWidth(this.scene)*.5, cam.y+getGameHeight(this.scene), getGameWidth(this.scene)*0.32);
+    const circle = new Phaser.Geom.Circle(cam.x+getGameWidth(this.scene)*.5, cam.y+getGameHeight(this.scene), getGameWidth(this.scene)*0.36);
     const a = 1/16;
     const b = 1/32;
     this.rotateIcon.setPosition(circle.getPoint(0.75-b).x, circle.getPoint(0.75-b).y);
@@ -330,9 +359,118 @@ export class Player extends Phaser.GameObjects.Sprite {
     }
   }
 
+  public onStartLevel() {
+    // save the players map position and scale
+    this.playerSavedPos = new Phaser.Math.Vector2(this.x, this.y);
+    this.playerSavedScaleX = this.scaleX;
+    this.playerSavedScaleY = this.scaleY;
+
+    // reset stats for new level
+    this.initStats();
+
+    // tween the player into grid level gaming mode
+    this.scene.add.tween({
+        targets: this,
+        y: this.y + getGameHeight(this.scene),
+        duration: 250,
+        onComplete: () => {
+            this.scene.add.tween({
+                targets: this,
+                x: this.scene.cameras.main.scrollX+getGameWidth(this.scene)*0.5,
+                y: this.scene.cameras.main.scrollY+getGameHeight(this.scene),
+                scale: getGameHeight(this.scene)*0.002,
+                duration: 250,
+                onComplete: () => {
+                    this.anims.play('still');
+                    this.setStatsVisible(true);
+                },
+            })
+        }
+    });
+  }
+
+  public onEndLevel() {
+    // hide our stats
+    this.setStatsVisible(false);
+
+    // tween the player back to the saved map position
+    this.scene.add.tween({
+        targets: this,
+        y: this.y + getGameHeight(this.scene),
+        duration: 250,
+        onComplete: () => {
+            this.scene.add.tween({
+                targets: this,
+                x: this.playerSavedPos.x,
+                y: this.playerSavedPos.y,
+                scaleX: this.playerSavedScaleX,
+                scaleY: this.playerSavedScaleY,
+                duration: 250,
+                onComplete: () => {
+                    this.anims.play('still');
+                },
+            })
+        }
+    });
+  }
+
+  public onSelectLevel(levelNumber: number) {
+    
+        const selectedLevelButton = this.world.getLevelButton(levelNumber);
+        const playerLevelButton = this.world.getLevelButton(this.levelNumber);
+
+        // if player doesn't have a level we need to set it to one
+        if (!playerLevelButton && selectedLevelButton) {      
+            // should really change this to a smoke bomb...
+            this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
+        } // valid player and selected buttons so...
+        else if (playerLevelButton && selectedLevelButton) {
+            // if player button adjacent to selected, tween to it...
+            if (playerLevelButton.isNextToButton(selectedLevelButton)) {
+                const path = { t: 0, vec: new Phaser.Math.Vector2() };
+                const curve = playerLevelButton.getBezierCurveLinkedTo(selectedLevelButton);
+
+                if (curve) {
+                    this.scene.tweens.add({
+                        targets: path,
+                        t: 1,
+                        onUpdate: () => {
+                            const playerX = this.x;
+                            const playerY = this.y;
+                            const targetX = curve?.getPoint(path.t).x;
+                            const targetY = curve?.getPoint(path.t).y-playerLevelButton.displayHeight*1.5;
+
+                            // find out which direction we're moving in most to determine gotchi orientation
+                            const deltaX = targetX - playerX;
+                            const deltaY = targetY - playerY;
+                            // check for left/right
+                            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                                deltaX > 0 ? this.setDirection('RIGHT') : this.setDirection('LEFT');
+                            } else {
+                                deltaY > 0 ? this.setDirection('DOWN') : this.setDirection('UP');
+                            }
+
+                            this.x = targetX;
+                            this.y = targetY;
+                        },
+                        onComplete: () => {
+                            this.setDirection('DOWN');
+                        },
+                        duration: 500,
+                    });
+                }
+            } else {
+                // should really change this to a smoke bomb...
+                this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
+            }
+
+        }
+
+        this.levelNumber = levelNumber;
+
+  }
+
   update(): void {
-    // play idle anims
-    
-    
+    // do nothing
   }
 }

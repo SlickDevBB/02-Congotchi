@@ -4,6 +4,7 @@
 
 import { GREEN_BUTTON, PURPLE_BUTTON, RED_BUTTON } from "game/assets";
 import { getGameWidth } from "game/helpers";
+import { DEPTH_LEVEL_BUTTON } from "game/helpers/constants";
 import { Player } from ".";
 
 
@@ -41,9 +42,9 @@ export class LevelButton extends Phaser.GameObjects.Image {
 
         // make some level text
         this.levelText = this.scene.add.text(
-            this.x, this.y, 
+            this.x, this.y-this.displayHeight*0.05, 
             levelNumber.toString(), 
-            { font: this.displayHeight*0.6+'px Courier', color: '#ffffff' })
+            { font: this.displayHeight*0.5+'px Courier', color: '#ffffff' })
                 .setOrigin(0.5,0.8)
                 .setStroke('#000000', 1)
                 .setShadow(0, 2, "#333333", 3, true, true);
@@ -53,7 +54,7 @@ export class LevelButton extends Phaser.GameObjects.Image {
         this.on( 'pointerout', () => { if (!this.isSelected) this.setTexture(RED_BUTTON) });
 
         // last thing to do is set depth
-        this.setDepth(5);
+        this.setDepth(DEPTH_LEVEL_BUTTON);
 
     }
 

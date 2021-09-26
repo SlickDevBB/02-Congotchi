@@ -3,36 +3,38 @@
 
 import { GREEN_BUTTON, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON } from "game/assets";
 import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
-import { LevelButton, Player, LevelConfig, levels, GuiLevelSelect, GridLevel } from ".";
-
+import { LevelButton, Player, LevelConfig, levels, Gui, GridLevel } from ".";
+import {
+    LEFT_CHEVRON, BG, CLICK, ARROW_DOWN, GUI_BUTTON_CROSS,
+  } from 'game/assets';
+import { GameScene } from "game/scenes/game-scene";
+import { DEPTH_WORLD_MASK } from "game/helpers/constants";
 
 interface Props {
-    scene: Phaser.Scene;
+    scene: GameScene;
     x: number;
     y: number;
     key: string;
-    player: Player;
     unlockedLevels?: string[];
 }
 
 export class WorldMap extends Phaser.GameObjects.Image {
 
     // declare private variables
-    private player: Player;
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
     private debugText: Phaser.GameObjects.Text;
     private worldCam: Phaser.Cameras.Scene2D.Camera;
     private levelButtons: LevelButton[] = [];
     private worldHeight;
     private worldWidth;
-    private selectedLevel = 0;
-    private levelSelector: GuiLevelSelect;
-    private levelPlaying = false;
-
-    private gridLevel?: GridLevel;
     
+    private backButton?: Phaser.GameObjects.Image;
+    private backSound?: Phaser.Sound.BaseSound;
+
+    private worldMask: Phaser.GameObjects.Rectangle;
+
     // call constructor
-    constructor({ scene, x, y, key, player, unlockedLevels }: Props) {
+    constructor({ scene, x, y, key, unlockedLevels }: Props) {
         super(scene, x, y, key);
 
         // add the map to the scene and set its display size
@@ -41,16 +43,10 @@ export class WorldMap extends Phaser.GameObjects.Image {
         this.worldHeight = getGameHeight(this.scene)*zoom;
         this.worldWidth = this.worldHeight/612*905;
         this.setDisplaySize(this.worldWidth, this.worldHeight);
-        // set alpha and world origin
-        // this.setAlpha(0.8);
         this.setOrigin(0,0);
 
         // // create level buttons
         this.createLevelButtons();
-
-        // add player and make stats invisible
-        this.player = player;
-        this.player.setStatsVisible(false);
 
         // create cursor control
         this.cursorKeys = this.scene.input.keyboard.createCursorKeys();
@@ -60,12 +56,6 @@ export class WorldMap extends Phaser.GameObjects.Image {
         this.debugText = this.scene.add.text(10, 10, 'Debug Info', { font: fontHeight+'px Courier', color: '#ff0000' });
         this.debugText.setScrollFactor(0);
         this.debugText.setStroke("#000000", 1);
-
-        // create the level selector
-        this.levelSelector = new GuiLevelSelect( {scene: this.scene, player: this.player, world: this});
-
-         // set the player to level 1
-         this.selectLevel(1);
 
         // get the main scene camera and set its initial scroll position
         this.worldCam = this.scene.cameras.main;
@@ -80,7 +70,12 @@ export class WorldMap extends Phaser.GameObjects.Image {
             this.worldCam.scrollY -= dragY * getGameHeight(this.scene) / this.displayHeight;
         });
 
-       
+        // create a world mask used to 'dim' the world on level select
+        this.worldMask = this.scene.add.rectangle(0,0,getGameWidth(this.scene),getGameHeight(this.scene),0x000000,0)
+            .setDepth(DEPTH_WORLD_MASK)
+            .setScrollFactor(0)
+            .setOrigin(0,0);
+
     }
 
     private createLevelButtons() {
@@ -92,7 +87,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             key: RED_BUTTON,
             levelNumber: 1,
         })
-        .on('pointerdown', () => this.selectLevel(1));
+        .on('pointerdown', () => (this.scene as GameScene).selectLevel(1));
 
         // level 2
         this.levelButtons[1] = new LevelButton({
@@ -102,7 +97,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             key: RED_BUTTON,
             levelNumber: 2,
         })
-        .on('pointerdown', () => this.selectLevel(2));
+        .on('pointerdown', () => (this.scene as GameScene).selectLevel(2));
 
         // create link form level 1 to 2
         this.levelButtons[0].createLink(this.levelButtons[1], 
@@ -118,7 +113,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             key: RED_BUTTON,
             levelNumber: 3,
         })
-        .on('pointerdown', () => this.selectLevel(3));
+        .on('pointerdown', () => (this.scene as GameScene).selectLevel(3));
 
         // create link form level 2 to 3
         this.levelButtons[1].createLink(this.levelButtons[2], 
@@ -134,7 +129,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             key: RED_BUTTON,
             levelNumber: 4,
         })
-        .on('pointerdown', () => this.selectLevel(4));
+        .on('pointerdown', () => (this.scene as GameScene).selectLevel(4));
 
         // create link form level 2 to 3
         this.levelButtons[2].createLink(this.levelButtons[3], 
@@ -150,13 +145,16 @@ export class WorldMap extends Phaser.GameObjects.Image {
             key: RED_BUTTON,
             levelNumber: 5,
         })
-        .on('pointerdown', () => this.selectLevel(5));
+        .on('pointerdown', () => (this.scene as GameScene).selectLevel(5));
 
         // create link form level 2 to 3
         this.levelButtons[3].createLink(this.levelButtons[4], 
             new Phaser.Math.Vector2(0.029*this.displayWidth, 0.279*this.displayHeight),
             new Phaser.Math.Vector2(0.038*this.displayWidth, 0.2*this.displayHeight),
         );
+
+
+        
     }
 
     public getLevelButton(levelNumber: number) {
@@ -164,84 +162,54 @@ export class WorldMap extends Phaser.GameObjects.Image {
         return val;
     }
 
-    public startLevel() {
-        this.gridLevel = new GridLevel({
-            scene: this.scene,
-            player: this.player,
-            levelConfig: levels[this.selectedLevel - 1],
-            x: this.scene.cameras.main.scrollX,
-            y: this.scene.cameras.main.scrollY,
-        })
-
-        this.levelPlaying = true;
+    public onStartLevel() {
         this.scene.input.disable(this);
         this.levelButtons.map(lb => this.scene.input.disable(lb));
+
+        // fade in the world mask
+        this.scene.add.tween({
+            targets: this.worldMask,
+            fillAlpha: 0.66,
+            duration: 250,
+        })
+
+        // move the main menu button offscreen
+        if (this.backButton) {
+            this.scene.add.tween({
+                targets: this.backButton,
+                x: this.backButton.x + getGameWidth(this.scene),
+                duration: 250,
+            })
+        }
     }
 
-    public endLevel() {
-        this.levelPlaying = false;
+    public onEndLevel() {
         this.scene.input.enable(this);
         this.levelButtons.map(lb => this.scene.input.enable(lb));
-        this.gridLevel?.destroy();
+        
+        // fade out the world mask
+        this.scene.add.tween({
+            targets: this.worldMask,
+            fillAlpha: 0,
+            duration: 250,
+        })
+
+        // move the main menu button offscreen
+        if (this.backButton) {
+            this.scene.add.tween({
+                targets: this.backButton,
+                x: this.backButton.x - getGameWidth(this.scene),
+                duration: 250,
+            })
+        }
     }
 
-    public selectLevel(levelNumber: number) {
-
+    public onSelectLevel(levelNumber: number) {
+        // set the selected level button to visible
         const selectedLevelButton = this.getLevelButton(levelNumber);
-        const playerLevelButton = this.getLevelButton(this.player.levelNumber);
-
-        // if player doesn't have a level we need to set it to one
-        if (!playerLevelButton && selectedLevelButton) {      
-            // should really change this to a smoke bomb...
-            this.player.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
-        } // valid player and selected buttons so...
-        else if (playerLevelButton && selectedLevelButton) {
-            // if player button adjacent to selected, tween to it...
-            if (playerLevelButton.isNextToButton(selectedLevelButton)) {
-                const path = { t: 0, vec: new Phaser.Math.Vector2() };
-                const curve = playerLevelButton.getBezierCurveLinkedTo(selectedLevelButton);
-
-                if (curve) {
-                    this.scene.tweens.add({
-                        targets: path,
-                        t: 1,
-                        onUpdate: () => {
-                            const playerX = this.player.x;
-                            const playerY = this.player.y;
-                            const targetX = curve?.getPoint(path.t).x;
-                            const targetY = curve?.getPoint(path.t).y-playerLevelButton.displayHeight*1.5;
-
-                            // find out which direction we're moving in most to determine gotchi orientation
-                            const deltaX = targetX - playerX;
-                            const deltaY = targetY - playerY;
-                            // check for left/right
-                            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                                deltaX > 0 ? this.player.setDirection('RIGHT') : this.player.setDirection('LEFT');
-                            } else {
-                                deltaY > 0 ? this.player.setDirection('DOWN') : this.player.setDirection('UP');
-                            }
-
-                            this.player.x = targetX;
-                            this.player.y = targetY;
-                        },
-                        onComplete: () => {
-                            this.player.setDirection('DOWN');
-                        },
-                        duration: 500,
-                    });
-                }
-            } else {
-                // should really change this to a smoke bomb...
-                this.player.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
-            }
-
-        }
-        // store the players new level number and ensure current level is selected
-        this.player.levelNumber = levelNumber;
-        this.selectedLevel = levelNumber;
         this.levelButtons.map( lb => { if (lb !== selectedLevelButton) lb.setSelected(false) });
         selectedLevelButton?.setSelected(true);
-        this.levelSelector.setLevel(levelNumber);
+
     }
 
 

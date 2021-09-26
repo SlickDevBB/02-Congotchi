@@ -29,6 +29,7 @@ export const M67_GRENADE = 'm67_grenade';
 export const MILKSHAKE = 'milkshake';
 export const UNCOMMON_CACTI = 'uncommon_cacti';
 export const PORTAL_OPEN = 'portal_open';
+export const PORTAL_CLOSED = 'portal_closed';
 export const BLACK_CIRCLE_SHADED = 'black-circle-shaded';
 export const WHITE_CIRCLE_SHADED = 'white-circle-shaded';
 export const MOVE_ICON = 'move_icon';
@@ -108,6 +109,11 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: PORTAL_OPEN,
     src: 'assets/images/h2_open.svg',
+    type: 'IMAGE',
+  },
+  {
+    key: PORTAL_CLOSED,
+    src: 'assets/images/h2_closed.svg',
     type: 'IMAGE',
   },
   {

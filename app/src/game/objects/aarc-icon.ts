@@ -1,6 +1,7 @@
 // aarc-icon.ts - these are the action icons around a gotchi
 
 import { BLACK_CIRCLE_SHADED, WHITE_CIRCLE_SHADED } from 'game/assets';
+import { DEPTH_PLAYER_ICONS, DEPTH_PLAYER_ICON_IMAGES } from 'game/helpers/constants';
 
 interface Props {
     scene: Phaser.Scene;
@@ -53,7 +54,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
         this.icon = this.scene.add.image(x, y, keyIcon);
         this.icon.displayHeight = 2*radius*this.iconToCircleRatio;
         this.icon.displayWidth = this.icon.displayHeight * (this.initWidth/this.initHeight);
-        this.icon.setDepth(3);
+        this.icon.setDepth(DEPTH_PLAYER_ICON_IMAGES);
 
         // add a badge if set to true in constructor
         if (useBadge) {
@@ -64,10 +65,10 @@ export class AarcIcon extends Phaser.GameObjects.Image {
                 0xff0000,
                 ALPHA)
                 .setOrigin(0.5,0.5)
-                .setDepth(5)
+                .setDepth(DEPTH_PLAYER_ICON_IMAGES+1)
             this.badgeText = this.scene.add.text(this.x, this.y, numBadge.toString())
                 .setOrigin(0.5,0.5)
-                .setDepth(10)
+                .setDepth(DEPTH_PLAYER_ICON_IMAGES+2)
                 .setStyle({
                     fontSize: (radius*.8).toString() + 'px',
                     fontFamily: 'Arial',
@@ -81,7 +82,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
         // call setposition and set visible just in case
         this.setPosition(x, y);
         this.setVisible(true);
-        
+        this.setDepth(DEPTH_PLAYER_ICONS);
 
     }
 
