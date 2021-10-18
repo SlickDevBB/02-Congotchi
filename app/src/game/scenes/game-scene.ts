@@ -17,6 +17,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 export class GameScene extends Phaser.Scene {
   private player?: Player;
   private selectedGotchi?: AavegotchiGameObject;
+  private randomGotchis?: AavegotchiGameObject[];
   private worldMap?: WorldMap;
   private gui?: Gui;
   private gridLevel?: GridLevel;
@@ -26,8 +27,9 @@ export class GameScene extends Phaser.Scene {
     super(sceneConfig);
   }
 
-  init = (data: { selectedGotchi: AavegotchiGameObject }): void => {
+  init = (data: { selectedGotchi: AavegotchiGameObject, randomGotchis: AavegotchiGameObject[] }): void => {
     this.selectedGotchi = data.selectedGotchi;
+    this.randomGotchis = data.randomGotchis;
   };
 
   public create(): void {
@@ -81,14 +83,17 @@ export class GameScene extends Phaser.Scene {
 
   public startLevel() {
     // create the grid level
-    if (this.player) {
-      this.gridLevel = new GridLevel({
-        scene: this,
-        player: this.player,
-        levelConfig: levels[this.selectedLevel - 1],
-        // x: this.cameras.main.scrollX,
-        // y: this.cameras.main.scrollY,
-      })  
+    if (this.randomGotchis) {
+      if (this.player) {
+        this.gridLevel = new GridLevel({
+          scene: this,
+          player: this.player,
+          randomGotchis: this.randomGotchis,
+          levelConfig: levels[this.selectedLevel - 1],
+        })  
+      }
+    } else {
+      alert('Random gotchis not available');
     }
 
     // call startLevel() for all our objects

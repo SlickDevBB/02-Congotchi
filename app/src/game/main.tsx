@@ -10,11 +10,12 @@ import { useDiamondCall } from "web3/actions";
 
 const Main = () => {
   const {
-    state: { usersAavegotchis, selectedAavegotchiId, provider },
+    state: { usersAavegotchis, randomAavegotchis, selectedAavegotchiId, provider },
   } = useWeb3();
   const [initialised, setInitialised] = useState(true);
   const [config, setConfig] = useState<GameInstance>();
 
+  // define the startGame async function
   const startGame = async (socket: Socket, selectedGotchi: AavegotchiObject) => {
     let width = window.innerWidth;
     let height = width * 1920/1080;
@@ -58,6 +59,7 @@ const Main = () => {
           setInitialised(false);
           game.registry.merge({
             selectedGotchi,
+            randomAavegotchis,
             socket
           });
         },
@@ -66,7 +68,7 @@ const Main = () => {
   }
 
   useEffect(() => {
-    if (usersAavegotchis && selectedAavegotchiId) {
+    if (usersAavegotchis && selectedAavegotchiId && randomAavegotchis) {
       // Socket is called here so we can take advantage of the useEffect hook to disconnect upon leaving the game screen
       const socket = io(process.env.REACT_APP_SERVER_PORT || 'http://localhost:8080');
       const selectedGotchi = usersAavegotchis.find(gotchi => gotchi.id === selectedAavegotchiId);

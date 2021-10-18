@@ -29,8 +29,14 @@ export const useSubgraph = async <T extends unknown>(
 };
 
 type DiamondCallMethods =
-  | { name: "currentHaunt"; parameters?: undefined }
-  | { name: "getAavegotchiSvg"; parameters: [string] }
+  | { 
+    name: "currentHaunt"; 
+    parameters?: undefined 
+    }
+  | { 
+    name: "getAavegotchiSvg"; 
+    parameters: [string] 
+    }
   | {
       name: "previewAavegotchi";
       parameters: [string, string, Tuple<number, 6>, Tuple<number, 16>];

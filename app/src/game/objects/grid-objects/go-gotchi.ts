@@ -5,58 +5,69 @@ import { GridPosition } from '../grid-level';
 import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
+import { AavegotchiGameObject } from 'types';
+import { timeStamp } from 'console';
+import { queryAllByDisplayValue } from '@testing-library/dom';
 
-// Grid objects will consist of 5 different types (action types will have sub types)
-// 1) Gotchis
-// 2) Portals
-// 3) Stealth Action Objects (BLUE) - Gotchis can perform a stealth action on these items if dragged into them and player has enough stealth
-//      a) Grenade - These can be diffused if gotchi dragged into them
-//      b) Galaxy Brain - Gotchi will run to end of nearest available line
-// 4) Aggro Action Objects (RED) - Gotchis can perform an aggressive action is dragged into them and player has enough aggro stat
-//      a) Cacti - These can be destroyed if gotchis dragged into them
-//      b) Coffee - Gotchi will randomly run around like crazy until it finds a new location
-// 5) Fun Action Objects (GREEN) - Gotchis can perform a fun action if dragged into them and player has enough fun stat
-//      a) Milkshake - These grant bonus points if gotchis dragged into them
-//      b) Lil Pump Drank - Grants additional Movement points
+export interface GO_Gotchi_Props {
+    scene: Phaser.Scene;
+    gridLevel: GridLevel;
+    gridRow: number;
+    gridCol: number;
+    key: string;
+    gotchi: AavegotchiGameObject;
+    frame?: number;
+    gridSize: number;
+    objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI',
+  }
 
-// interface Props {
-//     scene: Phaser.Scene;
-//     gridLevel: GridLevel;
-//     gridRow: number;
-//     gridCol: number;
-//     key: string;
-//     frame?: number;
-//     gridSize: number;
-//     objectType: 'GOTCHI' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'PORTAL',
-//   }
+interface CountGotchi {
+    count: number,
+    gotchi: GO_Gotchi | 0,
+}
   
   export class GO_Gotchi extends GridObject {
     private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
     private leader: GridObject | 0 = 0;
     private followers: Array<GridObject | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
+    private gotchi: AavegotchiGameObject;
+
+    // conga side is a variable for tracking which side we conga on
+    private congaSide: 'LEFT' | 'RIGHT' = Math.round(Math.random()) === 1 ? 'LEFT' : 'RIGHT';
+
+    // variable to see if we're jumping
+    // public congaJumping = false;
+
+    // timer is for click events
+    private timer = 0;
 
     // define variables for dragging object
-    private timer = 0;
-    private pointerDownGridPosition: GridPosition = {row: 0, col: 0, };
-    private dragGridPosition = { row: 0, col: 0 };
+    private ogDragGridPosition = { row: 0, col: 0 };
     private dragAxis: 'X' | 'Y' | 'NOT_ASSIGNED' = 'NOT_ASSIGNED';
     private dragX = 0;
     private dragY = 0;
 
-    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
+    // define public variables for conga
+    public newRow = 0;
+    public newCol = 0;
+    public newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
+    public status: 'READY' | 'CONGOTCHING' | 'JUMPING' | 'WAITING' = 'READY';
+
+    constructor({ scene, gridLevel, gridRow, gridCol, key, gotchi, gridSize, objectType }: GO_Gotchi_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GOTCHI'});
 
         // save our gridlevel
         this.gridLevel = gridLevel;  
         this.gridSize = gridSize;
         this.objectType = objectType;
+        this.gotchi = gotchi;
         
         // set our grid position
         this.gridPosition = {row: gridRow, col: gridCol };
 
-        // sprite
+        // lets set our origin about our base point
         this.setOrigin(0.5, 0.5);
-    
+
         // physics
         this.scene.physics.world.enable(this);
   
@@ -77,27 +88,21 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
         this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
-            this.pointerDownGridPosition = this.gridLevel.getGridPositionFromXY(pointer.x, pointer.y);
-
-            
         });
 
         // set behaviour for pointer up event
         this.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-            // get the new grid we've lifted the mouse pointer in
-            const gp = this.gridLevel.getGridPositionFromXY(pointer.x, pointer.y);
-
-            // see if we're close to a pointer down event for a single click
-            const time2 = new Date().getTime();
-            const delta = time2 - this.timer;
+            // See if we're close to a pointer down event for a single click
+            const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // this is where we bring up a gotchis rotate menu
+                // this is where object interaction menu pops up
             }
         });
 
+        // dragstart
         this.on('dragstart', () => {
             // store our initial drag positions
-            this.dragGridPosition = this.getGridPosition();
+            this.ogDragGridPosition = this.getGridPosition();
             this.dragX = this.x;
             this.dragY = this.y;
         })
@@ -109,7 +114,7 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
 
             if (gameScene && player) {    
                 // if we've got movement points left we can drag
-                if (player.getStat('MOVE') > 0) {
+                if (player.getStat('MOVE_GOTCHI') > 0) {
                     // only drag objects into grids they have space for
                     const gp = this.getGridPosition();
                     const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
@@ -139,23 +144,75 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
             }
         });
 
-        this.on('dragend', () => {
+        this.on('dragend', (pointer: Phaser.Input.Pointer) => {
+            // store the grid position dragging finished in
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-            const ogGridPos = this.dragGridPosition;
             this.setGridPosition(finalGridPos.row, finalGridPos.col);
             this.dragAxis = 'NOT_ASSIGNED';
 
-            const gameScene = this.scene as GameScene;
-            const player = gameScene.getPlayer();
+            // get the player
+            const player = (this.scene as GameScene).getPlayer();
     
             // decrease the players move count
             if (player) {
                 // check we didn't just end up back in original position
-                if (!(finalGridPos.row === ogGridPos.row && finalGridPos.col === ogGridPos.col)) {
-                    player.adjustStat('MOVE', -1);
+                if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                    player.adjustStat('MOVE_GOTCHI', -1);
                 }
             }
         })
+
+        // // Add animations
+        this.anims.create({
+            key: 'down',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 1 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 2, end: 3 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 4, end: 5 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'up',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 6, end: 7 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'down_happy',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 8, end: 9 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'left_happy',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 10, end: 11 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'right_happy',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 12, end: 13 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'up_happy',
+            frames: this.anims.generateFrameNumbers(key || '', { start: 14, end: 15 }),
+            frameRate: 2,
+            repeat: -1,
+        });
+    
+        this.anims.play('down');
 
     }
 
@@ -243,19 +300,19 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
         this.direction = direction;
         switch (direction) {
             case 'DOWN': {
-                this.setTexture(GOTCHI_FRONT);
+                this.anims.play('down');
                 break;
             }
             case 'LEFT': {
-                this.setTexture(GOTCHI_LEFT);
+                this.anims.play('left');
                 break;
             }
             case 'RIGHT': {
-                this.setTexture(GOTCHI_RIGHT);
+                this.anims.play('right');
                 break;
             }
             case 'UP': {
-                this.setTexture(GOTCHI_BACK);
+                this.anims.play('up');
                 break;
             }
             default: {
@@ -273,6 +330,7 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
         else if (this.direction === 'LEFT') this.setDirection('UP');
         return this;
     }
+
     public rotateACW() {
         if (this.direction === 'UP') this.setDirection('LEFT');
         else if (this.direction === 'LEFT') this.setDirection('DOWN');
@@ -290,25 +348,72 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
         return this;
     }
 
-    public congaIntoPortal(row: number, col: number) {
-        // let the gridlevel know old position needs to be set to empty
-        this.gridLevel.emptyGridObject(
-          this.gridPosition.row, 
-          this.gridPosition.col);
+    public congaIntoPosition(row: number, col: number) {
+        // define duration of one conga move
+        const duration = 250;
 
-        // set our new grid position
-        this.gridPosition = { row: row, col: col };
+        // call our set grid position that moves our gotchi
+        this.setGridPosition(
+            row,
+            col,
+            () => {
+                this.setDirection(this.newDir);
+                this.status = 'READY';
+            },
+            false,
+            duration,
+        )
 
-        // now set the position in actual space with a tween
-        const newX = this.gridLevel.x + (this.gridPosition.col)*this.gridSize + 0.5*this.gridSize;
-        const newY = this.gridLevel.y + (this.gridPosition.row)*this.gridSize + 0.5*this.gridSize;
+        // add another tween for our gotchi which rotates him a bit to look conga'ish
         this.scene.add.tween({
             targets: this,
-            x: newX,
-            y: newY,
-            duration: 150,
-            // on complete spin the gotchi into the portal
+            angle: this.congaSide === 'LEFT' ? -10 : 10,
+            duration: duration,
+            ease: 'Quad.easeOut',
             onComplete: () => {
+                // change conga side
+                this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
+            }
+        })
+
+        return this;
+
+    }
+
+    public congaJump() {
+
+        // change anim to happy
+        this.anims.play(this.getDirection().toLowerCase() + '_happy');
+
+        const prevStatus = this.status;
+
+        this.status = 'JUMPING';
+        
+        const duration = 125;
+
+        this.scene.add.tween({
+            targets: this,
+            y: this.y - this.displayHeight*0.3,
+            duration: duration,
+            ease: 'Quad.easeOut',
+            yoyo: true,
+            onComplete: () => {
+                this.status = prevStatus;
+            }
+        })
+
+        this.scene.add.tween({
+            targets: this,
+            angle: 0,
+            duration: duration,
+        })
+    }
+
+    public congaIntoPortal(row: number, col: number) {
+        this.setGridPosition(
+            row,
+            col,
+            () => {
                 (this.scene as GameScene).getGui()?.adjustScore(20);
                 this.scene.add.tween({
                     targets: this,
@@ -319,12 +424,48 @@ import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
                         this.destroy();
                     }
                 });
-            }
-        });
+            },
+            true,
+            250,
+        )
 
         return this;
-
     }
+
+    public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
+        // call our recursive function
+        this.getCongaChain(gotchiChain);
+    }
+
+    // get conga chain
+    private getCongaChain(gotchiChain: Array<GO_Gotchi>) {
+        // for each follower that is a gotchi add them to the chain and call their followers too
+        if (this.followers[0]) {
+            // add to the gotchi chain and check the follower for followers
+            gotchiChain.push((this.followers[0] as GO_Gotchi));
+            (this.followers[0] as GO_Gotchi).getCongaChain(gotchiChain);
+        }
+        if (this.followers[1]) {
+            // add to the gotchi chain and check the follower for followers
+            gotchiChain.push((this.followers[1] as GO_Gotchi));
+            (this.followers[1] as GO_Gotchi).getCongaChain(gotchiChain);
+        }
+        if (this.followers[2]) {
+            // add to the gotchi chain and check the follower for followers
+            gotchiChain.push((this.followers[2] as GO_Gotchi));
+            (this.followers[2] as GO_Gotchi).getCongaChain(gotchiChain);
+        }
+        if (this.followers[3]) {
+            // add to the gotchi chain and check the follower for followers
+            gotchiChain.push((this.followers[3] as GO_Gotchi));
+            (this.followers[3] as GO_Gotchi).getCongaChain(gotchiChain);
+        }
+
+    }        
+
+   public getStatus() {
+       return this.status;
+   }
   
     update(): void {
       // do something

@@ -23,7 +23,9 @@ export class BootScene extends Phaser.Scene {
   private connected?: boolean;
   private assetsLoaded?: boolean;
   private gotchi?: AavegotchiGameObject;
+  private randomGotchis?: AavegotchiGameObject[] = [];
   private loadIndex: number;
+  private randomLoadCounter: number;
   private progressBarContainer?: Phaser.GameObjects.Rectangle;
   private progressBar?: Phaser.GameObjects.Rectangle;
   private loadingText?: Phaser.GameObjects.Text;
@@ -31,6 +33,7 @@ export class BootScene extends Phaser.Scene {
   constructor() {
     super(sceneConfig);
     this.loadIndex = 0;
+    this.randomLoadCounter = 0;
   }
 
   public preload = (): void => {
@@ -44,6 +47,15 @@ export class BootScene extends Phaser.Scene {
       ...selectedGotchi,
       spritesheetKey: "PLAYER",
     };
+
+    // construct random gotchis from registry
+    const randomGotchiCopy: AavegotchiGameObject[] = [];
+    const registryGotchis = this.game.registry.values.randomAavegotchis;
+    for (let i = 0; i < registryGotchis.length; i++) {
+      randomGotchiCopy[i] = { ...registryGotchis[i], spritesheetKey: "RANDOM_GOTCHI_" + i.toString() };
+    }
+    this.randomGotchis = randomGotchiCopy;
+    
 
     // Checks connection to the server
     this.socket = this.game.registry.values.socket;
@@ -63,14 +75,22 @@ export class BootScene extends Phaser.Scene {
           this.loadingText?.setText(`Connecting to server...`);
           this.startGame();
         }
-        if (this.loadIndex === assets.length && this.gotchi) {
-          this.loadInGotchiSpritesheet(this.gotchi);
-        } else {
+
+        if (this.loadIndex === assets.length && this.gotchi && this.randomGotchis && this.randomGotchis.length === this.randomLoadCounter) {
+          this.loadInGotchiSpritesheet(this.gotchi, true);
+        } else if (this.loadIndex !== assets.length) {
           this.loadNextFile(this.loadIndex);
+        } else if (this.loadIndex === assets.length && this.randomGotchis && this.randomGotchis.length !== this.randomLoadCounter) {
+          console.log(this.randomLoadCounter);
+          console.log(this.randomGotchis[this.randomLoadCounter]);
+          this.loadInRandomGotchiSpritesheet(this.randomGotchis[this.randomLoadCounter], true);
+          this.randomLoadCounter++;
         }
       },
       this
     );
+
+    // start loading files
     this.loadNextFile(0);
   };
 
@@ -93,7 +113,7 @@ export class BootScene extends Phaser.Scene {
    */
   private startGame = () => {
     if (this.assetsLoaded && this.connected) {
-      this.scene.start("Game", { selectedGotchi: this.gotchi });
+      this.scene.start("Game", { selectedGotchi: this.gotchi, randomGotchis: this.randomGotchis });
     }
   };
 
@@ -168,39 +188,135 @@ export class BootScene extends Phaser.Scene {
    * Constructs and loads in the Aavegotchi spritesheet, you can use customiseSVG() to create custom poses and animations
    */
   private loadInGotchiSpritesheet = async (
-    gotchiObject: AavegotchiGameObject
+    gotchiObject: AavegotchiGameObject, startLoader: boolean,
   ) => {
-    const svg = gotchiObject.svg;
-    const spriteMatrix = [
-      // front
-      [
-        customiseSvg(svg[0], { removeBg: true }),
-        customiseSvg(svg[0], {
-          armsUp: true,
-          eyes: "happy",
-          float: true,
-          removeBg: true,
-        }),
-      ],
-      // Left
-      [
-        customiseSvg(svg[1], { removeBg: true }),
-      ],
-      // Right
-      [
-        customiseSvg(svg[2], { removeBg: true }),
-      ],
-      // Right
-      [
-        customiseSvg(svg[3], { removeBg: true }),
-      ]
-    ];
+    if (!gotchiObject.svg) {
+      alert('No svg data for ' + gotchiObject.id);
+    } else {
+      const svg = gotchiObject.svg;
+      const spriteMatrix = [
+        // front
+        [
+          customiseSvg(svg[0], { removeBg: true }),
+          customiseSvg(svg[0], {
+            armsUp: true,
+            eyes: "happy",
+            float: true,
+            removeBg: true,
+          }),
+        ],
+        // Left
+        [
+          customiseSvg(svg[1], { removeBg: true }),
+          customiseSvg(svg[1], {
+            armsUp: true,
+            eyes: "happy",
+            float: true,
+            removeBg: true,
+          }),
+        ],
+        // back
+        [
+          customiseSvg(svg[2], { removeBg: true }),
+          customiseSvg(svg[2], {
+            armsUp: true,
+            eyes: "happy",
+            float: true,
+            removeBg: true,
+          }),
+        ],
+        // Right
+        [
+          customiseSvg(svg[3], { removeBg: true }),
+          customiseSvg(svg[3], {
+            armsUp: true,
+            eyes: "happy",
+            float: true,
+            removeBg: true,
+          }),
+        ]
+      ];
 
-    const { src, dimensions } = await constructSpritesheet(spriteMatrix);
-    this.load.spritesheet(gotchiObject.spritesheetKey, src, {
-      frameWidth: dimensions.width / dimensions.x,
-      frameHeight: dimensions.height / dimensions.y,
-    });
-    this.load.start();
+      const { src, dimensions } = await constructSpritesheet(spriteMatrix);
+      try {
+        this.load.spritesheet(gotchiObject.spritesheetKey, src, {
+          frameWidth: dimensions.width / dimensions.x,
+          frameHeight: dimensions.height / dimensions.y,
+        });
+      } catch (err: any) {
+        alert(err.message);
+        alert("Offending Gotchi: " + gotchiObject.name + " at address " + gotchiObject.owner);
+      }
+
+      if (startLoader) this.load.start();
+    }
+  };
+
+  // load function for random gotchis
+  private loadInRandomGotchiSpritesheet = async (
+    gotchiObject: AavegotchiGameObject, startLoader: boolean,
+  ) => {
+    if (!gotchiObject.svg && this.randomGotchis && this.randomLoadCounter < this.randomGotchis.length) {
+      alert("No svg data for " + gotchiObject.id);
+      this.randomLoadCounter++;
+      this.loadInRandomGotchiSpritesheet(this.randomGotchis[this.randomLoadCounter], true);
+    } else if (gotchiObject.svg) {
+      const svg = gotchiObject.svg;
+      const spriteMatrix = [
+        // front_normal
+        [
+          customiseSvg(svg[0], { removeBg: true }),
+          customiseSvg(svg[0], { float: true, removeBg: true, }),
+        ],
+        // left_normal
+        [
+          customiseSvg(svg[1], { removeBg: true }),
+          customiseSvg(svg[1], { float: true, removeBg: true, }),
+        ],
+        // back_normal
+        [
+          customiseSvg(svg[2], { removeBg: true }),
+          customiseSvg(svg[2], { float: true, removeBg: true, }),
+        ],
+        // right_normal
+        [
+          customiseSvg(svg[3], { removeBg: true }),
+          customiseSvg(svg[3], { float: true, removeBg: true, }),
+        ],
+        // front_happy
+        [
+          customiseSvg(svg[0], { armsUp: true, eyes: "happy", float: false, removeBg: true, }),
+          customiseSvg(svg[0], { armsUp: true, eyes: "happy", float: true, removeBg: true, }),
+        ],
+        // left_happy
+        [
+          customiseSvg(svg[1], { armsUp: true, eyes: "happy", float: false, removeBg: true, }),
+          customiseSvg(svg[1], { armsUp: true, eyes: "happy", float: true, removeBg: true, }),
+        ],
+        // back_happy
+        [
+          customiseSvg(svg[2], { armsUp: true, eyes: "happy", float: false, removeBg: true, }),
+          customiseSvg(svg[2], { armsUp: true, eyes: "happy", float: true, removeBg: true, }),
+        ],
+        // right_happy
+        [
+          customiseSvg(svg[3], { armsUp: true, eyes: "happy", float: false, removeBg: true, }),
+          customiseSvg(svg[3], { armsUp: true, eyes: "happy", float: true, removeBg: true, }),
+        ],
+      ];
+
+      const { src, dimensions } = await constructSpritesheet(spriteMatrix);
+      try {
+        this.load.spritesheet(gotchiObject.spritesheetKey, src, {
+          frameWidth: dimensions.width / dimensions.x,
+          frameHeight: dimensions.height / dimensions.y,
+        });
+      } catch (err: any) {
+        alert(err.message);
+        alert("Offending Gotchi: " + gotchiObject.name + " at address " + gotchiObject.owner);
+      }
+
+      if (startLoader) this.load.start();
+    }
   };
 }

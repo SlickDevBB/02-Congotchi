@@ -9,12 +9,14 @@ import {
 import { Link } from "react-router-dom";
 import globalStyles from "theme/globalStyles.module.css";
 import { useServer } from "server-store";
-import { useWeb3, updateAavegotchis } from "web3/context";
+import { useWeb3, updateAavegotchis, updateRandomAavegotchis } from "web3/context";
 import { getDefaultGotchi, getPreviewGotchi } from "helpers/aavegotchi";
 import gotchiLoading from "assets/gifs/loading.gif";
 import { playSound } from "helpers/hooks/useSound";
 import styles from "./styles.module.css";
 import { RotateIcon } from "assets";
+import { useDiamondCall } from "web3/actions";
+import { Tuple } from "types";
 
 
 const Home = () => {
@@ -25,6 +27,7 @@ const Home = () => {
       selectedAavegotchiId,
       networkId,
       provider,
+      randomAavegotchis,
     },
     dispatch,
   } = useWeb3();
@@ -32,6 +35,7 @@ const Home = () => {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [gotchiSide, setGotchiSide] = useState<0 | 1 | 2 | 3>(0);
 
+  // function for using a default gotchi
   const useDefaultGotchi = () => {
     dispatch({
       type: "SET_USERS_AAVEGOTCHIS",
@@ -39,6 +43,7 @@ const Home = () => {
     });
   };
 
+  // function for using 3 preview gotchis
   const usePreviewGotchis = async () => {
     if (provider) {
       try {
@@ -74,6 +79,7 @@ const Home = () => {
     }
   };
 
+  // function to rotate gotchi
   const rotateGotchi = () => {
     const currentPos = gotchiSide;
     switch (currentPos) {
@@ -106,8 +112,9 @@ const Home = () => {
       });
     },
     [dispatch]
-  );
+  );  
 
+  // hook runs when 'address' is changed
   useEffect(() => {
     if (process.env.REACT_APP_OFFCHAIN) return useDefaultGotchi();
 
@@ -117,17 +124,58 @@ const Home = () => {
         prevGotchis.find(
           (gotchi) => gotchi.owner.id.toLowerCase() === address.toLowerCase()
         )
-      )
-        return;
+      ) return;
 
       dispatch({
         type: "SET_SELECTED_AAVEGOTCHI",
         selectedAavegotchiId: undefined,
       });
+
       updateAavegotchis(dispatch, address);
+
+      // call our update random gotchis function and specify number of randoms we'd like
+      updateRandomAavegotchis(dispatch, 25);
     }
   }, [address]);
 
+  const fetchRandomAavegotchiSvg = async (id: string) => {
+    if (provider && randomAavegotchis) {
+      const svg = await useDiamondCall<Tuple<string, 4>>(provider, {name: "getAavegotchiSideSvgs", parameters: [id]});
+      const ra = randomAavegotchis.find( ra => ra.id === id);
+      if (ra) ra.svg = svg;
+    }
+  }
+
+  console.log(randomAavegotchis);
+
+  // create a useEffect() that runs when we get random gotchis to fill in our svgs
+  useEffect( () => {  
+    if (randomAavegotchis) {
+      try {
+        for (let i = 0; i < randomAavegotchis.length; i++) {
+          fetchRandomAavegotchiSvg(randomAavegotchis[i].id);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, [randomAavegotchis]);
+
+  const haveFoundRandomGotchis = () => {
+    let count = 0;
+    if (randomAavegotchis) {
+      for (let i = 0; i < randomAavegotchis.length; i++) {
+        if (randomAavegotchis[i].svg) count++;
+      }
+    }
+    return (count === randomAavegotchis?.length && count !== 0);
+  }
+
+  /////////////////
+  // RENDER CODE //
+  /////////////////
+
+  // If we don't have a network connection
   if (networkId !== 137 && !process.env.REACT_APP_OFFCHAIN) {
     return (
       <Layout>
@@ -143,6 +191,7 @@ const Home = () => {
     );
   }
 
+  // If we don't have any userAavegotchis
   if (usersAavegotchis && usersAavegotchis?.length <= 0) {
     return (
       <Layout>
@@ -177,6 +226,7 @@ const Home = () => {
     );
   }
 
+  // default render if we have a connection and user has aavegotchis
   return (
     <Layout>
       {showRulesModal && (
@@ -229,7 +279,7 @@ const Home = () => {
               <Link
                 to="/play"
                 className={`${globalStyles.primaryButton} ${
-                  !usersAavegotchis ? globalStyles.disabledLink : ""
+                  !usersAavegotchis || !(() => haveFoundRandomGotchis()) ? globalStyles.disabledLink : ""
                 }`}
                 onClick={() => playSound("send")}
               >

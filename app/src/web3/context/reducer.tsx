@@ -7,6 +7,10 @@ export type Action =
       usersAavegotchis: State["usersAavegotchis"];
     }
   | {
+      type: "SET_RANDOM_AAVEGOTCHIS";
+      randomAavegotchis: State["randomAavegotchis"];
+    }
+  | {
       type: "SET_SELECTED_AAVEGOTCHI";
       selectedAavegotchiId: State["selectedAavegotchiId"];
     }
@@ -30,6 +34,11 @@ export type Action =
       svg: Tuple<string, 4>;
     }
   | {
+      type: "UPDATE_RANDOM_AAVEGOTCHI_SVG";
+      tokenId: string;
+      svg: Tuple<string, 4>;
+    }
+  | {
       type: "SET_PROVIDER";
       provider: State["provider"];
     }
@@ -44,6 +53,12 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         usersAavegotchis: action.usersAavegotchis,
+      };
+    }
+    case "SET_RANDOM_AAVEGOTCHIS": {
+      return {
+        ...state,
+        randomAavegotchis: action.randomAavegotchis,
       };
     }
     case "SET_SELECTED_AAVEGOTCHI": {
@@ -87,6 +102,21 @@ export const reducer = (state: State, action: Action): State => {
         return {
           ...state,
           usersAavegotchis: copyGotchiState
+        }
+      } else {
+        throw "Selected gotchi doesn't exist in state."
+      }
+    }
+    case "UPDATE_RANDOM_AAVEGOTCHI_SVG": {
+      if (!state.randomAavegotchis) throw "No Aavegotchis to update."
+      const copyGotchiState = [...state.randomAavegotchis];
+      const updatedGotchi = copyGotchiState.find(gotchi => gotchi.id === action.tokenId);
+
+      if (updatedGotchi) {
+        updatedGotchi.svg = action.svg;
+        return {
+          ...state,
+          randomAavegotchis: copyGotchiState
         }
       } else {
         throw "Selected gotchi doesn't exist in state."

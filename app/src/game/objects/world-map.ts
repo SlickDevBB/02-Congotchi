@@ -38,7 +38,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
         super(scene, x, y, key);
 
         // add the map to the scene and set its display size
-        const zoom = 1.5;
+        const zoom = 2;
         this.scene.add.existing(this);
         this.worldHeight = getGameHeight(this.scene)*zoom;
         this.worldWidth = this.worldHeight/612*905;

@@ -9,6 +9,9 @@ export interface State {
   loading: boolean;
   error?: Error | unknown;
   networkId?: number;
+
+  // add in random aavegotchis
+  randomAavegotchis?: Array<AavegotchiObject>;
 }
 
 export const initialState: State = {

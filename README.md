@@ -1,3 +1,10 @@
+# Congotchi!
+
+A mini-game all about lining up lost gotchis and getting them to conga their way home!
+
+To do:
+  Add error checking when first loading random gotchis
+
 # Aavegotchi minigame template
 
 The official Aavegotchi minigame template. This template allows you to create your own Aavegotchi minigames without any prior knowledge of web3. A basic understanding of Javascript and Typescript is necessary.

@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Action, reducer } from "./reducer";
 import { initialState, State } from './initialState';
 import { useSubgraph } from 'web3/actions';
-import { AavegotchisOfOwner, getAllAavegotchisOfOwner } from 'web3/actions/queries';
+import { AavegotchisOfOwner, AavegotchisRandom, getAllAavegotchisOfOwner, getRandomAavegotchis } from 'web3/actions/queries';
 
 export const Web3Context = createContext<{
   state: State;
@@ -26,6 +26,19 @@ const updateAavegotchis = async (dispatch: React.Dispatch<Action>, owner: string
   try {
     const res = await useSubgraph<AavegotchisOfOwner>(getAllAavegotchisOfOwner(owner));
     dispatch({ type: "SET_USERS_AAVEGOTCHIS", usersAavegotchis: res.aavegotchis });
+  } catch (err) {
+    dispatch({
+      type: "SET_ERROR",
+      error: err,
+    })
+  }
+}
+
+// this is my code
+const updateRandomAavegotchis = async (dispatch: React.Dispatch<Action>, num: number) => {
+  try {
+    const res = await useSubgraph<AavegotchisRandom>(getRandomAavegotchis(num));
+    dispatch({ type: "SET_RANDOM_AAVEGOTCHIS", randomAavegotchis: res.aavegotchis });
   } catch (err) {
     dispatch({
       type: "SET_ERROR",
@@ -69,4 +82,4 @@ const Web3ContextProvider = ({ children }: Props) => {
 const useWeb3 = () => useContext(Web3Context);
 
 export default Web3ContextProvider;
-export { useWeb3, connectToNetwork, updateAavegotchis };
+export { useWeb3, connectToNetwork, updateAavegotchis, updateRandomAavegotchis };

@@ -35,24 +35,31 @@ export class Player extends Phaser.GameObjects.Sprite {
   private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
   public speed = 200;
 
-  public rotate = { startMin: ROTATE_MIN, current: 1, startMax: ROTATE_MAX};
-  public move = { startMin: MOVE_MIN, current: 1, startMax: MOVE_MAX};
-  public grenade = { startMin: GRENADE_MIN, current: 1, startMax: GRENADE_MAX};
-  public cacti = { startMin: CACTI_MIN, current: 1, startMax: CACTI_MAX};
-  public milkshake = { startMin: MILKSHAKE_MIN, current: 1, startMax: MILKSHAKE_MAX};
-  public portal = { startMin: PORTAL_MIN, current: 1, startMax: PORTAL_MAX};
-  public reshuffle = { startMin: RESHUFFLE_MIN, current: 1, startMax: RESHUFFLE_MAX};
-  public bonus = { startMin: BONUS_MIN, current: 1, startMax: BONUS_MAX};
+  public interactGotchiStat = { startMin: ROTATE_MIN, current: 1, startMax: ROTATE_MAX};
+  public moveGotchiStat = { startMin: MOVE_MIN, current: 1, startMax: MOVE_MAX};
+
+  public moveAggroStat = { startMin: GRENADE_MIN, current: 1, startMax: GRENADE_MAX};
+  public interactAggroStat = { startMin: CACTI_MIN, current: 1, startMax: CACTI_MAX};
+
+  public interactPortalStat = { startMin: MILKSHAKE_MIN, current: 1, startMax: MILKSHAKE_MAX};
+  public movePortalStat = { startMin: PORTAL_MIN, current: 1, startMax: PORTAL_MAX};
+
+  public moveBoosterStat = { startMin: RESHUFFLE_MIN, current: 1, startMax: RESHUFFLE_MAX};
+  public interactBoosterStat = { startMin: BONUS_MIN, current: 1, startMax: BONUS_MAX};
 
   // declare all our icons
-  public rotateIcon;
-  public moveIcon;
-  public grenadeIcon;
-  public cactiIcon;
-  public milkshakeIcon;
-  public portalIcon;
-  public reshuffleIcon;
-  public bonusIcon;
+  public interactGotchiIcon;
+  public moveGotchiIcon;
+
+  public moveAggroIcon;
+  public interactAggroIcon;
+
+  public interactPortalIcon;
+  public movePortalIcon;
+
+  public moveBoosterIcon;
+  public interactBoosterIcon;
+
   public gotchi;
 
   // store some variables for when we leave the map toplay the level
@@ -119,7 +126,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     const iconRadius = this.displayHeight * 0.2;
 
     // create our icons
-    this.rotateIcon = new AarcIcon ({
+    this.interactGotchiIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x - this.displayWidth*.5,
       y: this.y - iconRadius*4,
@@ -127,10 +134,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: ROTATE_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.rotate?.current,
+      numBadge: this.interactGotchiStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.moveIcon = new AarcIcon ({
+    this.moveGotchiIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth*.5,
       y: this.y - iconRadius*4,
@@ -138,10 +145,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: MOVE_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.move?.current,
+      numBadge: this.moveGotchiStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.grenadeIcon = new AarcIcon ({
+    this.moveAggroIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x - this.displayWidth,
       y: this.y - iconRadius*1.33,
@@ -149,10 +156,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: M67_GRENADE,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.grenade?.current,
+      numBadge: this.moveAggroStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.cactiIcon = new AarcIcon ({
+    this.interactAggroIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth,
       y: this.y - iconRadius*1.33,
@@ -160,10 +167,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: UNCOMMON_CACTI,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.cacti?.current,
+      numBadge: this.interactAggroStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.milkshakeIcon = new AarcIcon ({
+    this.interactPortalIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x - this.displayWidth,
       y: this.y + iconRadius*1.33,
@@ -171,10 +178,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: MILKSHAKE,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.milkshake?.current,
+      numBadge: this.interactPortalStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.portalIcon = new AarcIcon ({
+    this.movePortalIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth,
       y: this.y + iconRadius*1.33,
@@ -182,10 +189,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: PORTAL_OPEN,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.portal?.current,
+      numBadge: this.movePortalStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.reshuffleIcon = new AarcIcon ({
+    this.moveBoosterIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x - this.displayWidth*.5,
       y: this.y + iconRadius*4,
@@ -193,10 +200,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: SHUFFLE_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.reshuffle?.current,
+      numBadge: this.moveBoosterStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.bonusIcon = new AarcIcon ({
+    this.interactBoosterIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth*.5,
       y: this.y + iconRadius*4,
@@ -204,7 +211,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: BONUS_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.bonus?.current,
+      numBadge: this.interactBoosterStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
     // start off with all stats invisible
@@ -215,24 +222,24 @@ export class Player extends Phaser.GameObjects.Sprite {
     const gotchi = this.gotchi;
     // set all the stats
     if (gotchi) {
-      this.rotate.current = ROTATE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(ROTATE_MAX-ROTATE_MIN));
-      this.move.current = MOVE_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_MAX-MOVE_MIN));
-      this.grenade.current = GRENADE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[1])/100*(GRENADE_MAX-GRENADE_MIN));
-      this.cacti.current = CACTI_MIN + Math.floor(gotchi.withSetsNumericTraits[1]/100*(CACTI_MAX-CACTI_MIN));
-      this.milkshake.current = MILKSHAKE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[2])/100*(MILKSHAKE_MAX-MILKSHAKE_MIN));
-      this.portal.current = PORTAL_MIN + Math.floor(gotchi.withSetsNumericTraits[2]/100*(PORTAL_MAX-PORTAL_MIN));
-      this.reshuffle.current = RESHUFFLE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[3])/100*(RESHUFFLE_MAX-RESHUFFLE_MIN));
-      this.bonus.current = BONUS_MIN + Math.floor(gotchi.withSetsNumericTraits[3]/100*(BONUS_MAX-BONUS_MIN));
+      this.interactGotchiStat.current = ROTATE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(ROTATE_MAX-ROTATE_MIN));
+      this.moveGotchiStat.current = MOVE_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_MAX-MOVE_MIN));
+      this.moveAggroStat.current = GRENADE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[1])/100*(GRENADE_MAX-GRENADE_MIN));
+      this.interactAggroStat.current = CACTI_MIN + Math.floor(gotchi.withSetsNumericTraits[1]/100*(CACTI_MAX-CACTI_MIN));
+      this.interactPortalStat.current = MILKSHAKE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[2])/100*(MILKSHAKE_MAX-MILKSHAKE_MIN));
+      this.movePortalStat.current = PORTAL_MIN + Math.floor(gotchi.withSetsNumericTraits[2]/100*(PORTAL_MAX-PORTAL_MIN));
+      this.moveBoosterStat.current = RESHUFFLE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[3])/100*(RESHUFFLE_MAX-RESHUFFLE_MIN));
+      this.interactBoosterStat.current = BONUS_MIN + Math.floor(gotchi.withSetsNumericTraits[3]/100*(BONUS_MAX-BONUS_MIN));
 
-      if (this.rotateIcon && this.moveIcon && this.grenadeIcon && this.cactiIcon && this.milkshakeIcon && this.portalIcon && this.reshuffleIcon && this.bonusIcon) {
-        this.rotateIcon.setBadge(this.rotate.current);
-        this.moveIcon.setBadge(this.move.current);
-        this.grenadeIcon.setBadge(this.grenade.current);
-        this.cactiIcon.setBadge(this.cacti.current);
-        this.milkshakeIcon.setBadge(this.milkshake.current);
-        this.portalIcon.setBadge(this.portal.current);
-        this.reshuffleIcon.setBadge(this.reshuffle.current);
-        this.bonusIcon.setBadge(this.bonus.current);
+      if (this.interactGotchiIcon && this.moveGotchiIcon && this.moveAggroIcon && this.interactAggroIcon && this.interactPortalIcon && this.movePortalIcon && this.moveBoosterIcon && this.interactBoosterIcon) {
+        this.interactGotchiIcon.setBadge(this.interactGotchiStat.current);
+        this.moveGotchiIcon.setBadge(this.moveGotchiStat.current);
+        this.moveAggroIcon.setBadge(this.moveAggroStat.current);
+        this.interactAggroIcon.setBadge(this.interactAggroStat.current);
+        this.interactPortalIcon.setBadge(this.interactPortalStat.current);
+        this.movePortalIcon.setBadge(this.movePortalStat.current);
+        this.moveBoosterIcon.setBadge(this.moveBoosterStat.current);
+        this.interactBoosterIcon.setBadge(this.interactBoosterStat.current);
       }
     }
     
@@ -241,107 +248,107 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   // setStatsVisible()
   public setStatsVisible(visible: boolean) {
-    this.rotateIcon.setVisible(visible);
-    this.moveIcon.setVisible(visible);
-    this.grenadeIcon.setVisible(visible);
-    this.cactiIcon.setVisible(visible);
-    this.milkshakeIcon.setVisible(visible);
-    this.portalIcon.setVisible(visible);
-    this.reshuffleIcon.setVisible(visible);
-    this.bonusIcon.setVisible(visible);
+    this.interactGotchiIcon.setVisible(visible);
+    this.moveGotchiIcon.setVisible(visible);
+    this.moveAggroIcon.setVisible(visible);
+    this.interactAggroIcon.setVisible(visible);
+    this.interactPortalIcon.setVisible(visible);
+    this.movePortalIcon.setVisible(visible);
+    this.moveBoosterIcon.setVisible(visible);
+    this.interactBoosterIcon.setVisible(visible);
 
     const cam = new Phaser.Math.Vector2(this.scene.cameras.main.scrollX, this.scene.cameras.main.scrollY);
     const circle = new Phaser.Geom.Circle(cam.x+getGameWidth(this.scene)*.5, cam.y+getGameHeight(this.scene), getGameWidth(this.scene)*0.36);
     const a = 1/16;
     const b = 1/32;
-    this.rotateIcon.setPosition(circle.getPoint(0.75-b).x, circle.getPoint(0.75-b).y);
-    this.moveIcon.setPosition(circle.getPoint(0.75+b).x, circle.getPoint(0.75+b).y);
-    this.grenadeIcon.setPosition(circle.getPoint(0.75-1.5*a).x, circle.getPoint(0.75-1.5*a).y);
-    this.cactiIcon.setPosition(circle.getPoint(0.75+1.5*a).x, circle.getPoint(0.75+1.5*a).y);
-    this.milkshakeIcon.setPosition(circle.getPoint(0.75-2.5*a).x, circle.getPoint(0.75-2.5*a).y);
-    this.portalIcon.setPosition(circle.getPoint(0.75+2.5*a).x, circle.getPoint(0.75+2.5*a).y);
-    this.reshuffleIcon.setPosition(circle.getPoint(0.75-3.5*a).x, circle.getPoint(0.75+3.5*a).y);
-    this.bonusIcon.setPosition(circle.getPoint(0.75+3.5*a).x, circle.getPoint(0.75+3.5*a).y);
+    this.interactGotchiIcon.setPosition(circle.getPoint(0.75-b).x, circle.getPoint(0.75-b).y);
+    this.moveGotchiIcon.setPosition(circle.getPoint(0.75+b).x, circle.getPoint(0.75+b).y);
+    this.moveAggroIcon.setPosition(circle.getPoint(0.75-1.5*a).x, circle.getPoint(0.75-1.5*a).y);
+    this.interactAggroIcon.setPosition(circle.getPoint(0.75+1.5*a).x, circle.getPoint(0.75+1.5*a).y);
+    this.interactPortalIcon.setPosition(circle.getPoint(0.75-2.5*a).x, circle.getPoint(0.75-2.5*a).y);
+    this.movePortalIcon.setPosition(circle.getPoint(0.75+2.5*a).x, circle.getPoint(0.75+2.5*a).y);
+    this.moveBoosterIcon.setPosition(circle.getPoint(0.75-3.5*a).x, circle.getPoint(0.75+3.5*a).y);
+    this.interactBoosterIcon.setPosition(circle.getPoint(0.75+3.5*a).x, circle.getPoint(0.75+3.5*a).y);
   }
 
   // create stat adjustment
-  public adjustStat(stat: 'ROTATE' | 'MOVE' | 'GRENADE' | 'CACTI' | 'MILKSHAKE' | 'PORTAL' | 'RESHUFFLE' | 'BONUS', value: number) {
+  public adjustStat(stat: 'INTERACT_GOTCHI' | 'MOVE_GOTCHI' | 'MOVE_AGGRO' | 'INTERACT_AGGRO' | 'INTERACT_PORTAL' | 'MOVE_PORTAL' | 'MOVE_BOOSTER' | 'INTERACT_BOOSTER', value: number) {
     switch (stat) {
-      case 'ROTATE': {
-        this.rotate.current += Math.floor(value);
-        this.rotateIcon.setBadge(this.rotate.current);
+      case 'INTERACT_GOTCHI': {
+        this.interactGotchiStat.current += Math.floor(value);
+        this.interactGotchiIcon.setBadge(this.interactGotchiStat.current);
         break;
       }
-      case 'MOVE': {
-        this.move.current += Math.floor(value);
-        this.moveIcon.setBadge(this.move.current);
+      case 'MOVE_GOTCHI': {
+        this.moveGotchiStat.current += Math.floor(value);
+        this.moveGotchiIcon.setBadge(this.moveGotchiStat.current);
         break;
       }
-      case 'GRENADE': {
-        this.grenade.current += Math.floor(value);
-        this.grenadeIcon.setBadge(this.grenade.current);
+      case 'MOVE_AGGRO': {
+        this.moveAggroStat.current += Math.floor(value);
+        this.moveAggroIcon.setBadge(this.moveAggroStat.current);
         break;
       }
-      case 'CACTI': {
-        this.cacti.current += Math.floor(value);
-        this.cactiIcon.setBadge(this.cacti.current);
+      case 'INTERACT_AGGRO': {
+        this.interactAggroStat.current += Math.floor(value);
+        this.interactAggroIcon.setBadge(this.interactAggroStat.current);
         break;
       }
-      case 'MILKSHAKE': {
-        this.milkshake.current += Math.floor(value);
-        this.milkshakeIcon.setBadge(this.milkshake.current);
+      case 'INTERACT_PORTAL': {
+        this.interactPortalStat.current += Math.floor(value);
+        this.interactPortalIcon.setBadge(this.interactPortalStat.current);
         break;
       }
-      case 'PORTAL': {
-        this.portal.current += Math.floor(value);
-        this.portalIcon.setBadge(this.portal.current);
+      case 'MOVE_PORTAL': {
+        this.movePortalStat.current += Math.floor(value);
+        this.movePortalIcon.setBadge(this.movePortalStat.current);
         break;
       }
-      case 'RESHUFFLE': {
-        this.reshuffle.current += Math.floor(value);
-        this.reshuffleIcon.setBadge(this.reshuffle.current);
+      case 'MOVE_BOOSTER': {
+        this.moveBoosterStat.current += Math.floor(value);
+        this.moveBoosterIcon.setBadge(this.moveBoosterStat.current);
         break;
       }
-      case 'BONUS': {
-        this.bonus.current += Math.floor(value);
-        this.bonusIcon.setBadge(this.bonus.current);
+      case 'INTERACT_BOOSTER': {
+        this.interactBoosterStat.current += Math.floor(value);
+        this.interactBoosterIcon.setBadge(this.interactBoosterStat.current);
         break;
       }
     }
   }
 
-  public getStat(stat: 'ROTATE' | 'MOVE' | 'GRENADE' | 'CACTI' | 'MILKSHAKE' | 'PORTAL' | 'RESHUFFLE' | 'BONUS') {
+  public getStat(stat: 'INTERACT_GOTCHI' | 'MOVE_GOTCHI' | 'MOVE_AGGRO' | 'INTERACT_AGGRO' | 'INTERACT_PORTAL' | 'MOVE_PORTAL' | 'MOVE_BOOSTER' | 'INTERACT_BOOSTER') {
     switch (stat) {
-      case 'ROTATE': {
-        return this.rotate.current;
+      case 'INTERACT_GOTCHI': {
+        return this.interactGotchiStat.current;
         break;
       }
-      case 'MOVE': {
-        return this.move.current;
+      case 'MOVE_GOTCHI': {
+        return this.moveGotchiStat.current;
         break;
       }
-      case 'GRENADE': {
-        return this.grenade.current;
+      case 'MOVE_AGGRO': {
+        return this.moveAggroStat.current;
         break;
       }
-      case 'CACTI': {
-        return this.cacti.current;
+      case 'INTERACT_AGGRO': {
+        return this.interactAggroStat.current;
         break;
       }
-      case 'MILKSHAKE': {
-        return this.milkshake.current;
+      case 'INTERACT_PORTAL': {
+        return this.interactPortalStat.current;
         break;
       }
-      case 'PORTAL': {
-        return this.portal.current;
+      case 'MOVE_PORTAL': {
+        return this.movePortalStat.current;
         break;
       }
-      case 'RESHUFFLE': {
-        return this.reshuffle.current;
+      case 'MOVE_BOOSTER': {
+        return this.moveBoosterStat.current;
         break;
       }
-      case 'BONUS': {
-        return this.bonus.current;
+      case 'INTERACT_BOOSTER': {
+        return this.interactBoosterStat.current;
         break;
       }
     }

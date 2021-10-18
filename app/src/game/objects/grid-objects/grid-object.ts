@@ -66,34 +66,50 @@ export interface GO_Props {
       this.setDepth(DEPTH_GRID_OBJECTS);
     }
 
-    public setGridPosition(row: number, col: number, customTween?: () => any) {
-        // let the gridlevel know old position needs to be set to empty
-        this.gridLevel.setGridObject(
-          this.gridPosition.row, 
-          this.gridPosition.col, 
-          new GO_Empty({scene: this.scene, gridLevel: this.gridLevel, gridRow: this.gridPosition.row, gridCol: this.gridPosition.col, key: '', gridSize: this.gridSize, objectType: 'EMPTY',}));
+    public setGridPosition(row: number, col: number, customOnComplete?: () => any, keepOldObject = false, tweenDuration = 100) {
+      // store our old row and column
+      const oldRow = this.gridPosition.row;
+      const oldCol = this.gridPosition.col;  
 
-        // set our new grid position
-        this.gridPosition = { row: row, col: col };
+      // now set the position in actual space with a tween
+      const newX = this.gridLevel.x + col*this.gridSize + 0.5*this.gridSize;
+      const newY = this.gridLevel.y + row*this.gridSize + 0.5*this.gridSize;
 
-        // now set the position in actual space with a tween
-        const newX = this.gridLevel.x + (this.gridPosition.col)*this.gridSize + 0.5*this.gridSize;
-        const newY = this.gridLevel.y + (this.gridPosition.row)*this.gridSize + 0.5*this.gridSize;
-        if (customTween) {
-          customTween();
-        } else {
-          this.scene.add.tween({
-              targets: this,
-              x: newX,
-              y: newY,
-              duration: 100,
-          });
-        }
+      // add tween that moves our object sprite
+      this.scene.add.tween({
+          targets: this,
+          x: newX,
+          y: newY,
+          duration: tweenDuration,
+          onComplete: () => { 
+            // run any custom onComplete code passed to us
+            if (customOnComplete) customOnComplete(); 
 
-        // now set the new grilevel object
-        this.gridLevel.setGridObject(row, col, this);
+            // set our new grid position
+            this.gridPosition = { row: row, col: col };
 
-        return this;
+            // now set the new gridlevel object
+            if (!keepOldObject) this.gridLevel.setGridObject(row, col, this);
+
+            // set our old position to empty if its not the same as our original position
+            if (row !== oldRow || col !== oldCol) {
+              this.gridLevel.setEmptyGridObject(oldRow, oldCol);
+            }
+          },
+      });
+
+      // // set our new grid position
+      // this.gridPosition = { row: row, col: col };
+
+      // // now set the new gridlevel object
+      // if (!keepOldObject) this.gridLevel.setGridObject(row, col, this);
+
+      // // set our old position to empty if its not the same as our original position
+      // if (row !== oldRow || col !== oldCol) {
+      //   this.gridLevel.setEmptyGridObject(oldRow, oldCol);
+      // }
+
+      return this;
 
     }
   
