@@ -169,7 +169,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
         // fade in the world mask
         this.scene.add.tween({
             targets: this.worldMask,
-            fillAlpha: 0.66,
+            fillAlpha: 0.8,
             duration: 250,
         })
 

@@ -3,7 +3,7 @@ import {
 } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
-import { GridLevel, Gui, Player, WorldMap, levels } from 'game/objects';
+import { GridLevel, Gui, Player, WorldMap, levels, GridObject } from 'game/objects';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -54,8 +54,7 @@ export class GameScene extends Phaser.Scene {
       height: getGameWidth(this) * 0.2,
       gotchi: this.selectedGotchi,
     })
-      .setOrigin(0.5,0.5)
-      .setDepth(10);
+      .setOrigin(0.5,0.5);
 
     // create the gui
     this.gui = new Gui({
@@ -120,12 +119,18 @@ export class GameScene extends Phaser.Scene {
     return this.gui;
   }
 
+  public getGridLevel() {
+    return this.gridLevel;
+  }
+
   update(): void {
     // update all our objects
     this.gridLevel?.update();
     this.player?.update();
     this.worldMap?.update();
     this.gui?.update();
+
+    
   }
 
 }

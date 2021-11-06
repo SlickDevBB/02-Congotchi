@@ -10,6 +10,7 @@ import { DEPTH_GRID_LEVEL, DEPTH_GRID_OBJECTS } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
 import { AavegotchiGameObject } from 'types';
 import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
+import { Game } from 'phaser';
 
 interface Props {
   scene: Phaser.Scene;
@@ -47,9 +48,9 @@ export class GridLevel {
   private randomGotchiCount = 0;
   private gridCells: Array<GridCell>[] = [];
   private levelConfig: LevelConfig; 
-
-  // define a gotchi array to make it easier to go through gotchis
-  // private gotchiObjects: GO_Gotchi[] = [];
+  private levelOver = false;
+  private initialGotchiCount = 0;
+  private status: 'ACTIVE' | 'INACTIVE';
 
   constructor({ scene, player, randomGotchis, levelConfig, }: Props) {
     // store our scene, player and levelConfig
@@ -57,6 +58,7 @@ export class GridLevel {
     this.player = player;
     this.randomGotchis = randomGotchis;
     this.levelConfig = levelConfig;
+    this.status = 'ACTIVE';
 
     // create the grid level
     this.numberRows = this.levelConfig.gridObjectLayout.length;
@@ -65,8 +67,6 @@ export class GridLevel {
     this.gridSize = getGameWidth(this.scene)/(this.numberCols + padGrid*2);
     this.x = this.gridSize*padGrid;
     this.y = 3*this.gridSize;
-
-    console.log(this.randomGotchis);
 
     // fill out the gridCells member based on the config file
     for (let i = 0; i < this.numberRows; i++) {
@@ -258,9 +258,14 @@ export class GridLevel {
     // find all the initial leaders and followers
     this.setupLeadersAndFollowers();
 
-    // init all the grid colours bby simply setting their gridobject to themselves
+    // init all the grid colours by simply setting their gridobject to themselves
     this.gridCells.map(row => row.map( cell => {
       this.setGridObject(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col, cell.gridObject);
+    }));
+
+    // count all our initial gotchis
+    this.gridCells.map(row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI') this.initialGotchiCount++;
     }));
   }
 
@@ -311,23 +316,36 @@ export class GridLevel {
     }));
     return gotchisReady;
   }
-  
-  update(): void {
 
-    // if gotchis are ready we can do stuff
-    if (this.isGotchiGangReady()) {
+  public isLevelOver() {
+    // declare a level over variable
+    let noGotchisLeft = true;
+    let noPortalPointsLeft = true;
 
-      // setup all leader and follower relationships for gotchis
-      this.setupLeadersAndFollowers(); 
+    // check if all gotchis are gone
+    this.gridCells.map( row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI') {
+        noGotchisLeft = false;
+      }
+    }));
 
-      // conga gotchi lines next to any open portals
-      this.runCongaPortals();
-
-      // render all grid cells
-      this.gridCells.map(row => row.map( cell => this.renderGridCell(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col)));
-
+    // check if we've still got portal moves/opens
+    if (this.player) {
+      if (this.player.getStat("INTERACT_PORTAL") > 0 || this.player.getStat('MOVE_PORTAL') > 0) {
+        noPortalPointsLeft = false;
+      }
     }
+
+    return (noGotchisLeft || noPortalPointsLeft);
   }
+  
+  // public setGotchiArrowsVisible(visible: boolean) {
+  //   this.gridCells.map(row => row.map(cell => {
+  //     if (cell.gridObject.getType() === 'GOTCHI') {
+  //       (cell.gridObject as GO_Gotchi).setRotateArrowsVisible(visible);
+  //     }
+  //   }))
+  // }
 
 
 
@@ -457,6 +475,70 @@ export class GridLevel {
         }
       })
     })
+
+    this.status = 'INACTIVE';
+  }
+
+  public getStatus() {
+    return this.status;
+  }
+
+
+  update(): void {
+    // update our star score depending on gotchis saved
+    let remainingGotchiCount = 0;
+    const gui = (this.scene as GameScene).getGui();
+    this.gridCells.map(row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI') remainingGotchiCount++;
+    }));
+
+    if (gui) {
+      if (remainingGotchiCount > this.initialGotchiCount * 2/3) {
+        gui.setStarScore(0);
+      }
+      else if (remainingGotchiCount > this.initialGotchiCount * 1/3) {
+        gui.setStarScore(1);
+      }
+      else if (remainingGotchiCount > 0) {
+        gui.setStarScore(2);
+      }
+      else {
+        gui.setStarScore(3);
+      }
+    }
+
+    // if level is over call our scenes end level function
+    if (this.isLevelOver() && !this.levelOver) {
+      this.levelOver = true;
+      // set a timeout to end the level
+      setTimeout( () => {
+        (this.scene as GameScene).getGui()?.showLevelOverScreen();
+        // (this.scene as GameScene).endLevel();
+      }, 500);
+    }
+
+    // if gotchis are ready we can do stuff
+    if (this.isGotchiGangReady()) {
+
+      // setup all leader and follower relationships for gotchis
+      this.setupLeadersAndFollowers(); 
+
+      // conga gotchi lines next to any open portals
+      this.runCongaPortals();
+
+      // render all grid cells
+      this.gridCells.map(row => row.map( cell => this.renderGridCell(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col)));
+
+    }
+
+    
+
+    // call update for all our grid objects
+    this.gridCells.map(row => row.map(cell => {
+      cell.gridObject.update();
+    }))
+
+    
   }
 
 }

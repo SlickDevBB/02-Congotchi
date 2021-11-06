@@ -47,7 +47,12 @@ export const GUI_BUTTON_PLAY = 'gui_button_play';
 export const GUI_BUTTON_FORWARD = 'gui_button_foward';
 export const GUI_BUTTON_BACK = 'gui_button_back';
 export const GUI_SCORE_PANEL = 'gui_score_panel';
-
+export const GUI_0_STARS = 'gui_0_stars';
+export const GUI_1_STARS = 'gui_1_stars';
+export const GUI_2_STARS = 'gui_2_stars';
+export const GUI_3_STARS = 'gui_3_stars';
+export const CW_ROTATE_MOVE_ICON = 'cw_rotate_move_icon';
+export const ACW_ROTATE_MOVE_ICON = 'acw_rotate_move_icon';
 
 // Save all in game assets in the public folder
 export const assets: Array<Asset | SpritesheetAsset> = [
@@ -198,7 +203,37 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   },
   {
     key: GUI_SCORE_PANEL,
-    src: 'assets/gui/score-panel.png',
+    src: 'assets/gui/score-panel-2.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_0_STARS,
+    src: 'assets/gui/0-stars.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_1_STARS,
+    src: 'assets/gui/1-stars.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_2_STARS,
+    src: 'assets/gui/2-stars.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_3_STARS,
+    src: 'assets/gui/3-stars.png',
+    type: 'IMAGE',
+  },
+  {
+    key: CW_ROTATE_MOVE_ICON,
+    src: 'assets/icons/cw-rotate-move-icon.png',
+    type: 'IMAGE',
+  },
+  {
+    key: ACW_ROTATE_MOVE_ICON,
+    src: 'assets/icons/acw-rotate-move-icon.png',
     type: 'IMAGE',
   },
 ];

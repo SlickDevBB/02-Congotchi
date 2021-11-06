@@ -2,12 +2,13 @@
 
 import { GO_Empty, GO_Props, GridLevel, GridObject } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT } from 'game/assets';
+import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, CW_ROTATE_MOVE_ICON, ACW_ROTATE_MOVE_ICON } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
-import { DEPTH_GO_GOTCHI } from 'game/helpers/constants';
+import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI } from 'game/helpers/constants';
 import { AavegotchiGameObject } from 'types';
 import { timeStamp } from 'console';
 import { queryAllByDisplayValue } from '@testing-library/dom';
+import { Game } from 'phaser';
 
 export interface GO_Gotchi_Props {
     scene: Phaser.Scene;
@@ -32,11 +33,25 @@ interface CountGotchi {
     private followers: Array<GridObject | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
     private gotchi: AavegotchiGameObject;
 
+    // declare our rotate icons
+    // private rotateCWicon: Phaser.GameObjects.Image;
+    // private rotateACWicon: Phaser.GameObjects.Image;
+    // private rotateArrowsVisible = false;
+
+    // declare icon for rotate and move on hover
+    private rotateMoveIcon: Phaser.GameObjects.Image;
+
+    // declare a shift key variable
+    private shiftKey: Phaser.Input.Keyboard.Key;
+
+    // need a little circle to use as a direction guide
+    private directionGuide: Phaser.GameObjects.Ellipse;
+
     // conga side is a variable for tracking which side we conga on
     private congaSide: 'LEFT' | 'RIGHT' = Math.round(Math.random()) === 1 ? 'LEFT' : 'RIGHT';
 
-    // variable to see if we're jumping
-    // public congaJumping = false;
+    // duration variable for conga steps
+    private congaStepDuration = 200;
 
     // timer is for click events
     private timer = 0;
@@ -80,23 +95,72 @@ interface CountGotchi {
         // add to the scene
         this.scene.add.existing(this);
 
+        // create the shift key
+        this.shiftKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+
+        // create the rotatemove icon
+        this.rotateMoveIcon = this.scene.add.image(
+                this.x,this.y,
+                CW_ROTATE_MOVE_ICON,)
+                .setDisplaySize(this.displayWidth*0.9, this.displayHeight*0.8)
+                .setOrigin(0.5,0.5)
+                .setScrollFactor(0)
+                .setDepth(DEPTH_GOTCHI_ICON)
+                .setAlpha(0);
+
+        // create our direction guide
+        this.directionGuide = this.scene.add.ellipse(this.x, this.y,
+            this.displayWidth*0.12, this.displayWidth*0.12, 0xff00ff)
+            .setDepth(1000)
+            .setAlpha(0.9)
+            .setScrollFactor(0);
+
         // enable draggable input
         this.setInteractive();
         this.scene.input.setDraggable(this);
 
         // set behaviour for pointer click down
-        this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            // get the time and grid we clicked in
+        this.on('pointerdown', () => {
+            // get the time at which we clicked
             this.timer = new Date().getTime();
+
         });
 
         // set behaviour for pointer up event
-        this.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-            // See if we're close to a pointer down event for a single click
+        this.on('pointerup', () => {
+            // See if we're close to a pointer down event (i.e. a single click occurred)
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // this is where object interaction menu pops up
+                // check we've got enough interact points
+                const player = (this.scene as GameScene).getPlayer();
+                if (player && player.getStat('INTERACT_GOTCHI') > 0) {
+                    // if shift is down rotate anti clockwise, clocwise if not down
+                    if (this.shiftKey.isDown) {
+                        this.rotateACW();
+                    } else {
+                        this.rotateCW();
+                    }
+                }
             }
+            console.log('test');
+        });
+
+        // show the rotate move icon when pointer over
+        this.on('pointerover', () => {
+            this.scene.add.tween({
+                targets: this.rotateMoveIcon,
+                alpha: 0.9,
+                duration: 100,
+            });
+        });
+
+        // hide rotate move icon when pointer out
+        this.on('pointerout', () => {
+            this.scene.add.tween({
+                targets: this.rotateMoveIcon,
+                alpha: 0,
+                duration: 100,
+            });
         });
 
         // dragstart
@@ -165,49 +229,49 @@ interface CountGotchi {
         // // Add animations
         this.anims.create({
             key: 'down',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 1 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 0 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'left',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 2, end: 3 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 2, end: 2 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'right',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 4, end: 5 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 4, end: 4 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'up',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 6, end: 7 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 6, end: 6 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'down_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 8, end: 9 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 8, end: 8 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'left_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 10, end: 11 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 10, end: 10 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'right_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 12, end: 13 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 12, end: 12 }),
             frameRate: 2,
             repeat: -1,
         });
         this.anims.create({
             key: 'up_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 14, end: 15 }),
+            frames: this.anims.generateFrameNumbers(key || '', { start: 14, end: 14 }),
             frameRate: 2,
             repeat: -1,
         });
@@ -349,9 +413,6 @@ interface CountGotchi {
     }
 
     public congaIntoPosition(row: number, col: number) {
-        // define duration of one conga move
-        const duration = 250;
-
         // call our set grid position that moves our gotchi
         this.setGridPosition(
             row,
@@ -361,14 +422,14 @@ interface CountGotchi {
                 this.status = 'READY';
             },
             false,
-            duration,
+            this.congaStepDuration,
         )
 
         // add another tween for our gotchi which rotates him a bit to look conga'ish
         this.scene.add.tween({
             targets: this,
             angle: this.congaSide === 'LEFT' ? -10 : 10,
-            duration: duration,
+            duration: this.congaStepDuration,
             ease: 'Quad.easeOut',
             onComplete: () => {
                 // change conga side
@@ -381,6 +442,8 @@ interface CountGotchi {
     }
 
     public congaJump() {
+        // get the gui and display some action text
+        (this.scene as GameScene).getGui()?.showActionText('CONGOTCHI!!!');
 
         // change anim to happy
         this.anims.play(this.getDirection().toLowerCase() + '_happy');
@@ -388,13 +451,11 @@ interface CountGotchi {
         const prevStatus = this.status;
 
         this.status = 'JUMPING';
-        
-        const duration = 125;
 
         this.scene.add.tween({
             targets: this,
             y: this.y - this.displayHeight*0.3,
-            duration: duration,
+            duration: this.congaStepDuration*0.5,
             ease: 'Quad.easeOut',
             yoyo: true,
             onComplete: () => {
@@ -405,7 +466,7 @@ interface CountGotchi {
         this.scene.add.tween({
             targets: this,
             angle: 0,
-            duration: duration,
+            duration: this.congaStepDuration*0.5,
         })
     }
 
@@ -426,10 +487,15 @@ interface CountGotchi {
                 });
             },
             true,
-            250,
+            this.congaStepDuration,
         )
 
         return this;
+    }
+
+    destroy() {
+        super.destroy();
+        this.directionGuide.destroy();
     }
 
     public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
@@ -468,7 +534,25 @@ interface CountGotchi {
    }
   
     update(): void {
-      // do something
+        // update direction guide position
+        switch (this.getDirection()) {
+            case 'DOWN': { this.directionGuide.setPosition(this.x, this.y+this.displayHeight/2); break; }
+            case 'LEFT': { this.directionGuide.setPosition(this.x-this.displayWidth/2, this.y); break; }
+            case 'UP': { this.directionGuide.setPosition(this.x, this.y-this.displayHeight/2); break; }
+            case 'RIGHT': { this.directionGuide.setPosition(this.x+this.displayWidth/2, this.y); break; }
+        }
+
+        // make sure rotate icon follows us
+        this.rotateMoveIcon.x = this.x;
+        this.rotateMoveIcon.y = this.y;
+
+        // if shift is down we should be in the opposite direction
+        if (this.shiftKey.isDown) {
+            this.rotateMoveIcon.setTexture(ACW_ROTATE_MOVE_ICON);
+        } else {
+            this.rotateMoveIcon.setTexture(CW_ROTATE_MOVE_ICON);
+        }
+      
     }
   }
   

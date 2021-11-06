@@ -5,19 +5,6 @@ import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT } from 'game/asset
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GRID_OBJECTS } from 'game/helpers/constants';
 
-// Grid objects will consist of 5 different types (action types will have sub types)
-// 1) Gotchis
-// 2) Portals
-// 3) Stealth Action Objects (BLUE) - Gotchis can perform a stealth action on these items if dragged into them and player has enough stealth
-//      a) Grenade - These can be diffused if gotchi dragged into them
-//      b) Galaxy Brain - Gotchi will run to end of nearest available line
-// 4) Aggro Action Objects (RED) - Gotchis can perform an aggressive action is dragged into them and player has enough aggro stat
-//      a) Cacti - These can be destroyed if gotchis dragged into them
-//      b) Coffee - Gotchi will randomly run around like crazy until it finds a new location
-// 5) Fun Action Objects (GREEN) - Gotchis can perform a fun action if dragged into them and player has enough fun stat
-//      a) Milkshake - These grant bonus points if gotchis dragged into them
-//      b) Lil Pump Drank - Grants additional Movement points
-
 export interface GO_Props {
     scene: Phaser.Scene;
     gridLevel: GridLevel;
@@ -81,6 +68,7 @@ export interface GO_Props {
           x: newX,
           y: newY,
           duration: tweenDuration,
+          ease: 'Quad.easeOut',
           onComplete: () => { 
             // run any custom onComplete code passed to us
             if (customOnComplete) customOnComplete(); 
@@ -98,17 +86,6 @@ export interface GO_Props {
           },
       });
 
-      // // set our new grid position
-      // this.gridPosition = { row: row, col: col };
-
-      // // now set the new gridlevel object
-      // if (!keepOldObject) this.gridLevel.setGridObject(row, col, this);
-
-      // // set our old position to empty if its not the same as our original position
-      // if (row !== oldRow || col !== oldCol) {
-      //   this.gridLevel.setEmptyGridObject(oldRow, oldCol);
-      // }
-
       return this;
 
     }
@@ -123,7 +100,7 @@ export interface GO_Props {
 
   
     update(): void {
-      const a = '';
+      // do stuff
     }
   }
   

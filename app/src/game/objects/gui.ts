@@ -2,11 +2,12 @@
 // this object controls display of all gui elements
 
 import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
-import { GREEN_BUTTON, CLICK, GUI_SCORE_PANEL, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON, GUI_BUTTON_PLAY, GUI_BUTTON_FORWARD, GUI_BUTTON_BACK, GUI_BUTTON_CROSS } from "game/assets";
-import { LevelButton, Player, LevelConfig, levels, GridLevel, WorldMap } from ".";
+import { GREEN_BUTTON, CLICK, GUI_SCORE_PANEL, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON, GUI_BUTTON_PLAY, GUI_BUTTON_FORWARD, GUI_BUTTON_BACK, GUI_BUTTON_CROSS, GUI_0_STARS, GUI_1_STARS, GUI_3_STARS, GUI_2_STARS } from "game/assets";
+import { LevelButton, Player, LevelConfig, levels, GridLevel, WorldMap, GuiScoreBoard } from ".";
 // import { Math } from "phaser";
 import { GameScene } from "game/scenes/game-scene";
-import { DEPTH_GUI_LEVEL_SELECT } from "game/helpers/constants";
+import { DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT, DEPTH_GUI_SCORE } from "game/helpers/constants";
+import { Game } from "phaser";
 
 interface Props {
     scene: GameScene,
@@ -20,12 +21,14 @@ export class Gui {
     private guiLevelSelectRibbon?: Phaser.GameObjects.Image;
     private text?: Phaser.GameObjects.Text;
     private playButton: Phaser.GameObjects.Image;
-    private forwardButton: Phaser.GameObjects.Image;
-    private backButton: Phaser.GameObjects.Image;
+    // private forwardButton: Phaser.GameObjects.Image;
+    // private backButton: Phaser.GameObjects.Image;
     private exitButton: Phaser.GameObjects.Image;
-    private scorePanel: Phaser.GameObjects.Image;
-    private scoreText;
+    // private scorePanel: Phaser.GameObjects.Image;
+    // private scorePanelStars: Phaser.GameObjects.Image;
+    // private scoreText;
     private score = 0;
+    private scoreBoard: GuiScoreBoard;
     private mainMenuButton?: Phaser.GameObjects.Image;
     private clickSound?: Phaser.Sound.BaseSound;
     
@@ -83,111 +86,72 @@ export class Gui {
                 this.scene.startLevel()
             });
 
-        // add a forward level button
-        this.forwardButton = this.scene.add.image(
-            getGameWidth(this.scene)*0.93,
-            getGameHeight(this.scene)*0.9,
-            GUI_BUTTON_FORWARD,)
-            .setDepth(DEPTH_GUI_LEVEL_SELECT+2)
-            .setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1)
-            .setScrollFactor(0)
-            .setInteractive()
-            .on('pointerdown', () => {
-                this.scene.selectLevel(this.levelNumber+1);
-            });
-        
-        // add a back level button
-        this.backButton = this.scene.add.image(
-            getGameWidth(this.scene)*0.07,
-            getGameHeight(this.scene)*0.9,
-            GUI_BUTTON_BACK,)
-            .setDepth(DEPTH_GUI_LEVEL_SELECT+2)
-            .setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1)
-            .setScrollFactor(0)
-            .setInteractive()
-            .on('pointerdown', () => {
-                this.scene.selectLevel(this.levelNumber-1);
-            });
+        // // add a forward level button
+        // this.forwardButton = this.scene.add.image(
+        //     getGameWidth(this.scene)*0.93,
+        //     getGameHeight(this.scene)*0.9,
+        //     GUI_BUTTON_FORWARD,)
+        //     .setDepth(DEPTH_GUI_LEVEL_SELECT+2)
+        //     .setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1)
+        //     .setScrollFactor(0)
+        //     .setInteractive()
+        //     .on('pointerdown', () => {
+        //         this.scene.selectLevel(this.levelNumber+1);
+        //     });
 
-        // add exit button and start it just offscreen
+        // add exit button when we need to get out of a level
         this.exitButton = this.scene.add.image(
-            getGameWidth(this.scene)-getGameWidth(this.scene)*0.05 + getGameWidth(this.scene), 
-            getGameWidth(this.scene)*0.05, 
+            getGameWidth(this.scene)-getGameWidth(this.scene)*0.1, 
+            getGameWidth(this.scene)*0.1, 
             GUI_BUTTON_CROSS)
-            .setDepth(DEPTH_GUI_LEVEL_SELECT)
+            .setDepth(DEPTH_GUI_LEVEL_OVER+5)
             .setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1)
             .setScrollFactor(0)
-            .setOrigin(1,0)
+            .setOrigin(0.5,0.5)
             .setInteractive()
             .on('pointerdown', () => {
-                // end the level
-                this.scene.endLevel()
+                // check if we've got an active level
+                if (this.scene.getGridLevel()?.getStatus() === 'ACTIVE') {
+                    this.scene.endLevel();
+                } else {
+                    this.clickSound?.play();
+                    window.history.back();
+                }
             });
-
-
-        // add the scorePanel for grid levels (it should start offscreen)
-        this.scorePanel = this.scene.add.image(
-            getGameWidth(this.scene)*0.05 - getGameWidth(this.scene),
-            getGameWidth(this.scene)*0.05,
-            GUI_SCORE_PANEL,)
-            .setOrigin(0,0)
-            .setScrollFactor(0)
-            .setDisplaySize(getGameWidth(this.scene)*0.4, getGameWidth(this.scene)*0.126)
-            .setDepth(DEPTH_GUI_LEVEL_SELECT);
-  
-        // add the scoring text
-        this.scoreText = this.scene.add.text(
-            getGameWidth(this.scene)*0.21 - getGameWidth(this.scene),
-            getGameWidth(this.scene)*0.095,
-            '0000000',)
-            .setVisible(true)
-            .setStyle({
-                fontFamily: 'Arial', 
-                fontSize: Math.trunc(getGameHeight(this.scene)*0.03).toString() + 'px', 
-                })
-            .setOrigin(0,0)
-            .setStroke('0x000000', 3)
-            .setScrollFactor(0)
-            .setDepth(DEPTH_GUI_LEVEL_SELECT);
         
-        // add the return to main menu button
-        this.mainMenuButton = this.scene.add.sprite(
-            getGameWidth(this.scene)-getGameWidth(this.scene)*0.05, 
-            getGameWidth(this.scene)*0.05, 
-            GUI_BUTTON_CROSS)
-            .setOrigin(1, 0)
-            .setInteractive({ useHandCursor: true })
-            .setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1)
-            .on('pointerdown', () => {
-                this.clickSound?.play();
-                window.history.back();
-            })
-            .setScrollFactor(0)
-            .setDepth(DEPTH_GUI_LEVEL_SELECT);
+        // add scoreboard
+        this.scoreBoard = new GuiScoreBoard({
+            scene: this.scene,
+            x: getGameWidth(this.scene)*0.25,
+            y: getGameWidth(this.scene)*0.125,
+        });
 
         // create the back button click sound
         this.clickSound = this.scene.sound.add(CLICK, { loop: false });
     }
 
     public adjustScore(delta: number) {
-        this.score += delta;
-        this.scoreText.text = this.score.toString().padStart(7,'0');
+        this.scoreBoard.adjustScore(delta);
+    }
+
+    public setStarScore(stars: 0 | 1 | 2 | 3) {
+        this.scoreBoard.setStarScore(stars);
+    }
+
+    public resetScore() {
+        this.scoreBoard.resetScore();
     }
 
     public onStartLevel() {
         // tween down the level description gui
         this.scene.add.tween({
-                targets: [this.levelDescription, this.guiLevelSelectRibbon,this.text,this.playButton,this.forwardButton,this.backButton],
+                targets: [this.levelDescription, this.guiLevelSelectRibbon,this.text,this.playButton,],
                 y: '+='+(getGameHeight(this.scene)*0.5).toString(),
                 duration: 250,
         });
 
-        // tween across the score panel and text
-        this.scene.add.tween({
-            targets: [this.scorePanel, this.scoreText],
-            x: '+='+(getGameWidth(this.scene)).toString(),
-            duration: 250,
-        });
+        // reset the score shown in the gui
+        this.resetScore();
 
         // tween out the main menu button
         this.scene.add.tween({
@@ -195,29 +159,27 @@ export class Gui {
             x: '+='+(getGameWidth(this.scene)).toString(),
             duration: 250,
         })
-
-        // tween in the exit button
-        this.scene.add.tween({
-            targets: this.exitButton,
-            x: '+='+(-getGameWidth(this.scene)).toString(),
-            duration: 250,
-        })
     }
 
     public onEndLevel() {
         // tween the level description back into view
         this.scene.add.tween({
-            targets: [this.levelDescription, this.guiLevelSelectRibbon,this.text,this.playButton,this.forwardButton,this.backButton],
+            targets: [this.levelDescription, this.guiLevelSelectRibbon,this.text,this.playButton,],
             y: '+='+(-getGameHeight(this.scene)*0.5).toString(),
             duration: 250,
         });
 
-        // tween across the score panel and text
+        // tween the exit button back home
         this.scene.add.tween({
-            targets: [this.scorePanel, this.scoreText],
-            x: '+='+(-getGameWidth(this.scene)).toString(),
+            targets: this.exitButton,
+            x: getGameWidth(this.scene)-getGameWidth(this.scene)*0.1, 
+            y: getGameWidth(this.scene)*0.1, 
+            // scale: this.exitButton.scale/1.5,
             duration: 250,
-        });
+        })
+
+        // this is where we log score to the server
+        // SEND SCORE TO SERVER!!!!
 
         // tween in the main menu button
         this.scene.add.tween({
@@ -226,12 +188,11 @@ export class Gui {
             duration: 250,
         })
 
-        // tween out the exit button
-        this.scene.add.tween({
-            targets: this.exitButton,
-            x: '+='+(getGameWidth(this.scene)).toString(),
-            duration: 250,
-        })
+        // tween exit button back to normal position
+
+
+        // return score home
+        this.scoreBoard.returnHome();
     }
 
     public onSelectLevel(levelNumber: number) {
@@ -258,10 +219,64 @@ export class Gui {
                 break;
             }
         }
+
+        // Fetch current gotchis highest score for this level and display it
+    }
+
+    public showActionText(text: string) {
+        // add a tween of some text in middle of page
+        const phaserText = this.scene.add.text(
+            getGameWidth(this.scene)*0.5, 
+            getGameHeight(this.scene)*0.4, 
+            text,
+            {
+                fontFamily: 'Arial',
+                fontSize: (getGameHeight(this.scene)*0.03).toString() + 'px',
+                color: '#fff',
+                stroke: '#f0f',
+                strokeThickness: 3
+            })
+            .setOrigin(0.5,0.5)
+            .setScrollFactor(0)
+            .setDepth(DEPTH_ACTION_TEXT)
+            .setAlpha(0);
+
+        this.scene.add.tween({
+            targets: phaserText,
+            angle: 1,
+            yoyo: true,
+            duration: 500,
+        })
+
+        this.scene.add.tween({
+            targets: phaserText,
+            alpha: 1,
+            yoyo: true,
+            y: phaserText.y - getGameHeight(this.scene)*0.002,
+            duration: 500,
+            onComplete: () => {
+                phaserText.destroy();
+            }
+        })
+    }
+
+    public showLevelOverScreen() {
+
+        this.scoreBoard.levelOver();
+        
+        // tween the exit button down next to the scoreboard
+        this.scene.add.tween({
+            targets: this.exitButton,
+            x: getGameWidth(this.scene)*0.87,
+            y: getGameHeight(this.scene)*0.43,
+            // scale: this.exitButton.scale*1.5,
+            duration: 250,
+        })
     }
 
     public update() {
-        // do nothing atm
+        // update gui score board
+        this.scoreBoard.update();
     }
 
 }

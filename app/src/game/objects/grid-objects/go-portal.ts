@@ -23,7 +23,7 @@ export class GO_Portal extends GridObject {
     private gotchiChainRunning = [false, false, false, false];
 
     // these variables used for pausing the conga line after each step
-    private congaPauseDuration = 500;
+    private congaPauseDuration = 50;
     private congaPauseTimer = 0;
 
     // variables for controlling conga logic

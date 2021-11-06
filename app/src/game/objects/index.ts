@@ -5,6 +5,7 @@ export * from './world-map';
 export * from './level-button';
 export * from './level-configs';
 export * from './gui';
+export * from './gui-score-board';
 
 export * from './grid-objects/grid-object';
 export * from './grid-objects/go-inactive';

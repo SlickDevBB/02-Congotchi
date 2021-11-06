@@ -1,6 +1,6 @@
 import { BLACK_CIRCLE_SHADED, BONUS_ICON, M67_GRENADE, MILKSHAKE, MOVE_ICON, PORTAL_OPEN, ROTATE_ICON, SHUFFLE_ICON, UNCOMMON_CACTI } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
-import { DEPTH_PLAYER_ICONS } from "game/helpers/constants";
+import { DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { AavegotchiGameObject } from "types";
 import { AarcIcon, WorldMap } from ".";
 
@@ -118,6 +118,8 @@ export class Player extends Phaser.GameObjects.Sprite {
 
     // physics
     this.scene.physics.world.enable(this);
+
+    this.setDepth(DEPTH_PLAYER);
 
     // input
     this.cursorKeys = scene.input.keyboard.createCursorKeys();

@@ -257,7 +257,7 @@ export class BootScene extends Phaser.Scene {
     gotchiObject: AavegotchiGameObject, startLoader: boolean,
   ) => {
     if (!gotchiObject.svg && this.randomGotchis && this.randomLoadCounter < this.randomGotchis.length) {
-      alert("No svg data for " + gotchiObject.id);
+      // alert("No svg data for " + gotchiObject.id);
       this.randomLoadCounter++;
       this.loadInRandomGotchiSpritesheet(this.randomGotchis[this.randomLoadCounter], true);
     } else if (gotchiObject.svg) {

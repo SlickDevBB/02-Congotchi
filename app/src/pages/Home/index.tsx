@@ -134,7 +134,7 @@ const Home = () => {
       updateAavegotchis(dispatch, address);
 
       // call our update random gotchis function and specify number of randoms we'd like
-      updateRandomAavegotchis(dispatch, 25);
+      updateRandomAavegotchis(dispatch, 5);
     }
   }, [address]);
 

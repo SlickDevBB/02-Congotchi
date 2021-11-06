@@ -41,7 +41,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
 
         // set depth, alpha and display size
         this.setAlpha(ALPHA);
-        this.setDisplaySize(2*radius, 2*radius);
+        this.setDisplaySize(3*radius, 3*radius);
 
         // add the icon itself to the scene
         this.scene.add.existing(this);
