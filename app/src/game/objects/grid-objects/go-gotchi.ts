@@ -2,7 +2,7 @@
 
 import { GO_Empty, GO_Props, GridLevel, GridObject } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, CW_ROTATE_MOVE_ICON, ACW_ROTATE_MOVE_ICON } from 'game/assets';
+import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, CW_ROTATE_MOVE_ICON, ACW_ROTATE_MOVE_ICON, ARROW_ICON } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI } from 'game/helpers/constants';
 import { AavegotchiGameObject } from 'types';
@@ -33,16 +33,22 @@ interface CountGotchi {
     private followers: Array<GridObject | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
     private gotchi: AavegotchiGameObject;
 
-    // declare our rotate icons
-    // private rotateCWicon: Phaser.GameObjects.Image;
-    // private rotateACWicon: Phaser.GameObjects.Image;
-    // private rotateArrowsVisible = false;
+    // create arrows which are used to depict direction changes
+    private arrows: Array<Phaser.GameObjects.Image> = [];
 
     // declare icon for rotate and move on hover
-    private rotateMoveIcon: Phaser.GameObjects.Image;
+    // private rotateMoveIcon: Phaser.GameObjects.Image;
+
+    // declare variable for setting visibility of rotate arrows
+    private rotateArrowsVisible = false;
+    private overArrows = false;
+    private overGotchi = false;
 
     // declare a shift key variable
     private shiftKey: Phaser.Input.Keyboard.Key;
+
+    // store the active pointer
+    private mousePointer: Phaser.Input.Pointer;
 
     // need a little circle to use as a direction guide
     private directionGuide: Phaser.GameObjects.Ellipse;
@@ -55,6 +61,7 @@ interface CountGotchi {
 
     // timer is for click events
     private timer = 0;
+    private mouseTimer = 0;
 
     // define variables for dragging object
     private ogDragGridPosition = { row: 0, col: 0 };
@@ -66,7 +73,7 @@ interface CountGotchi {
     public newRow = 0;
     public newCol = 0;
     public newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
-    public status: 'READY' | 'CONGOTCHING' | 'JUMPING' | 'WAITING' = 'READY';
+    public status: 'READY' | 'CONGOTCHING' | 'JUMPING' | 'WAITING' | 'BURNT' = 'READY';
 
     constructor({ scene, gridLevel, gridRow, gridCol, key, gotchi, gridSize, objectType }: GO_Gotchi_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GOTCHI'});
@@ -76,6 +83,9 @@ interface CountGotchi {
         this.gridSize = gridSize;
         this.objectType = objectType;
         this.gotchi = gotchi;
+
+        // set our background colour
+        this.setBgSquareColour('PINK');
         
         // set our grid position
         this.gridPosition = {row: gridRow, col: gridCol };
@@ -98,15 +108,83 @@ interface CountGotchi {
         // create the shift key
         this.shiftKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
-        // create the rotatemove icon
-        this.rotateMoveIcon = this.scene.add.image(
-                this.x,this.y,
-                CW_ROTATE_MOVE_ICON,)
-                .setDisplaySize(this.displayWidth*0.9, this.displayHeight*0.8)
-                .setOrigin(0.5,0.5)
-                .setScrollFactor(0)
-                .setDepth(DEPTH_GOTCHI_ICON)
-                .setAlpha(0);
+        // save the mouse
+        this.mousePointer = this.scene.input.activePointer;
+
+        // create down arrow
+        this.arrows.push(
+            this.scene.add.image(this.x, this.y+this.displayHeight*.5, ARROW_ICON)
+            .setAngle(0)
+            .on('pointerup', () => {
+                // check we've got enough interaction points
+                const player = (this.scene as GameScene).getPlayer();
+                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'DOWN') {
+                    this.setDirection('DOWN');
+                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    // in case we were burnt change status back to 'ready'
+                    this.status = 'READY';
+                }
+            })
+        );
+
+        // create left arrow
+        this.arrows.push(
+            this.scene.add.image(this.x-this.displayWidth*.5, this.y, ARROW_ICON)
+            .setAngle(90)
+            .on('pointerup', () => {
+                // check we've got enough interaction points
+                const player = (this.scene as GameScene).getPlayer();
+                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'LEFT') {
+                    this.setDirection('LEFT');
+                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    // in case we were burnt change status back to 'ready'
+                    this.status = 'READY';
+                }
+            })
+        );
+
+        // create up arrow
+        this.arrows.push(
+            this.scene.add.image(this.x, this.y-this.displayHeight*.5, ARROW_ICON)
+            .setAngle(180)
+            .on('pointerup', () => {
+                // check we've got enough interaction points
+                const player = (this.scene as GameScene).getPlayer();
+                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'UP') {
+                    this.setDirection('UP');
+                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    // in case we were burnt change status back to 'ready'
+                    this.status = 'READY';
+                }
+            })
+        );
+
+        // create right arrow
+        this.arrows.push(
+            this.scene.add.image(this.x+this.displayWidth, this.y, ARROW_ICON)    
+            .setAngle(-90)
+            .on('pointerup', () => {
+                // check we've got enough interaction points
+                const player = (this.scene as GameScene).getPlayer();
+                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'RIGHT') {
+                    this.setDirection('RIGHT');
+                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    // in case we were burnt change status back to 'ready'
+                    this.status = 'READY';
+                }
+            })    
+        );
+
+        // set some standard arrow values
+        this.arrows.map(arrow => {
+            arrow.setDisplaySize(this.displayWidth*0.5, this.displayHeight*0.5)
+            .setDepth(DEPTH_GOTCHI_ICON)
+            .setScrollFactor(0)
+            .setVisible(false)
+            .setInteractive()
+            .on('pointerover', () => this.overArrows = true)
+            .on('pointerout', () => this.overArrows = false)
+        })
 
         // create our direction guide
         this.directionGuide = this.scene.add.ellipse(this.x, this.y,
@@ -124,6 +202,7 @@ interface CountGotchi {
             // get the time at which we clicked
             this.timer = new Date().getTime();
 
+            console.log(this);
         });
 
         // set behaviour for pointer up event
@@ -134,34 +213,15 @@ interface CountGotchi {
                 // check we've got enough interact points
                 const player = (this.scene as GameScene).getPlayer();
                 if (player && player.getStat('INTERACT_GOTCHI') > 0) {
-                    // if shift is down rotate anti clockwise, clocwise if not down
-                    if (this.shiftKey.isDown) {
-                        this.rotateACW();
-                    } else {
-                        this.rotateCW();
-                    }
+                    // we have enough interact points so toggle visible arrow status
+                    this.rotateArrowsVisible = !this.rotateArrowsVisible;
                 }
             }
-            console.log('test');
         });
 
-        // show the rotate move icon when pointer over
-        this.on('pointerover', () => {
-            this.scene.add.tween({
-                targets: this.rotateMoveIcon,
-                alpha: 0.9,
-                duration: 100,
-            });
-        });
-
-        // hide rotate move icon when pointer out
-        this.on('pointerout', () => {
-            this.scene.add.tween({
-                targets: this.rotateMoveIcon,
-                alpha: 0,
-                duration: 100,
-            });
-        });
+        // set behaviour when over gotchi
+        this.on('pointerover', () => { this.overGotchi = true;})
+        this.on('pointerout', () => { this.overGotchi = false;})
 
         // dragstart
         this.on('dragstart', () => {
@@ -214,15 +274,11 @@ interface CountGotchi {
             this.setGridPosition(finalGridPos.row, finalGridPos.col);
             this.dragAxis = 'NOT_ASSIGNED';
 
-            // get the player
-            const player = (this.scene as GameScene).getPlayer();
-    
-            // decrease the players move count
-            if (player) {
-                // check we didn't just end up back in original position
-                if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    player.adjustStat('MOVE_GOTCHI', -1);
-                }
+            // adjust the player stat
+            if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                    this.adjustPlayerStat('MOVE_GOTCHI', -1);
+                    // in case we were burnt change status back to 'ready'
+                    this.status = 'READY';
             }
         })
 
@@ -278,6 +334,15 @@ interface CountGotchi {
     
         this.anims.play('down');
 
+    }
+
+    // create stat adjustment
+    public adjustPlayerStat(stat: 'INTERACT_GOTCHI' | 'MOVE_GOTCHI' | 'MOVE_AGGRO' | 'INTERACT_AGGRO' | 'INTERACT_PORTAL' | 'MOVE_PORTAL' | 'MOVE_BOOSTER' | 'INTERACT_BOOSTER', value: number) {
+        // get the player
+        const player = (this.scene as GameScene).getPlayer();
+    
+        // decrease the players move count
+        if (player) player.adjustStat(stat, -1);
     }
 
     public findLeader() {
@@ -387,20 +452,8 @@ interface CountGotchi {
         return this;
     }
 
-    public rotateCW() {
-        if (this.direction === 'UP') this.setDirection('RIGHT');
-        else if (this.direction === 'RIGHT') this.setDirection('DOWN');
-        else if (this.direction === 'DOWN') this.setDirection('LEFT');
-        else if (this.direction === 'LEFT') this.setDirection('UP');
-        return this;
-    }
-
-    public rotateACW() {
-        if (this.direction === 'UP') this.setDirection('LEFT');
-        else if (this.direction === 'LEFT') this.setDirection('DOWN');
-        else if (this.direction === 'DOWN') this.setDirection('RIGHT');
-        else if (this.direction === 'RIGHT') this.setDirection('UP');
-        return this;
+    public setRotateArrowsVisible(visible: boolean) {
+        this.arrows.map(arrow => arrow.setVisible(visible));
     }
 
     public setRandomDirection() {
@@ -496,6 +549,7 @@ interface CountGotchi {
     destroy() {
         super.destroy();
         this.directionGuide.destroy();
+        this.arrows.map(arrow => arrow.destroy());
     }
 
     public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
@@ -534,6 +588,8 @@ interface CountGotchi {
    }
   
     update(): void {
+        super.update();
+
         // update direction guide position
         switch (this.getDirection()) {
             case 'DOWN': { this.directionGuide.setPosition(this.x, this.y+this.displayHeight/2); break; }
@@ -542,17 +598,30 @@ interface CountGotchi {
             case 'RIGHT': { this.directionGuide.setPosition(this.x+this.displayWidth/2, this.y); break; }
         }
 
-        // make sure rotate icon follows us
-        this.rotateMoveIcon.x = this.x;
-        this.rotateMoveIcon.y = this.y;
-
-        // if shift is down we should be in the opposite direction
-        if (this.shiftKey.isDown) {
-            this.rotateMoveIcon.setTexture(ACW_ROTATE_MOVE_ICON);
-        } else {
-            this.rotateMoveIcon.setTexture(CW_ROTATE_MOVE_ICON);
+        // make sure rotate arrows follow their gotchi
+        if (this.arrows.length === 4) {
+            this.arrows[0].setPosition(this.x, this.y+this.displayHeight*.65);
+            this.arrows[1].setPosition(this.x-this.displayWidth*.65, this.y);
+            this.arrows[2].setPosition(this.x, this.y-this.displayHeight*.65);
+            this.arrows[3].setPosition(this.x+this.displayWidth*.65, this.y);
         }
-      
+
+        // update visibility of all arrows
+        this.arrows.map(arrow => {
+            arrow.setVisible(this.rotateArrowsVisible);
+        })
+
+        // if there is a click hide the arrows of the gotchi
+        if (this.mousePointer.isDown && !this.overArrows && !this.overGotchi) {
+            this.rotateArrowsVisible = false;
+        }
+
+        // if the gotchi has burnt status set tint to grey/black
+        if (this.status === 'BURNT') {
+            this.setTint(0x444444);
+        } else {
+            this.setTint(0xffffff);
+        }
     }
   }
   

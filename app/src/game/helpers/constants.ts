@@ -10,7 +10,7 @@ export const DEPTH_WORLD_MASK = 5;
 export const DEPTH_PLAYER = 6;
 export const DEPTH_GUI_LEVEL_SELECT = 8;
 
-export const DEPTH_GRID_LEVEL = 10;
+export const DEPTH_GRID_LEVEL = 9;
 export const DEPTH_GRID_OBJECTS = 11;
 export const DEPTH_GO_PORTAL = 11;
 export const DEPTH_GO_GOTCHI = 12;

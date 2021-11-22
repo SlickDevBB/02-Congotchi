@@ -27,7 +27,6 @@ export class Gui {
     // private scorePanel: Phaser.GameObjects.Image;
     // private scorePanelStars: Phaser.GameObjects.Image;
     // private scoreText;
-    private score = 0;
     private scoreBoard: GuiScoreBoard;
     private mainMenuButton?: Phaser.GameObjects.Image;
     private clickSound?: Phaser.Sound.BaseSound;
@@ -138,9 +137,9 @@ export class Gui {
         this.scoreBoard.setStarScore(stars);
     }
 
-    public resetScore() {
-        this.scoreBoard.resetScore();
-    }
+    // public resetScore() {
+    //     this.scoreBoard.resetScore();
+    // }
 
     public onStartLevel() {
         // tween down the level description gui
@@ -150,8 +149,8 @@ export class Gui {
                 duration: 250,
         });
 
-        // reset the score shown in the gui
-        this.resetScore();
+        // tell the scoreboard started a level
+        this.scoreBoard.onLevelStart();
 
         // tween out the main menu button
         this.scene.add.tween({
@@ -262,7 +261,7 @@ export class Gui {
 
     public showLevelOverScreen() {
 
-        this.scoreBoard.levelOver();
+        this.scoreBoard.onLevelOver();
         
         // tween the exit button down next to the scoreboard
         this.scene.add.tween({

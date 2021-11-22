@@ -1,4 +1,4 @@
-import { BLACK_CIRCLE_SHADED, BONUS_ICON, M67_GRENADE, MILKSHAKE, MOVE_ICON, PORTAL_OPEN, ROTATE_ICON, SHUFFLE_ICON, UNCOMMON_CACTI } from "game/assets";
+import { BLACK_CIRCLE_SHADED, BLUE_CIRCLE_SHADED, BONUS_ICON, GREEN_CIRCLE_SHADED, M67_GRENADE, MILKSHAKE, MOVE_ICON, PINK_CIRCLE_SHADED, PORTAL_OPEN, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, ROTATE_ICON, SHUFFLE_ICON, UNCOMMON_CACTI } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { AavegotchiGameObject } from "types";
@@ -22,43 +22,46 @@ interface stat {
   startMax: number,
 }
 
-const ROTATE_MIN = 5;     const ROTATE_MAX = 10;
-const MOVE_MIN = 5;       const MOVE_MAX = 10;
-const GRENADE_MIN = 1;    const GRENADE_MAX = 3;
-const CACTI_MIN = 1;      const CACTI_MAX = 3;
-const MILKSHAKE_MIN = 1;  const MILKSHAKE_MAX = 3;
-const PORTAL_MIN = 2;     const PORTAL_MAX = 5;
-const RESHUFFLE_MIN = 1;  const RESHUFFLE_MAX = 3;
-const BONUS_MIN = 0;      const BONUS_MAX = 3; 
+const INTERACT_PINK_MIN = 10;       const MOVE_PINK_MIN = 10; 
+const INTERACT_PINK_MAX = 20;       const MOVE_PINK_MAX = 20;
+         
+const INTERACT_RED_MIN = 1;         const MOVE_RED_MIN = 2;
+const INTERACT_RED_MAX = 5;         const MOVE_RED_MAX = 10;
+           
+const INTERACT_BLUE_MIN = 1;        const MOVE_BLUE_MIN = 2;  
+const INTERACT_BLUE_MAX = 5;        const MOVE_BLUE_MAX = 10;
+
+const INTERACT_GREEN_MIN = 1;       const MOVE_GREEN_MIN = 2; 
+const INTERACT_GREEN_MAX = 5;       const MOVE_GREEN_MAX = 10; 
 
 export class Player extends Phaser.GameObjects.Sprite {
   private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
   public speed = 200;
 
-  public interactGotchiStat = { startMin: ROTATE_MIN, current: 1, startMax: ROTATE_MAX};
-  public moveGotchiStat = { startMin: MOVE_MIN, current: 1, startMax: MOVE_MAX};
+  public interactPinkStat = { startMin: INTERACT_PINK_MIN, current: 1, startMax: INTERACT_PINK_MAX};
+  public movePinkStat = { startMin: MOVE_PINK_MIN, current: 1, startMax: MOVE_PINK_MAX};
 
-  public moveAggroStat = { startMin: GRENADE_MIN, current: 1, startMax: GRENADE_MAX};
-  public interactAggroStat = { startMin: CACTI_MIN, current: 1, startMax: CACTI_MAX};
+  public interactRedStat = { startMin: INTERACT_RED_MIN, current: 1, startMax: INTERACT_RED_MAX};
+  public moveRedStat = { startMin: MOVE_RED_MIN, current: 1, startMax: MOVE_RED_MAX};
 
-  public interactPortalStat = { startMin: MILKSHAKE_MIN, current: 1, startMax: MILKSHAKE_MAX};
-  public movePortalStat = { startMin: PORTAL_MIN, current: 1, startMax: PORTAL_MAX};
+  public interactBlueStat = { startMin: INTERACT_BLUE_MIN, current: 1, startMax: INTERACT_BLUE_MAX};
+  public moveBlueStat = { startMin: MOVE_BLUE_MIN, current: 1, startMax: MOVE_BLUE_MAX};
 
-  public moveBoosterStat = { startMin: RESHUFFLE_MIN, current: 1, startMax: RESHUFFLE_MAX};
-  public interactBoosterStat = { startMin: BONUS_MIN, current: 1, startMax: BONUS_MAX};
+  public interactGreenStat = { startMin: INTERACT_GREEN_MIN, current: 1, startMax: INTERACT_GREEN_MAX};
+  public moveGreenStat = { startMin: MOVE_GREEN_MIN, current: 1, startMax: MOVE_GREEN_MAX};
 
   // declare all our icons
-  public interactGotchiIcon;
-  public moveGotchiIcon;
+  public interactPinkIcon;
+  public movePinkIcon;
 
-  public moveAggroIcon;
-  public interactAggroIcon;
+  public interactRedIcon;
+  public moveRedIcon;
 
-  public interactPortalIcon;
-  public movePortalIcon;
+  public interactBlueIcon;
+  public moveBlueIcon;
 
-  public moveBoosterIcon;
-  public interactBoosterIcon;
+  public interactGreenIcon;
+  public moveGreenIcon;
 
   public gotchi;
 
@@ -68,8 +71,8 @@ export class Player extends Phaser.GameObjects.Sprite {
   private playerSavedScaleY= 1;
   private world;
 
-  // levelNumber variable stores what level our gotchi is on
-  private levelNumber = 1;
+  // levelNumber variable stores what level our gotchi is on (starts on a non valid level)
+  private levelNumber = 0;
 
   // direction variable
   private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
@@ -128,120 +131,126 @@ export class Player extends Phaser.GameObjects.Sprite {
     const iconRadius = this.displayHeight * 0.2;
 
     // create our icons
-    this.interactGotchiIcon = new AarcIcon ({
+    this.interactPinkIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x - this.displayWidth*.5,
       y: this.y - iconRadius*4,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: ROTATE_ICON,
+      keyBg: PINK_CIRCLE_SHADED,
+      keyIcon: QUESTION_MARK_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.interactGotchiStat?.current,
+      numBadge: this.interactPinkStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.moveGotchiIcon = new AarcIcon ({
+    this.movePinkIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth*.5,
       y: this.y - iconRadius*4,
-      keyBg: BLACK_CIRCLE_SHADED,
+      keyBg: PINK_CIRCLE_SHADED,
       keyIcon: MOVE_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.moveGotchiStat?.current,
+      numBadge: this.movePinkStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.moveAggroIcon = new AarcIcon ({
-      scene: this.scene,
-      x: this.x - this.displayWidth,
-      y: this.y - iconRadius*1.33,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: M67_GRENADE,
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.moveAggroStat?.current,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.interactAggroIcon = new AarcIcon ({
+    this.interactRedIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth,
       y: this.y - iconRadius*1.33,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: UNCOMMON_CACTI,
+      keyBg: RED_CIRCLE_SHADED,
+      keyIcon: QUESTION_MARK_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.interactAggroStat?.current,
+      numBadge: this.interactRedStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.interactPortalIcon = new AarcIcon ({
+    this.moveRedIcon = new AarcIcon ({
+      scene: this.scene,
+      x: this.x - this.displayWidth,
+      y: this.y - iconRadius*1.33,
+      keyBg: RED_CIRCLE_SHADED,
+      keyIcon: MOVE_ICON,
+      radius: iconRadius,
+      useBadge: true,
+      numBadge: this.moveRedStat?.current,
+    }).setDepth(DEPTH_PLAYER_ICONS);
+
+    
+
+    this.interactBlueIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x - this.displayWidth,
       y: this.y + iconRadius*1.33,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: MILKSHAKE,
+      keyBg: BLUE_CIRCLE_SHADED,
+      keyIcon: QUESTION_MARK_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.interactPortalStat?.current,
+      numBadge: this.interactBlueStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.movePortalIcon = new AarcIcon ({
+    this.moveBlueIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth,
       y: this.y + iconRadius*1.33,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: PORTAL_OPEN,
+      keyBg: BLUE_CIRCLE_SHADED,
+      keyIcon: MOVE_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.movePortalStat?.current,
+      numBadge: this.moveBlueStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
-    this.moveBoosterIcon = new AarcIcon ({
-      scene: this.scene,
-      x: this.x - this.displayWidth*.5,
-      y: this.y + iconRadius*4,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: SHUFFLE_ICON,
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.moveBoosterStat?.current,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.interactBoosterIcon = new AarcIcon ({
+    this.interactGreenIcon = new AarcIcon ({
       scene: this.scene,
       x: this.x + this.displayWidth*.5,
       y: this.y + iconRadius*4,
-      keyBg: BLACK_CIRCLE_SHADED,
-      keyIcon: BONUS_ICON,
+      keyBg: GREEN_CIRCLE_SHADED,
+      keyIcon: QUESTION_MARK_ICON,
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.interactBoosterStat?.current,
+      numBadge: this.interactGreenStat?.current,
+    }).setDepth(DEPTH_PLAYER_ICONS);
+
+    this.moveGreenIcon = new AarcIcon ({
+      scene: this.scene,
+      x: this.x - this.displayWidth*.5,
+      y: this.y + iconRadius*4,
+      keyBg: GREEN_CIRCLE_SHADED,
+      keyIcon: MOVE_ICON,
+      radius: iconRadius,
+      useBadge: true,
+      numBadge: this.moveGreenStat?.current,
     }).setDepth(DEPTH_PLAYER_ICONS);
 
     // start off with all stats invisible
     this.setStatsVisible(false);
+
+    
   }
 
   private initStats() {
     const gotchi = this.gotchi;
     // set all the stats
     if (gotchi) {
-      this.interactGotchiStat.current = ROTATE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(ROTATE_MAX-ROTATE_MIN));
-      this.moveGotchiStat.current = MOVE_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_MAX-MOVE_MIN));
-      this.moveAggroStat.current = GRENADE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[1])/100*(GRENADE_MAX-GRENADE_MIN));
-      this.interactAggroStat.current = CACTI_MIN + Math.floor(gotchi.withSetsNumericTraits[1]/100*(CACTI_MAX-CACTI_MIN));
-      this.interactPortalStat.current = MILKSHAKE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[2])/100*(MILKSHAKE_MAX-MILKSHAKE_MIN));
-      this.movePortalStat.current = PORTAL_MIN + Math.floor(gotchi.withSetsNumericTraits[2]/100*(PORTAL_MAX-PORTAL_MIN));
-      this.moveBoosterStat.current = RESHUFFLE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[3])/100*(RESHUFFLE_MAX-RESHUFFLE_MIN));
-      this.interactBoosterStat.current = BONUS_MIN + Math.floor(gotchi.withSetsNumericTraits[3]/100*(BONUS_MAX-BONUS_MIN));
+      this.interactPinkStat.current = INTERACT_PINK_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(INTERACT_PINK_MAX-INTERACT_PINK_MIN));
+      this.interactRedStat.current = INTERACT_RED_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(INTERACT_RED_MAX-INTERACT_RED_MIN));
+      this.interactBlueStat.current = INTERACT_BLUE_MIN + Math.floor((100-gotchi.withSetsNumericTraits[2])/100*(INTERACT_BLUE_MAX-INTERACT_BLUE_MIN));
+      this.interactGreenStat.current = INTERACT_GREEN_MIN + Math.floor((100-gotchi.withSetsNumericTraits[0])/100*(INTERACT_GREEN_MAX-INTERACT_GREEN_MIN));
 
-      if (this.interactGotchiIcon && this.moveGotchiIcon && this.moveAggroIcon && this.interactAggroIcon && this.interactPortalIcon && this.movePortalIcon && this.moveBoosterIcon && this.interactBoosterIcon) {
-        this.interactGotchiIcon.setBadge(this.interactGotchiStat.current);
-        this.moveGotchiIcon.setBadge(this.moveGotchiStat.current);
-        this.moveAggroIcon.setBadge(this.moveAggroStat.current);
-        this.interactAggroIcon.setBadge(this.interactAggroStat.current);
-        this.interactPortalIcon.setBadge(this.interactPortalStat.current);
-        this.movePortalIcon.setBadge(this.movePortalStat.current);
-        this.moveBoosterIcon.setBadge(this.moveBoosterStat.current);
-        this.interactBoosterIcon.setBadge(this.interactBoosterStat.current);
+      this.movePinkStat.current = MOVE_PINK_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_PINK_MAX-MOVE_PINK_MIN));
+      this.moveRedStat.current = MOVE_RED_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_RED_MAX-MOVE_RED_MIN));
+      this.moveBlueStat.current = MOVE_BLUE_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_BLUE_MAX-MOVE_BLUE_MIN));
+      this.moveGreenStat.current = MOVE_GREEN_MIN + Math.floor(gotchi.withSetsNumericTraits[0]/100*(MOVE_GREEN_MAX-MOVE_GREEN_MIN));
+      
+
+      if (this.interactPinkIcon && this.movePinkIcon && this.moveRedIcon && this.interactRedIcon && this.interactBlueIcon && this.moveBlueIcon && this.moveGreenIcon && this.interactGreenIcon) {
+        this.interactPinkIcon.setBadge(this.interactPinkStat.current);
+        this.movePinkIcon.setBadge(this.movePinkStat.current);
+        this.moveRedIcon.setBadge(this.moveRedStat.current);
+        this.interactRedIcon.setBadge(this.interactRedStat.current);
+        this.interactBlueIcon.setBadge(this.interactBlueStat.current);
+        this.moveBlueIcon.setBadge(this.moveBlueStat.current);
+        this.moveGreenIcon.setBadge(this.moveGreenStat.current);
+        this.interactGreenIcon.setBadge(this.interactGreenStat.current);
       }
     }
     
@@ -250,70 +259,70 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   // setStatsVisible()
   public setStatsVisible(visible: boolean) {
-    this.interactGotchiIcon.setVisible(visible);
-    this.moveGotchiIcon.setVisible(visible);
-    this.moveAggroIcon.setVisible(visible);
-    this.interactAggroIcon.setVisible(visible);
-    this.interactPortalIcon.setVisible(visible);
-    this.movePortalIcon.setVisible(visible);
-    this.moveBoosterIcon.setVisible(visible);
-    this.interactBoosterIcon.setVisible(visible);
+    this.interactPinkIcon.setVisible(visible);
+    this.movePinkIcon.setVisible(visible);
+    this.interactRedIcon.setVisible(visible);
+    this.moveRedIcon.setVisible(visible);
+    this.interactBlueIcon.setVisible(visible);
+    this.moveBlueIcon.setVisible(visible);
+    this.interactGreenIcon.setVisible(visible);
+    this.moveGreenIcon.setVisible(visible);
 
     const cam = new Phaser.Math.Vector2(this.scene.cameras.main.scrollX, this.scene.cameras.main.scrollY);
     const circle = new Phaser.Geom.Circle(cam.x+getGameWidth(this.scene)*.5, cam.y+getGameHeight(this.scene), getGameWidth(this.scene)*0.36);
     const a = 1/16;
     const b = 1/32;
-    this.interactGotchiIcon.setPosition(circle.getPoint(0.75-b).x, circle.getPoint(0.75-b).y);
-    this.moveGotchiIcon.setPosition(circle.getPoint(0.75+b).x, circle.getPoint(0.75+b).y);
-    this.moveAggroIcon.setPosition(circle.getPoint(0.75-1.5*a).x, circle.getPoint(0.75-1.5*a).y);
-    this.interactAggroIcon.setPosition(circle.getPoint(0.75+1.5*a).x, circle.getPoint(0.75+1.5*a).y);
-    this.interactPortalIcon.setPosition(circle.getPoint(0.75-2.5*a).x, circle.getPoint(0.75-2.5*a).y);
-    this.movePortalIcon.setPosition(circle.getPoint(0.75+2.5*a).x, circle.getPoint(0.75+2.5*a).y);
-    this.moveBoosterIcon.setPosition(circle.getPoint(0.75-3.5*a).x, circle.getPoint(0.75+3.5*a).y);
-    this.interactBoosterIcon.setPosition(circle.getPoint(0.75+3.5*a).x, circle.getPoint(0.75+3.5*a).y);
+    this.interactPinkIcon.setPosition(circle.getPoint(0.75-b).x, circle.getPoint(0.75-b).y);
+    this.movePinkIcon.setPosition(circle.getPoint(0.75+b).x, circle.getPoint(0.75+b).y);
+    this.interactRedIcon.setPosition(circle.getPoint(0.75-1.5*a).x, circle.getPoint(0.75-1.5*a).y);
+    this.moveRedIcon.setPosition(circle.getPoint(0.75+1.5*a).x, circle.getPoint(0.75+1.5*a).y);
+    this.interactBlueIcon.setPosition(circle.getPoint(0.75-2.5*a).x, circle.getPoint(0.75-2.5*a).y);
+    this.moveBlueIcon.setPosition(circle.getPoint(0.75+2.5*a).x, circle.getPoint(0.75+2.5*a).y);
+    this.interactGreenIcon.setPosition(circle.getPoint(0.75-3.5*a).x, circle.getPoint(0.75+3.5*a).y);
+    this.moveGreenIcon.setPosition(circle.getPoint(0.75+3.5*a).x, circle.getPoint(0.75+3.5*a).y);
   }
 
   // create stat adjustment
   public adjustStat(stat: 'INTERACT_GOTCHI' | 'MOVE_GOTCHI' | 'MOVE_AGGRO' | 'INTERACT_AGGRO' | 'INTERACT_PORTAL' | 'MOVE_PORTAL' | 'MOVE_BOOSTER' | 'INTERACT_BOOSTER', value: number) {
     switch (stat) {
       case 'INTERACT_GOTCHI': {
-        this.interactGotchiStat.current += Math.floor(value);
-        this.interactGotchiIcon.setBadge(this.interactGotchiStat.current);
+        this.interactPinkStat.current += Math.floor(value);
+        this.interactPinkIcon.setBadge(this.interactPinkStat.current);
         break;
       }
       case 'MOVE_GOTCHI': {
-        this.moveGotchiStat.current += Math.floor(value);
-        this.moveGotchiIcon.setBadge(this.moveGotchiStat.current);
+        this.movePinkStat.current += Math.floor(value);
+        this.movePinkIcon.setBadge(this.movePinkStat.current);
         break;
       }
       case 'MOVE_AGGRO': {
-        this.moveAggroStat.current += Math.floor(value);
-        this.moveAggroIcon.setBadge(this.moveAggroStat.current);
+        this.moveRedStat.current += Math.floor(value);
+        this.moveRedIcon.setBadge(this.moveRedStat.current);
         break;
       }
       case 'INTERACT_AGGRO': {
-        this.interactAggroStat.current += Math.floor(value);
-        this.interactAggroIcon.setBadge(this.interactAggroStat.current);
+        this.interactRedStat.current += Math.floor(value);
+        this.interactRedIcon.setBadge(this.interactRedStat.current);
         break;
       }
       case 'INTERACT_PORTAL': {
-        this.interactPortalStat.current += Math.floor(value);
-        this.interactPortalIcon.setBadge(this.interactPortalStat.current);
+        this.interactBlueStat.current += Math.floor(value);
+        this.interactBlueIcon.setBadge(this.interactBlueStat.current);
         break;
       }
       case 'MOVE_PORTAL': {
-        this.movePortalStat.current += Math.floor(value);
-        this.movePortalIcon.setBadge(this.movePortalStat.current);
+        this.moveBlueStat.current += Math.floor(value);
+        this.moveBlueIcon.setBadge(this.moveBlueStat.current);
         break;
       }
       case 'MOVE_BOOSTER': {
-        this.moveBoosterStat.current += Math.floor(value);
-        this.moveBoosterIcon.setBadge(this.moveBoosterStat.current);
+        this.moveGreenStat.current += Math.floor(value);
+        this.moveGreenIcon.setBadge(this.moveGreenStat.current);
         break;
       }
       case 'INTERACT_BOOSTER': {
-        this.interactBoosterStat.current += Math.floor(value);
-        this.interactBoosterIcon.setBadge(this.interactBoosterStat.current);
+        this.interactGreenStat.current += Math.floor(value);
+        this.interactGreenIcon.setBadge(this.interactGreenStat.current);
         break;
       }
     }
@@ -322,35 +331,35 @@ export class Player extends Phaser.GameObjects.Sprite {
   public getStat(stat: 'INTERACT_GOTCHI' | 'MOVE_GOTCHI' | 'MOVE_AGGRO' | 'INTERACT_AGGRO' | 'INTERACT_PORTAL' | 'MOVE_PORTAL' | 'MOVE_BOOSTER' | 'INTERACT_BOOSTER') {
     switch (stat) {
       case 'INTERACT_GOTCHI': {
-        return this.interactGotchiStat.current;
+        return this.interactPinkStat.current;
         break;
       }
       case 'MOVE_GOTCHI': {
-        return this.moveGotchiStat.current;
+        return this.movePinkStat.current;
         break;
       }
       case 'MOVE_AGGRO': {
-        return this.moveAggroStat.current;
+        return this.moveRedStat.current;
         break;
       }
       case 'INTERACT_AGGRO': {
-        return this.interactAggroStat.current;
+        return this.interactRedStat.current;
         break;
       }
       case 'INTERACT_PORTAL': {
-        return this.interactPortalStat.current;
+        return this.interactBlueStat.current;
         break;
       }
       case 'MOVE_PORTAL': {
-        return this.movePortalStat.current;
+        return this.moveBlueStat.current;
         break;
       }
       case 'MOVE_BOOSTER': {
-        return this.moveBoosterStat.current;
+        return this.moveGreenStat.current;
         break;
       }
       case 'INTERACT_BOOSTER': {
-        return this.interactBoosterStat.current;
+        return this.interactGreenStat.current;
         break;
       }
     }
@@ -423,6 +432,15 @@ export class Player extends Phaser.GameObjects.Sprite {
     });
   }
 
+  public panCameraToPlayer() {
+    this.scene.add.tween({
+      targets: this.scene.cameras.main,
+      scrollX: this.x - getGameWidth(this.scene)*0.5,
+      scrollY: this.y - getGameHeight(this.scene)*0.5,
+      duration: 500,
+    })
+  }
+
   public onSelectLevel(levelNumber: number) {
     
         const selectedLevelButton = this.world.getLevelButton(levelNumber);
@@ -432,6 +450,11 @@ export class Player extends Phaser.GameObjects.Sprite {
         if (!playerLevelButton && selectedLevelButton) {      
             // should really change this to a smoke bomb...
             this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
+
+            // set the camera to the players starting position
+            this.scene.cameras.main.scrollX = this.x - getGameWidth(this.scene)*0.5;
+            this.scene.cameras.main.scrollY = this.y - getGameHeight(this.scene)*0.5;
+
         } // valid player and selected buttons so...
         else if (playerLevelButton && selectedLevelButton) {
             // if player button adjacent to selected, tween to it...
@@ -464,6 +487,9 @@ export class Player extends Phaser.GameObjects.Sprite {
                         },
                         onComplete: () => {
                             this.setDirection('DOWN');
+
+                            // tween camera to new position
+                            this.panCameraToPlayer();
                         },
                         duration: 500,
                     });
@@ -471,11 +497,16 @@ export class Player extends Phaser.GameObjects.Sprite {
             } else {
                 // should really change this to a smoke bomb...
                 this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
+
+                // tween camera to new position
+                this.panCameraToPlayer();
             }
 
         }
 
         this.levelNumber = levelNumber;
+
+        // last thing to do is tween the camera to centre on our player
 
   }
 

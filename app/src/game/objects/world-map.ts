@@ -215,25 +215,6 @@ export class WorldMap extends Phaser.GameObjects.Image {
 
     update() {
 
-        if (this.cursorKeys.up.isDown)
-        {
-            this.scene.cameras.main.scrollY -= 0.01*this.worldHeight;
-        }
-        else if (this.cursorKeys.down.isDown)
-        {
-            this.scene.cameras.main.scrollY += 0.01*this.worldHeight;
-        }
-
-        if (this.cursorKeys.left.isDown)
-        {
-            this.scene.cameras.main.scrollX -= 0.01*this.worldHeight;
-        }
-        else if (this.cursorKeys.right.isDown)
-        {
-            this.scene.cameras.main.scrollX += 0.01*this.worldHeight;
-        }
-
-
         // render some debug info
         const pointer = this.scene.input.activePointer;
 

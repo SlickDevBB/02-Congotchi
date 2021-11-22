@@ -32,10 +32,16 @@ export const PORTAL_OPEN = 'portal_open';
 export const PORTAL_CLOSED = 'portal_closed';
 export const BLACK_CIRCLE_SHADED = 'black-circle-shaded';
 export const WHITE_CIRCLE_SHADED = 'white-circle-shaded';
+export const PINK_CIRCLE_SHADED = 'pink-circle-shaded';
+export const RED_CIRCLE_SHADED = 'red-circle-shaded';
+export const GREEN_CIRCLE_SHADED = 'green-circle-shaded';
+export const BLUE_CIRCLE_SHADED = 'blue-circle-shaded';
 export const MOVE_ICON = 'move_icon';
+export const QUESTION_MARK_ICON = 'question_mark_icon';
 export const ROTATE_ICON = 'rotate_icon';
 export const SHUFFLE_ICON = 'shuffle_icon';
 export const BONUS_ICON = 'bonus_icon';
+export const ARROW_ICON = 'arrow_icon';
 export const RED_BUTTON = 'red_button';
 export const PURPLE_BUTTON = 'purple_button';
 export const GREEN_BUTTON = 'green_button';
@@ -53,6 +59,7 @@ export const GUI_2_STARS = 'gui_2_stars';
 export const GUI_3_STARS = 'gui_3_stars';
 export const CW_ROTATE_MOVE_ICON = 'cw_rotate_move_icon';
 export const ACW_ROTATE_MOVE_ICON = 'acw_rotate_move_icon';
+export const PIXEL_EXPLOSION = 'pixel_explosion';
 
 // Save all in game assets in the public folder
 export const assets: Array<Asset | SpritesheetAsset> = [
@@ -132,8 +139,33 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'IMAGE',
   },
   {
+    key: PINK_CIRCLE_SHADED,
+    src: 'assets/icons/sphere-pink.png',
+    type: 'IMAGE',
+  },
+  {
+    key: RED_CIRCLE_SHADED,
+    src: 'assets/icons/sphere-red.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GREEN_CIRCLE_SHADED,
+    src: 'assets/icons/sphere-green.png',
+    type: 'IMAGE',
+  },
+  {
+    key: BLUE_CIRCLE_SHADED,
+    src: 'assets/icons/sphere-blue.png',
+    type: 'IMAGE',
+  },
+  {
     key: MOVE_ICON,
-    src: 'assets/icons/move.png',
+    src: 'assets/icons/move-icon.png',
+    type: 'IMAGE',
+  },
+  {
+    key: QUESTION_MARK_ICON,
+    src: 'assets/icons/question-mark-icon.png',
     type: 'IMAGE',
   },
   {
@@ -234,6 +266,16 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: ACW_ROTATE_MOVE_ICON,
     src: 'assets/icons/acw-rotate-move-icon.png',
+    type: 'IMAGE',
+  },
+  {
+    key: ARROW_ICON,
+    src: 'assets/icons/arrow-icon.png',
+    type: 'IMAGE',
+  },
+  {
+    key: PIXEL_EXPLOSION,
+    src: 'assets/effects/pixel-explosion.png',
     type: 'IMAGE',
   },
 ];

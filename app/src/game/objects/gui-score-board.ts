@@ -4,6 +4,9 @@
 import { GUI_0_STARS, GUI_1_STARS, GUI_2_STARS, GUI_3_STARS, GUI_SCORE_PANEL } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_GUI_SCORE } from "game/helpers/constants";
+import { GameObjects } from "phaser";
+import { GameScene } from 'game/scenes/game-scene';
+import { Socket } from "socket.io-client";
 
 interface Props {
     scene: Phaser.Scene;
@@ -14,10 +17,15 @@ interface Props {
 export class GuiScoreBoard extends Phaser.GameObjects.Image {
     private scorePanelStars: Phaser.GameObjects.Image;
     private scoreText;
+    private level = 0;
+    private stars = 0;
     private score = 0;
     private xInit = 0;
     private yInit = 0;
     private scaleInit = 0;
+
+    // create a socket object for server scoreboard sends and retrieves
+    private socket?: Socket;
 
     constructor({ scene, x, y }: Props) {
         super(scene, x, y, GUI_SCORE_PANEL);
@@ -25,6 +33,10 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
         // set init variables
         this.xInit = x;
         this.yInit = y;
+
+        // add our socket
+        this.socket = this.scene.game.registry.values.socket;
+        this.socket?.emit('levelStarted');
 
         // add the scoreboard to the scene
         this.scene.add.existing(this);
@@ -77,15 +89,22 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
         else if (stars === 1) this.scorePanelStars.setTexture(GUI_1_STARS);
         else if (stars === 2) this.scorePanelStars.setTexture(GUI_2_STARS);
         else if (stars === 3) this.scorePanelStars.setTexture(GUI_3_STARS);
+        this.stars = stars;
     }
 
-    public resetScore() {
+    public onLevelStart() {
         this.score = 0;
         this.scoreText.text = this.score.toString().padStart(10,'0');
         this.setStarScore(0);
+
+        // set the level
+        const levelNum = (this.scene as GameScene).getGridLevel()?.getLevelNumber();
+        if (levelNum) {
+            this.level = levelNum;
+        }
     }
 
-    public levelOver() {
+    public onLevelOver() {
         this.scene.add.tween({
             targets: [this],
             x: getGameWidth(this.scene)*0.5,
@@ -93,6 +112,10 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
             scale: 3,
             duration: 250,
         })
+
+        
+        // tell the socket level is finished
+        this.socket?.emit('levelOver', {level: this.level, score: this.score, stars: this.stars});
     }
 
     public returnHome() {

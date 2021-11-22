@@ -48,6 +48,9 @@ export class GO_Portal extends GridObject {
         this.setInteractive();
         this.scene.input.setDraggable(this);
 
+        // set our bg colour
+        this.setBgSquareColour('BLUE');
+
         // set a specific depth
         this.setDepth(DEPTH_GO_PORTAL);
 
@@ -55,6 +58,8 @@ export class GO_Portal extends GridObject {
         this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
+            
+            console.log(this);
         });
 
         // set behaviour for pointer up event
@@ -191,7 +196,7 @@ export class GO_Portal extends GridObject {
         // find all gotchis adjacent the portal
         this.findCongaLeaders();
 
-        // go through each congachain
+        // go through each conga leader to see if they have followers
         for (let i = 0; i < 4; i++) {
 
             // see if we have a conga leader
@@ -204,9 +209,6 @@ export class GO_Portal extends GridObject {
                 if (this.gotchiChains[i]) {
                     this.gotchiChains[i].map( g => { if (g.status === 'READY') this.numReadyGotchis[i]++; });
                 }
-
-                console.log('ready gotchi num: ' + this.numReadyGotchis[i]);
-                console.log('subchain gotchi num: ' + this.numSubchainGotchis[i]);
 
                 // if our number of ready gotchis === number of gotchis in subchain of particular follower we can find followers/leaders and run set pos/dir functions
                 if (this.numReadyGotchis[i] === this.numSubchainGotchis[i]) {
@@ -300,7 +302,7 @@ export class GO_Portal extends GridObject {
     }
 
     update(): void {
-        // do stuff
+        super.update();
     }
 }
   

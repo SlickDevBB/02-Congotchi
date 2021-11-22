@@ -3,7 +3,7 @@
 
 
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
-import { GO_Empty, GO_Gotchi, GO_Inactive, GO_Portal, GridObject, LevelConfig, Player } from 'game/objects';
+import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GridObject, LevelConfig, Player } from 'game/objects';
 import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, GUI_SCORE_PANEL, M67_GRENADE, MILKSHAKE, PORTAL_CLOSED, PORTAL_OPEN, UNCOMMON_CACTI } from 'game/assets';
 import '../helpers/constants';
 import { DEPTH_GRID_LEVEL, DEPTH_GRID_OBJECTS } from '../helpers/constants';
@@ -11,6 +11,7 @@ import { GameScene } from 'game/scenes/game-scene';
 import { AavegotchiGameObject } from 'types';
 import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
 import { Game } from 'phaser';
+import { Socket } from 'socket.io-client';
 
 interface Props {
   scene: Phaser.Scene;
@@ -52,6 +53,9 @@ export class GridLevel {
   private initialGotchiCount = 0;
   private status: 'ACTIVE' | 'INACTIVE';
 
+  // our score variable
+  private score = 0;
+
   constructor({ scene, player, randomGotchis, levelConfig, }: Props) {
     // store our scene, player and levelConfig
     this.scene = scene;
@@ -59,6 +63,8 @@ export class GridLevel {
     this.randomGotchis = randomGotchis;
     this.levelConfig = levelConfig;
     this.status = 'ACTIVE';
+
+    
 
     // create the grid level
     this.numberRows = this.levelConfig.gridObjectLayout.length;
@@ -250,6 +256,24 @@ export class GridLevel {
             }
             break;
           }
+          case 7: {
+            this.gridCells[i][j] = { 
+              row: i, 
+              col: j,
+              gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: M67_GRENADE, gridSize: this.gridSize, objectType: 'GRENADE',}),
+              gridRectangle: this.makeRectangle(i,j),
+            }
+            break;
+          }
+          case 8: {
+            this.gridCells[i][j] = { 
+              row: i, 
+              col: j,
+              gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: MILKSHAKE, gridSize: this.gridSize, objectType: 'GRENADE',}),
+              gridRectangle: this.makeRectangle(i,j),
+            }
+            break;
+          }
           default: break;
         }
       }
@@ -338,16 +362,10 @@ export class GridLevel {
 
     return (noGotchisLeft || noPortalPointsLeft);
   }
-  
-  // public setGotchiArrowsVisible(visible: boolean) {
-  //   this.gridCells.map(row => row.map(cell => {
-  //     if (cell.gridObject.getType() === 'GOTCHI') {
-  //       (cell.gridObject as GO_Gotchi).setRotateArrowsVisible(visible);
-  //     }
-  //   }))
-  // }
 
-
+  public getLevelNumber() {
+    return this.levelConfig.levelNumber;
+  }
 
   public getGridSize() {
     return this.gridSize;
@@ -381,17 +399,6 @@ export class GridLevel {
        case 'EMPTY': {
          gr.setFillStyle(0x000000); 
          break;
-       }
-       case 'GOTCHI': {
-         if ( (go as GO_Gotchi).hasFollower() || (go as GO_Gotchi).hasLeader() ) {
-           gr.setFillStyle(0x770077);
-         } else {
-           gr.setFillStyle(0x000000);
-         }
-         break;
-       }
-       case 'PORTAL': {
-         gr.setFillStyle(0x000077);
        }
      }
   }
@@ -477,6 +484,7 @@ export class GridLevel {
     })
 
     this.status = 'INACTIVE';
+
   }
 
   public getStatus() {
@@ -485,7 +493,7 @@ export class GridLevel {
 
 
   update(): void {
-    // update our star score depending on gotchis saved
+        // update our star score depending on gotchis saved
     let remainingGotchiCount = 0;
     const gui = (this.scene as GameScene).getGui();
     this.gridCells.map(row => row.map( cell => {
@@ -513,7 +521,6 @@ export class GridLevel {
       // set a timeout to end the level
       setTimeout( () => {
         (this.scene as GameScene).getGui()?.showLevelOverScreen();
-        // (this.scene as GameScene).endLevel();
       }, 500);
     }
 

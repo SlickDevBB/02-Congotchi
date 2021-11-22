@@ -21,6 +21,8 @@ export interface GO_Props {
     protected gridLevel: GridLevel;
     protected gridSize: number;
     protected objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' = 'BASE_CLASS';
+    protected bgSquareColour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE' = 'NONE';
+    protected bgSquare: Phaser.GameObjects.Rectangle;
 
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
       super(scene,
@@ -51,6 +53,32 @@ export interface GO_Props {
 
       // set the depth
       this.setDepth(DEPTH_GRID_OBJECTS);
+
+      // create a rectangle background with our base colour
+      this.bgSquare = this.scene.add.rectangle(
+        this.x, this.y, 
+        this.gridSize, this.gridSize
+        )
+        .setAlpha(0.33)
+        .setStrokeStyle(1, 0xffffff)
+        .setOrigin(0.5,0.5)
+        .setDepth(DEPTH_GRID_OBJECTS - 1)
+        .setScrollFactor(0)
+
+      this.setBgSquareColour('NONE');
+
+    }
+
+    public setBgSquareColour(colour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE') {
+      this.bgSquare.setVisible(true);
+      switch (colour) {
+        case 'PINK': this.bgSquare.setFillStyle(0xfe019a); break;
+        case 'RED' : this.bgSquare.setFillStyle(0xff0000); break;
+        case 'GREEN' : this.bgSquare.setFillStyle(0x00ff00); break;
+        case 'BLUE' : this.bgSquare.setFillStyle(0x0000ff); break;
+        case 'NONE' : this.bgSquare.setVisible(false); break;
+        default: break;
+      }
     }
 
     public setGridPosition(row: number, col: number, customOnComplete?: () => any, keepOldObject = false, tweenDuration = 100) {
@@ -98,9 +126,15 @@ export interface GO_Props {
       return this.objectType;
     }
 
+    destroy() {
+      super.destroy();
+      this.bgSquare.destroy();
+    }
+
   
     update(): void {
-      // do stuff
+      // make sure bg square follows this object
+      this.bgSquare.setPosition(this.x, this.y);
     }
   }
   

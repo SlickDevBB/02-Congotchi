@@ -17,7 +17,7 @@ interface Props {
 }
 
 const HOVER_SCALE_UP = 1.33;
-const ALPHA = 0.75;
+const ALPHA = 0.95;
 
 export class AarcIcon extends Phaser.GameObjects.Image {
     // declare private variables
@@ -28,9 +28,10 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     private initWidth = 0;
     private badgeBG: Phaser.GameObjects.Arc | 0;
     private badgeText: Phaser.GameObjects.Text | 0;
-    private iconToCircleRatio = 0.6;
+    private iconToCircleRatio;
+    private badgeOffset = 1;
 
-    constructor({ scene, x, y, keyBg, keyIcon, frame, radius, useBadge = false, numBadge = 0, iconToCircleRatio = 0.6} : Props) {
+    constructor({ scene, x, y, keyBg, keyIcon, frame, radius, useBadge = false, numBadge = 0, iconToCircleRatio = 0.8} : Props) {
         super(scene, x, y, keyBg, frame);
         
         // save the initial specified radius for later
@@ -59,8 +60,8 @@ export class AarcIcon extends Phaser.GameObjects.Image {
         // add a badge if set to true in constructor
         if (useBadge) {
             this.badgeBG = this.scene.add.circle(
-                this.x + radius*.7,
-                this.y + radius*.7,
+                this.x + radius*this.badgeOffset,
+                this.y + radius*this.badgeOffset,
                 radius*0.5,
                 0xff0000,
                 ALPHA)
@@ -142,8 +143,8 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     public setPosition(x: number, y: number) {
         super.setPosition(x,y);
         if (this.icon) this.icon.setPosition(x,y);
-        if (this.badgeBG) this.badgeBG.setPosition(x+this.initRadius*.7,y+this.initRadius*.7);
-        if (this.badgeText) this.badgeText.setPosition(x+this.initRadius*.7,y+this.initRadius*.7);
+        if (this.badgeBG) this.badgeBG.setPosition(x+this.initRadius*this.badgeOffset,y+this.initRadius*this.badgeOffset);
+        if (this.badgeText) this.badgeText.setPosition(x+this.initRadius*this.badgeOffset,y+this.initRadius*this.badgeOffset);
         return this;
     }
 

@@ -12,3 +12,5 @@ export * from './grid-objects/go-inactive';
 export * from './grid-objects/go-empty';
 export * from './grid-objects/go-gotchi';
 export * from './grid-objects/go-portal';
+export * from './grid-objects/go-grenade';
+export * from './grid-objects/go-milkshake';
