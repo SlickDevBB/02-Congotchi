@@ -9,6 +9,7 @@ import { AavegotchiGameObject } from 'types';
 import { timeStamp } from 'console';
 import { queryAllByDisplayValue } from '@testing-library/dom';
 import { Game } from 'phaser';
+import { getGameHeight } from 'game/helpers';
 
 export interface GO_Gotchi_Props {
     scene: Phaser.Scene;
@@ -35,6 +36,10 @@ interface CountGotchi {
 
     // create arrows which are used to depict direction changes
     private arrows: Array<Phaser.GameObjects.Image> = [];
+
+    // score bonus is how many points you get for getting this gotchi into a portal
+    public scoreBonus = 5;
+    private scoreBonusText;
 
     // declare icon for rotate and move on hover
     // private rotateMoveIcon: Phaser.GameObjects.Image;
@@ -110,10 +115,24 @@ interface CountGotchi {
 
         // save the mouse
         this.mousePointer = this.scene.input.activePointer;
+        
+        // create scorebonus text
+        this.scoreBonusText = this.scene.add.text(
+            this.x-this.gridSize*.475,
+            this.y-this.gridSize*.5,
+            this.scoreBonus.toString(),)
+            .setVisible(true)
+            .setStyle({
+                fontFamily: 'Arial', 
+                fontSize: Math.trunc(getGameHeight(this.scene)*0.02).toString() + 'px', 
+                })
+            .setOrigin(0,0)
+            .setScrollFactor(0)
+            .setDepth(this.depth+1);
 
         // create down arrow
         this.arrows.push(
-            this.scene.add.image(this.x, this.y+this.displayHeight*.5, ARROW_ICON)
+            this.scene.add.image(this.x, this.y+this.gridSize, ARROW_ICON)
             .setAngle(0)
             .on('pointerup', () => {
                 // check we've got enough interaction points
@@ -129,7 +148,7 @@ interface CountGotchi {
 
         // create left arrow
         this.arrows.push(
-            this.scene.add.image(this.x-this.displayWidth*.5, this.y, ARROW_ICON)
+            this.scene.add.image(this.x-this.gridSize, this.y, ARROW_ICON)
             .setAngle(90)
             .on('pointerup', () => {
                 // check we've got enough interaction points
@@ -145,7 +164,7 @@ interface CountGotchi {
 
         // create up arrow
         this.arrows.push(
-            this.scene.add.image(this.x, this.y-this.displayHeight*.5, ARROW_ICON)
+            this.scene.add.image(this.x, this.y-this.gridSize, ARROW_ICON)
             .setAngle(180)
             .on('pointerup', () => {
                 // check we've got enough interaction points
@@ -161,7 +180,7 @@ interface CountGotchi {
 
         // create right arrow
         this.arrows.push(
-            this.scene.add.image(this.x+this.displayWidth, this.y, ARROW_ICON)    
+            this.scene.add.image(this.x+this.gridSize, this.y, ARROW_ICON)    
             .setAngle(-90)
             .on('pointerup', () => {
                 // check we've got enough interaction points
@@ -177,7 +196,7 @@ interface CountGotchi {
 
         // set some standard arrow values
         this.arrows.map(arrow => {
-            arrow.setDisplaySize(this.displayWidth*0.5, this.displayHeight*0.5)
+            arrow.setDisplaySize(this.gridSize, this.gridSize)
             .setDepth(DEPTH_GOTCHI_ICON)
             .setScrollFactor(0)
             .setVisible(false)
@@ -245,6 +264,9 @@ interface CountGotchi {
                     const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
                     const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
                     const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
+
+                    // console.log(this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col));
+                    // console.log(this.gridLevel.getGridObject(gp.row+1, gp.col));
                     
                     const adoX = this.dragX;
                     const adoY = this.dragY;
@@ -528,7 +550,9 @@ interface CountGotchi {
             row,
             col,
             () => {
-                (this.scene as GameScene).getGui()?.adjustScore(20);
+                // adjust the score
+                (this.scene as GameScene).getGui()?.adjustScore(this.scoreBonus);
+                // spiral the gotchi into the portal
                 this.scene.add.tween({
                     targets: this,
                     scale: 0,
@@ -538,6 +562,26 @@ interface CountGotchi {
                         this.destroy();
                     }
                 });
+                // create a temporary score text
+                const score = this.scene.add.text(this.x, this.y,
+                    this.scoreBonus.toString(),
+                    {fontFamily: 'Arial', fontSize: (getGameHeight(this.scene)*0.05).toString()+'px'})
+                    .setDepth(this.depth+100)
+                    .setStroke('0x000000',2)
+                    .setScrollFactor(0)
+                    .setOrigin(0.5,0.5);
+
+                // grab the gui scoreboard and tween our temp text over to it
+                const guiScoreboard = (this.scene as GameScene).getGui()?.getScoreboard();
+                this.scene.tweens.add({
+                    targets: score,
+                    // alpha: 0,
+                    x: guiScoreboard?.x,
+                    y: guiScoreboard?.y,
+                    duration: 250,
+                    onComplete: () => { score.destroy() }
+                })
+                
             },
             true,
             this.congaStepDuration,
@@ -550,6 +594,7 @@ interface CountGotchi {
         super.destroy();
         this.directionGuide.destroy();
         this.arrows.map(arrow => arrow.destroy());
+        this.scoreBonusText.destroy();
     }
 
     public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
@@ -560,22 +605,22 @@ interface CountGotchi {
     // get conga chain
     private getCongaChain(gotchiChain: Array<GO_Gotchi>) {
         // for each follower that is a gotchi add them to the chain and call their followers too
-        if (this.followers[0]) {
+        if (this.followers[0] && (this.followers[0] as GO_Gotchi).status !== 'BURNT') {
             // add to the gotchi chain and check the follower for followers
             gotchiChain.push((this.followers[0] as GO_Gotchi));
             (this.followers[0] as GO_Gotchi).getCongaChain(gotchiChain);
         }
-        if (this.followers[1]) {
+        if (this.followers[1] && (this.followers[1] as GO_Gotchi).status !== 'BURNT') {
             // add to the gotchi chain and check the follower for followers
             gotchiChain.push((this.followers[1] as GO_Gotchi));
             (this.followers[1] as GO_Gotchi).getCongaChain(gotchiChain);
         }
-        if (this.followers[2]) {
+        if (this.followers[2] && (this.followers[2] as GO_Gotchi).status !== 'BURNT') {
             // add to the gotchi chain and check the follower for followers
             gotchiChain.push((this.followers[2] as GO_Gotchi));
             (this.followers[2] as GO_Gotchi).getCongaChain(gotchiChain);
         }
-        if (this.followers[3]) {
+        if (this.followers[3] && (this.followers[3] as GO_Gotchi).status !== 'BURNT') {
             // add to the gotchi chain and check the follower for followers
             gotchiChain.push((this.followers[3] as GO_Gotchi));
             (this.followers[3] as GO_Gotchi).getCongaChain(gotchiChain);
@@ -588,7 +633,13 @@ interface CountGotchi {
    }
   
     update(): void {
-        super.update();
+        super.update(); 
+
+        // update score bonus text position and make sure it stays the same as the scorebonus
+        this.scoreBonusText.setPosition(
+            this.x-this.gridSize*.475,
+            this.y-this.gridSize*.5,);
+        this.scoreBonusText.text = this.scoreBonus.toString();
 
         // update direction guide position
         switch (this.getDirection()) {
@@ -600,10 +651,10 @@ interface CountGotchi {
 
         // make sure rotate arrows follow their gotchi
         if (this.arrows.length === 4) {
-            this.arrows[0].setPosition(this.x, this.y+this.displayHeight*.65);
-            this.arrows[1].setPosition(this.x-this.displayWidth*.65, this.y);
-            this.arrows[2].setPosition(this.x, this.y-this.displayHeight*.65);
-            this.arrows[3].setPosition(this.x+this.displayWidth*.65, this.y);
+            this.arrows[0].setPosition(this.x, this.y+this.gridSize);
+            this.arrows[1].setPosition(this.x-this.gridSize, this.y);
+            this.arrows[2].setPosition(this.x, this.y-this.gridSize);
+            this.arrows[3].setPosition(this.x+this.gridSize, this.y);
         }
 
         // update visibility of all arrows

@@ -3,6 +3,8 @@
 #firebase
 service-account.json
 
+.env.development
+
 # dependencies
 */node_modules
 /.pnp

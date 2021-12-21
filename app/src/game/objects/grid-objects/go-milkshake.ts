@@ -2,7 +2,7 @@
 
 import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, PORTAL_OPEN } from 'game/assets';
+import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, PIXEL_PINK_SPLASH, PORTAL_OPEN } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
 
@@ -30,6 +30,8 @@ export class GO_Milkshake extends GridObject {
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'MILKSHAKE'});
 
+        console.log('MILKHAKE CREATED');
+
         // enable draggable input
         this.setInteractive();
         this.scene.input.setDraggable(this);
@@ -51,7 +53,11 @@ export class GO_Milkshake extends GridObject {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // make the grenade explode
+                // activate the milkshake
+                this.quenchThirst();
+
+                // destroy the milkshake
+                // this.gridLevel.destroyAndMakeEmptyGridObject(this.gridPosition.row, this.gridPosition.col);
             }
         });
 
@@ -119,14 +125,49 @@ export class GO_Milkshake extends GridObject {
         })
     }
 
-    public getStatus() {
-        return this.status;
+    public quenchThirst() {
+        // go through a 3x3 grid of all objects and find gotchis
+        for (let i = this.gridPosition.row-1; i < this.gridPosition.row + 2; i++) {
+            for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
+                const go = this.gridLevel.getGridObject(i, j);
+                if (go && go.getType() === 'GOTCHI') {
+
+                    const gotchi = (go as GO_Gotchi);
+                    // increase the gotchis score bonus
+                    gotchi.scoreBonus += 10;
+
+                    // generate a pink splash image
+                    const explosionImage = this.scene.add.image(
+                        gotchi.x,
+                        gotchi.y,
+                        PIXEL_PINK_SPLASH
+                    )
+                    .setDisplaySize(gotchi.displayWidth, gotchi.displayHeight)
+                    .setDepth(gotchi.depth+1)
+                    .setOrigin(0.5, 0.5)
+                    .setAlpha(1)
+                    .setScrollFactor(0);
+            
+                    this.scene.add.tween({
+                        targets: [explosionImage, this],
+                        alpha: 0,
+                        duration: 500,
+                        onComplete: () => { 
+                            explosionImage.destroy() 
+                            this.destroy()
+                        },
+                    })
+                }
+            }
+        }
+
+        // I have no idea but i have to do a weird timeout for this to work properly????
+        // instantly setting to empty grid object doesn't seem to be recognized
+        setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),500);
     }
 
-    public setStatus(status: 'OPEN' | 'CLOSED') {
-        this.status = status;
-        if (status === 'OPEN') this.setTexture(PORTAL_OPEN);
-        return this;
+    destroy() {
+        super.destroy();
     }
 
     update(): void {

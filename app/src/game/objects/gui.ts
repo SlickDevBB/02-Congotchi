@@ -8,11 +8,18 @@ import { LevelButton, Player, LevelConfig, levels, GridLevel, WorldMap, GuiScore
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT, DEPTH_GUI_SCORE } from "game/helpers/constants";
 import { Game } from "phaser";
+import { Socket } from "socket.io-client";
 
 interface Props {
     scene: GameScene,
     player: Player,
     world: WorldMap,
+}
+
+interface LevelScores {
+    levelNumber: number,
+    highScore: number,
+    stars: number,
 }
 
 export class Gui {
@@ -21,12 +28,7 @@ export class Gui {
     private guiLevelSelectRibbon?: Phaser.GameObjects.Image;
     private text?: Phaser.GameObjects.Text;
     private playButton: Phaser.GameObjects.Image;
-    // private forwardButton: Phaser.GameObjects.Image;
-    // private backButton: Phaser.GameObjects.Image;
     private exitButton: Phaser.GameObjects.Image;
-    // private scorePanel: Phaser.GameObjects.Image;
-    // private scorePanelStars: Phaser.GameObjects.Image;
-    // private scoreText;
     private scoreBoard: GuiScoreBoard;
     private mainMenuButton?: Phaser.GameObjects.Image;
     private clickSound?: Phaser.Sound.BaseSound;
@@ -42,9 +44,10 @@ export class Gui {
 
         // add the panel for text
         this.levelDescription = this.scene.add.image(
-            getGameWidth(this.scene)*0.5,getGameHeight(this.scene)-getGameWidth(this.scene)*0.05,
+            getGameWidth(this.scene)*0.5,
+            getGameHeight(this.scene)-getGameWidth(this.scene)*0.05,
             GUI_PANEL_5)
-        .setDisplaySize(getGameWidth(this.scene)*.9, getGameHeight(this.scene)*0.15)
+        .setDisplaySize(getGameWidth(this.scene)*.9, getGameHeight(this.scene)*0.3)
         .setDepth(DEPTH_GUI_LEVEL_SELECT)
         .setOrigin(0.5,1)
         .setScrollFactor(0);
@@ -61,11 +64,12 @@ export class Gui {
         // add text for level description
         const fontHeight = getGameHeight(this.scene)*0.027;
         this.text = this.scene.add.text(
-            this.levelDescription.x + getGameWidth(this.scene)*0.01, 
-            getGameHeight(this.scene)*0.872,
+            getGameWidth(this.scene)*0.5, 
+            getGameHeight(this.scene)*(1-0.28),
             '',
             { font: fontHeight+'px Courier', color: '#000000' })
-            .setWordWrapWidth(getGameWidth(this.scene)*0.7)
+            .setWordWrapWidth(getGameWidth(this.scene)*0.85)
+            .setAlign('center')
             .setDepth(25)
             .setOrigin(0.5,0)
             .setScrollFactor(0);
@@ -85,19 +89,6 @@ export class Gui {
                 this.scene.startLevel()
             });
 
-        // // add a forward level button
-        // this.forwardButton = this.scene.add.image(
-        //     getGameWidth(this.scene)*0.93,
-        //     getGameHeight(this.scene)*0.9,
-        //     GUI_BUTTON_FORWARD,)
-        //     .setDepth(DEPTH_GUI_LEVEL_SELECT+2)
-        //     .setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1)
-        //     .setScrollFactor(0)
-        //     .setInteractive()
-        //     .on('pointerdown', () => {
-        //         this.scene.selectLevel(this.levelNumber+1);
-        //     });
-
         // add exit button when we need to get out of a level
         this.exitButton = this.scene.add.image(
             getGameWidth(this.scene)-getGameWidth(this.scene)*0.1, 
@@ -113,6 +104,8 @@ export class Gui {
                 if (this.scene.getGridLevel()?.getStatus() === 'ACTIVE') {
                     this.scene.endLevel();
                 } else {
+                    // we've hit exit when on world map, save the current level and get out of here
+                    (this.scene as GameScene).saveCurrentLevel();
                     this.clickSound?.play();
                     window.history.back();
                 }
@@ -129,6 +122,12 @@ export class Gui {
         this.clickSound = this.scene.sound.add(CLICK, { loop: false });
     }
 
+    
+
+    public getScoreboard() {
+        return this.scoreBoard;
+    }
+
     public adjustScore(delta: number) {
         this.scoreBoard.adjustScore(delta);
     }
@@ -137,9 +136,15 @@ export class Gui {
         this.scoreBoard.setStarScore(stars);
     }
 
-    // public resetScore() {
-    //     this.scoreBoard.resetScore();
-    // }
+    public onSelectLevel(levelNumber: number) {
+        this.levelNumber = levelNumber;
+        this.text?.setText(levels[levelNumber-1].levelDescription);
+
+        // display the latest available score data
+        this.displayLevelHighScore(levelNumber);
+
+        console.log((this.scene as GameScene).levelScores);
+    }
 
     public onStartLevel() {
         // tween down the level description gui
@@ -150,14 +155,15 @@ export class Gui {
         });
 
         // tell the scoreboard started a level
-        this.scoreBoard.onLevelStart();
+        this.scoreBoard.onStartLevel();
 
         // tween out the main menu button
         this.scene.add.tween({
-            targets: this.mainMenuButton,
+            targets: [this.mainMenuButton,  ],
             x: '+='+(getGameWidth(this.scene)).toString(),
             duration: 250,
         })
+
     }
 
     public onEndLevel() {
@@ -177,49 +183,35 @@ export class Gui {
             duration: 250,
         })
 
-        // this is where we log score to the server
-        // SEND SCORE TO SERVER!!!!
-
         // tween in the main menu button
         this.scene.add.tween({
-            targets: this.mainMenuButton,
+            targets: [this.mainMenuButton,  ],
             x: '+='+(-getGameWidth(this.scene)).toString(),
             duration: 250,
         })
 
-        // tween exit button back to normal position
-
-
         // return score home
         this.scoreBoard.returnHome();
+
+        // redisplay high scores
+        this.displayLevelHighScore(this.levelNumber);
     }
 
-    public onSelectLevel(levelNumber: number) {
-        this.levelNumber = levelNumber;
-        switch (levelNumber) {
-            case 1: {
-                this.text?.setText('1: So... U Congotchi round here often?');
-                break;
-            }
-            case 2: {
-                this.text?.setText("2: I'm going on an Aadventure!!!");
-                break;
-            }
-            case 3: {
-                this.text?.setText('3: Friskin by the Forest! Oooooweeee!');
-                break;
-            }
-            case 4: {
-                this.text?.setText('4: Shall we go in? Maybe wait a bit...');
-                break;
-            }
-            case 5: {
-                this.text?.setText('5: OMG. Is that a head? A tentacle? What.. the.. f....');
-                break;
-            }
-        }
-
+    public displayLevelHighScore(levelNumber: number) {
         // Fetch current gotchis highest score for this level and display it
+        if ((this.scene as GameScene).levelScores[levelNumber-1]) {
+            const hs = (this.scene as GameScene).levelScores[levelNumber-1].highScore;
+            const st = (this.scene as GameScene).levelScores[levelNumber-1].stars;
+            
+            // update the scoreboard
+            this.scoreBoard.setScore(hs);
+            this.scoreBoard.setStarScore(st);
+            console.log('hs ' + hs);
+            console.log('st ' + st);
+            
+        } else {
+            console.log('Why are we missing level data?????');
+        }
     }
 
     public showActionText(text: string) {
@@ -260,8 +252,8 @@ export class Gui {
     }
 
     public showLevelOverScreen() {
-
-        this.scoreBoard.onLevelOver();
+        // move the scoreboard into the end of level results position
+        this.scoreBoard.showLevelOverResults();
         
         // tween the exit button down next to the scoreboard
         this.scene.add.tween({
@@ -270,12 +262,14 @@ export class Gui {
             y: getGameHeight(this.scene)*0.43,
             // scale: this.exitButton.scale*1.5,
             duration: 250,
-        })
+        });
     }
 
     public update() {
         // update gui score board
         this.scoreBoard.update();
+
+        // if we're not in a level update the score
     }
 
 }

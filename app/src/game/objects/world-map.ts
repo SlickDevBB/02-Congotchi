@@ -1,7 +1,7 @@
 // world-map.ts
 // this is the main level selector object that our gotchi traverses
 
-import { GREEN_BUTTON, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON } from "game/assets";
+import { GREEN_BUTTON, GREY_CIRCLE_SHADED, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON } from "game/assets";
 import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
 import { LevelButton, Player, LevelConfig, levels, Gui, GridLevel } from ".";
 import {
@@ -9,13 +9,13 @@ import {
   } from 'game/assets';
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_WORLD_MASK } from "game/helpers/constants";
+import { Socket } from "socket.io-client";
 
 interface Props {
     scene: GameScene;
     x: number;
     y: number;
     key: string;
-    unlockedLevels?: string[];
 }
 
 export class WorldMap extends Phaser.GameObjects.Image {
@@ -27,14 +27,16 @@ export class WorldMap extends Phaser.GameObjects.Image {
     private levelButtons: LevelButton[] = [];
     private worldHeight;
     private worldWidth;
+
+    // private socket: Socket;
     
     private backButton?: Phaser.GameObjects.Image;
     private backSound?: Phaser.Sound.BaseSound;
-
     private worldMask: Phaser.GameObjects.Rectangle;
 
+
     // call constructor
-    constructor({ scene, x, y, key, unlockedLevels }: Props) {
+    constructor({ scene, x, y, key }: Props) {
         super(scene, x, y, key);
 
         // add the map to the scene and set its display size
@@ -78,13 +80,20 @@ export class WorldMap extends Phaser.GameObjects.Image {
 
     }
 
+    public setUnlockedLevels(unlockedLevelNum: number) {
+        // this.maxUnlockedLevelNum = unlockedLevelNum;
+        for (let i = 0; i < unlockedLevelNum; i++) {
+            this.levelButtons[i].setLocked(false);
+        }
+    }
+
     private createLevelButtons() {
         // level 1
         this.levelButtons[0] = new LevelButton({
             scene: this.scene,
             x: 0.23*this.displayWidth,
             y: 0.65*this.displayHeight,
-            key: RED_BUTTON,
+            key: GREY_CIRCLE_SHADED,
             levelNumber: 1,
         })
         .on('pointerdown', () => (this.scene as GameScene).selectLevel(1));
@@ -94,7 +103,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             scene: this.scene,
             x: 0.285*this.displayWidth,
             y: 0.485*this.displayHeight,
-            key: RED_BUTTON,
+            key: GREY_CIRCLE_SHADED,
             levelNumber: 2,
         })
         .on('pointerdown', () => (this.scene as GameScene).selectLevel(2));
@@ -110,7 +119,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             scene: this.scene,
             x: 0.206*this.displayWidth,
             y: 0.386*this.displayHeight,
-            key: RED_BUTTON,
+            key: GREY_CIRCLE_SHADED,
             levelNumber: 3,
         })
         .on('pointerdown', () => (this.scene as GameScene).selectLevel(3));
@@ -126,7 +135,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             scene: this.scene,
             x: 0.06*this.displayWidth,
             y: 0.4*this.displayHeight,
-            key: RED_BUTTON,
+            key: GREY_CIRCLE_SHADED,
             levelNumber: 4,
         })
         .on('pointerdown', () => (this.scene as GameScene).selectLevel(4));
@@ -142,7 +151,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             scene: this.scene,
             x: 0.115*this.displayWidth,
             y: 0.273*this.displayHeight,
-            key: RED_BUTTON,
+            key: GREY_CIRCLE_SHADED,
             levelNumber: 5,
         })
         .on('pointerdown', () => (this.scene as GameScene).selectLevel(5));
@@ -160,6 +169,14 @@ export class WorldMap extends Phaser.GameObjects.Image {
     public getLevelButton(levelNumber: number) {
         const val = this.levelButtons.find( lb => lb.getLevelNumber() === levelNumber );
         return val;
+    }
+
+    public onSelectLevel(levelNumber: number) {
+        // set the selected level button to visible
+        const selectedLevelButton = this.getLevelButton(levelNumber);
+        this.levelButtons.map( lb => { if (lb !== selectedLevelButton) lb.setSelected(false) });
+        selectedLevelButton?.setSelected(true);
+        // this.selectedLevelNumber = levelNumber;
     }
 
     public onStartLevel() {
@@ -204,15 +221,6 @@ export class WorldMap extends Phaser.GameObjects.Image {
         }
     }
 
-    public onSelectLevel(levelNumber: number) {
-        // set the selected level button to visible
-        const selectedLevelButton = this.getLevelButton(levelNumber);
-        this.levelButtons.map( lb => { if (lb !== selectedLevelButton) lb.setSelected(false) });
-        selectedLevelButton?.setSelected(true);
-
-    }
-
-
     update() {
 
         // render some debug info
@@ -231,6 +239,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             '  Camera Y: ' + (this.scene.cameras.main.scrollY/this.worldHeight).toFixed(3),
             // '  Camera Zoom: ' + this.worldCam.zoom,
         ]);
+
     }
 
 }

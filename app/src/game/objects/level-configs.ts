@@ -20,6 +20,7 @@
 export interface LevelConfig {
     levelNumber: number,
     gridObjectLayout: Array<number[]>,
+    levelDescription: string,
 }
 
 export const levels: Array<LevelConfig> = [
@@ -35,7 +36,11 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 1, 6, 1, 1, 1, 1, 0],
         [0, 1, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
+        ],
+        levelDescription: 
+        'Welcome aadventurer! Our frens are lost throughout the gotchiverse and we need your help to save them!' +
+        "\n\n" +
+        'Arrange gotchis into conga lines and open portals to bring them home :)'
     },
     {
         levelNumber: 2,
@@ -49,7 +54,11 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 1, 1, 1, 2, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
+        ],
+        levelDescription: 
+        "Phew! So far so good. The GRID is a bit more dangerous though and you'll need to learn how to spin." +
+        "\n\n" +
+        "Single click on gotchis to point them in the right direction",
     },
     {
         levelNumber: 3,
@@ -63,7 +72,11 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 1, 6, 1, 1, 1, 1, 0],
         [0, 1, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
+        ],
+        levelDescription: 
+        "The DAARK FOREST beckons... but on the way there, keep your eyes peeled for milkshakes." +
+        "\n\n" +
+        "Position shakes next to gotchis and click them to give nearby frens a boost!"
     },
     {
         levelNumber: 4,
@@ -77,7 +90,11 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 1, 1, 2, 1, 2, 1, 0],
         [0, 1, 0, 1, 0, 1, 0, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
+        ],
+        levelDescription: 
+        "A final test before we enter the DAARK FOREST. This level is littered with grenades!" +
+        "\n\n" +
+        "BEFORE you open any portals PLEASE make sure grenades are moved far away from your frens!"
     },
     {
         levelNumber: 5,
@@ -91,6 +108,9 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 1, 1, 2, 1, 2, 1, 0],
         [0, 1, 0, 1, 0, 1, 0, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
+        ],
+        levelDescription: "The TREE OF FUD! OK fren... no need to panic... it's just a smiling, giant, purple, terrifying, gotchi eating tree..." +
+        "\n\n" +
+        "Use all your skills to get our frens home safely!"
     }
 ];

@@ -103,6 +103,7 @@ export class BootScene extends Phaser.Scene {
     this.socket?.emit("setGotchiData", {
       name: gotchi.name,
       tokenId: gotchi.id,
+      owner: gotchi.owner,
     });
 
     this.startGame();

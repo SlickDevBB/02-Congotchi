@@ -137,7 +137,10 @@ export class GO_Grenade extends GridObject {
             targets: explosionImage,
             alpha: 0,
             duration: 500,
-            onComplete: () => { explosionImage.destroy() },
+            onComplete: () => { 
+                explosionImage.destroy() 
+                this.destroy()
+            },
         })
 
         // go through a 3x3 grid of all objects
@@ -150,7 +153,11 @@ export class GO_Grenade extends GridObject {
             }
         }
 
-     
+        // I have no idea but i have to do a weird timeout for this to work properly????
+        // instantly setting to empty grid object doesn't seem to be recognized
+        setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),500);
+
+        this.setVisible(false);
     }
 
     update(): void {

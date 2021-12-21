@@ -70,9 +70,7 @@ export class Player extends Phaser.GameObjects.Sprite {
   private playerSavedScaleX = 1;
   private playerSavedScaleY= 1;
   private world;
-
-  // levelNumber variable stores what level our gotchi is on (starts on a non valid level)
-  private levelNumber = 0;
+  private levelNumber = 1;
 
   // direction variable
   private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
@@ -84,7 +82,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.world = world;
 
     // sprite
-    this.setOrigin(0, 0);
+    this.setOrigin(0.5, 0.5);
 
     // init stats
     this.initStats();
@@ -446,10 +444,12 @@ export class Player extends Phaser.GameObjects.Sprite {
         const selectedLevelButton = this.world.getLevelButton(levelNumber);
         const playerLevelButton = this.world.getLevelButton(this.levelNumber);
 
+        const OFFSET = 1.75
+
         // if player doesn't have a level we need to set it to one
         if (!playerLevelButton && selectedLevelButton) {      
             // should really change this to a smoke bomb...
-            this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
+            this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*OFFSET);
 
             // set the camera to the players starting position
             this.scene.cameras.main.scrollX = this.x - getGameWidth(this.scene)*0.5;
@@ -470,7 +470,7 @@ export class Player extends Phaser.GameObjects.Sprite {
                             const playerX = this.x;
                             const playerY = this.y;
                             const targetX = curve?.getPoint(path.t).x;
-                            const targetY = curve?.getPoint(path.t).y-playerLevelButton.displayHeight*1.5;
+                            const targetY = curve?.getPoint(path.t).y-playerLevelButton.displayHeight*OFFSET;
 
                             // find out which direction we're moving in most to determine gotchi orientation
                             const deltaX = targetX - playerX;
@@ -496,7 +496,7 @@ export class Player extends Phaser.GameObjects.Sprite {
                 }
             } else {
                 // should really change this to a smoke bomb...
-                this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*1.5);
+                this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*OFFSET);
 
                 // tween camera to new position
                 this.panCameraToPlayer();
@@ -505,9 +505,6 @@ export class Player extends Phaser.GameObjects.Sprite {
         }
 
         this.levelNumber = levelNumber;
-
-        // last thing to do is tween the camera to centre on our player
-
   }
 
   update(): void {

@@ -2,7 +2,7 @@
 // this should be stand alone from the actual levels
 // an object placed in the world that our gotchi can traverse between
 
-import { GREEN_BUTTON, PURPLE_BUTTON, RED_BUTTON } from "game/assets";
+import { GREEN_BUTTON, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, PINK_CIRCLE_SHADED, PURPLE_BUTTON, RED_BUTTON, RED_CIRCLE_SHADED } from "game/assets";
 import { getGameWidth } from "game/helpers";
 import { DEPTH_LEVEL_BUTTON } from "game/helpers/constants";
 import { Player } from ".";
@@ -24,6 +24,7 @@ export class LevelButton extends Phaser.GameObjects.Image {
     private curveGraphics: Phaser.GameObjects.Graphics;
     private levelNumber;
     private isSelected = false;
+    private locked = true;  // note we start all buttons locked
 
     // call constructor
     constructor({ scene, x, y, key, levelNumber }: Props) {
@@ -34,7 +35,7 @@ export class LevelButton extends Phaser.GameObjects.Image {
 
         // add button to the scene
         this.scene.add.existing(this);
-        this.setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.1);
+        this.setDisplaySize(getGameWidth(this.scene)*0.1, getGameWidth(this.scene)*0.075);
         
         this.setOrigin(0.5,0.5);
         
@@ -44,14 +45,15 @@ export class LevelButton extends Phaser.GameObjects.Image {
         this.levelText = this.scene.add.text(
             this.x, this.y-this.displayHeight*0.05, 
             levelNumber.toString(), 
-            { font: this.displayHeight*0.5+'px Courier', color: '#ffffff' })
-                .setOrigin(0.5,0.8)
+            { font: this.displayHeight*0.6+'px Courier', color: '#ffffff' })
+                .setOrigin(0.5,0.5)
                 .setStroke('#000000', 1)
                 .setShadow(0, 2, "#333333", 3, true, true);
 
         this.setInteractive();
-        this.on( 'pointerover', () => { if (!this.isSelected) this.setTexture(PURPLE_BUTTON) });
-        this.on( 'pointerout', () => { if (!this.isSelected) this.setTexture(RED_BUTTON) });
+        this.on( 'pointerover', () => { if (!this.isSelected && !this.locked) this.setTexture(PINK_CIRCLE_SHADED) });
+        this.on( 'pointerout', () => { if (!this.isSelected && !this.locked) this.setTexture(RED_CIRCLE_SHADED) });
+        this.on( 'pointerdown', () => console.log(this.isSelected));
 
         // last thing to do is set depth
         this.setDepth(DEPTH_LEVEL_BUTTON);
@@ -97,6 +99,23 @@ export class LevelButton extends Phaser.GameObjects.Image {
         return this;
     }
 
+    public setLocked(locked: boolean) {
+        this.locked = locked;
+        if (this.locked) {
+            this.setTexture(GREY_CIRCLE_SHADED);
+        } else {
+            if (!this.isSelected) {
+                this.setTexture(RED_CIRCLE_SHADED);
+            } else {
+                this.setTexture(GREEN_CIRCLE_SHADED);
+            }
+        }
+    }
+
+    public isLocked() {
+        return this.locked;
+    }
+
     public getLevelNumber() {
         return this.levelNumber;
     }
@@ -117,10 +136,20 @@ export class LevelButton extends Phaser.GameObjects.Image {
     }
 
     public setSelected(selected: boolean) {
-        this.isSelected = selected;
-        if (this.isSelected) this.setTexture(GREEN_BUTTON);
-        else this.setTexture(RED_BUTTON);
+        if (!this.locked) {
+            this.isSelected = selected;
+            if (this.isSelected) this.setTexture(GREEN_CIRCLE_SHADED);
+            else this.setTexture(RED_CIRCLE_SHADED);
+        }
     }
 
     public getSelected() { return this.isSelected; }
+
+    // update() {
+    //     super.update();
+    //     if (!this.locked) {
+    //         if (this.isSelected) this.setTexture(GREEN_CIRCLE_SHADED);
+    //         else this.setTexture(RED_CIRCLE_SHADED);
+    //     }
+    // }
 }

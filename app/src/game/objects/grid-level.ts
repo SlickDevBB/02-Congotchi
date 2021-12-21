@@ -269,7 +269,7 @@ export class GridLevel {
             this.gridCells[i][j] = { 
               row: i, 
               col: j,
-              gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: MILKSHAKE, gridSize: this.gridSize, objectType: 'GRENADE',}),
+              gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: MILKSHAKE, gridSize: this.gridSize, objectType: 'MILKSHAKE',}),
               gridRectangle: this.makeRectangle(i,j),
             }
             break;
@@ -331,9 +331,9 @@ export class GridLevel {
 
   public isGotchiGangReady() {
     let gotchisReady = true;
-    // first look for any open portals
+    // go through all grid objects and see if any gotchis are congotching
     this.gridCells.map( row => row.map( cell => {
-      if (cell.gridObject.getType() === 'GOTCHI' && !( (cell.gridObject as GO_Gotchi).getStatus() === 'READY') && !( (cell.gridObject as GO_Gotchi).getStatus() === 'WAITING')) {
+      if (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'CONGOTCHING') {
         // we have a gotchi not ready so set gotchisREady to false
         gotchisReady = false;
       }
@@ -391,18 +391,6 @@ export class GridLevel {
     return levelConfigClone;
   }
 
-  public renderGridCell(row: number, col: number) {
-     // based on the gridobject type we should shade the cell
-     const gr = this.gridCells[row][col].gridRectangle as Phaser.GameObjects.Rectangle;
-     const go = this.gridCells[row][col].gridObject;
-     switch (go.getType()) {
-       case 'EMPTY': {
-         gr.setFillStyle(0x000000); 
-         break;
-       }
-     }
-  }
-
   public setGridObject(row: number, col: number, gridObj: GridObject) {
     // set the new grid object to the cell requested
     if (this.gridCells[row][col]) {
@@ -450,8 +438,7 @@ export class GridLevel {
   }
 
   public isGridPositionEmpty(row: number, col: number) {
-    if (this.gridCells[row][col].gridObject.getType() === 'EMPTY') return true;
-    else return false;
+    return this.gridCells[row][col].gridObject.getType() === 'EMPTY';
   }
 
   public getGridPositionFromXY(x: number, y: number): GridPosition {
@@ -491,6 +478,22 @@ export class GridLevel {
     return this.status;
   }
 
+  public explodeGrenadesNearCongotchis() {
+    this.gridCells.map(row => row.map (cell => {
+      if (cell.gridObject.getType() === 'GRENADE') {
+        // go through a 3x3 grid of all objects adjacent grenade
+        for (let i = cell.gridObject.gridPosition.row-1; i < cell.gridObject.gridPosition.row + 2; i++) {
+          for (let j = cell.gridObject.gridPosition.col-1; j < cell.gridObject.gridPosition.col + 2; j++) {
+              const go = this.getGridObject(i, j);
+              if (go && go.getType() === 'GOTCHI' && (go as GO_Gotchi).status === 'CONGOTCHING') {
+                  (cell.gridObject as GO_Grenade).explode();
+              }
+          }
+        }
+      }
+    }))
+  }
+
 
   update(): void {
         // update our star score depending on gotchis saved
@@ -522,9 +525,9 @@ export class GridLevel {
       setTimeout( () => {
         (this.scene as GameScene).getGui()?.showLevelOverScreen();
       }, 500);
-    }
+    } 
 
-    // if gotchis are ready we can do stuff
+    // if gotchis are ready (nobody congotching) we can do stuff
     if (this.isGotchiGangReady()) {
 
       // setup all leader and follower relationships for gotchis
@@ -532,9 +535,6 @@ export class GridLevel {
 
       // conga gotchi lines next to any open portals
       this.runCongaPortals();
-
-      // render all grid cells
-      this.gridCells.map(row => row.map( cell => this.renderGridCell(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col)));
 
     }
 

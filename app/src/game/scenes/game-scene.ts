@@ -1,15 +1,22 @@
 import {
-  LEFT_CHEVRON, BG, CLICK, ARROW_DOWN, GUI_BUTTON_CROSS,
+  LEFT_CHEVRON, BG, CLICK, ARROW_DOWN, GUI_BUTTON_CROSS, MUSIC_WORLD_MAP, MUSIC_GRID_LEVEL_A,
 } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
 import { GridLevel, Gui, Player, WorldMap, levels, GridObject } from 'game/objects';
+import { Socket } from 'socket.io-client';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
   visible: false,
   key: 'Game',
 };
+
+interface LevelScores {
+  levelNumber: number,
+  highScore: number,
+  stars: number,
+}
 
 /**
  * Scene where gameplay takes place
@@ -21,7 +28,17 @@ export class GameScene extends Phaser.Scene {
   private worldMap?: WorldMap;
   private gui?: Gui;
   private gridLevel?: GridLevel;
-  private selectedLevel = 1;
+  private socket: Socket | null = null;
+
+  // the game scene needs the following game state variables
+  public currentLevel = 1;
+  public unlockedLevels = 1;
+  public levelScores: Array<LevelScores> = [];
+
+  // create a music object
+  private musicWorldMap?: Phaser.Sound.HTML5AudioSound;
+  private musicGridLevel?: Phaser.Sound.HTML5AudioSound;
+  private soundClick?: Phaser.Sound.HTML5AudioSound;
 
   constructor() {
     super(sceneConfig);
@@ -33,51 +50,77 @@ export class GameScene extends Phaser.Scene {
   };
 
   public create(): void {
-    
+    // fetch progress data
+    this.socket = this.game.registry.values.socket;
+    this.socket?.emit('fetchProgressData');
+    this.socket?.on('fetchProgressDataResponse', (currentLevel, unlockedLevels, levelScores) => {
+      // locally store previous game states from our database
+      this.currentLevel = currentLevel;
+      this.unlockedLevels = unlockedLevels;
+      this.setLevelScores(levelScores, unlockedLevels);
 
-    // create the world map
-    this.worldMap = new WorldMap({
-      scene: this,
-      x: 0,
-      y: 0,
-      key: BG,
-    }).setDepth(0);
+      // create the world map
+      this.worldMap = new WorldMap({
+        scene: this,
+        x: 0,
+        y: 0,
+        key: BG,
+      }).setDepth(0)
+      this.worldMap.setUnlockedLevels(unlockedLevels);
 
-    // create our player
-    this.player = new Player({
-      scene: this,
-      x: getGameWidth(this)*0.25,
-      y: getGameHeight(this)*0.87,
-      key: this.selectedGotchi?.spritesheetKey || '',
-      world: this.worldMap,
-      width: getGameWidth(this) * 0.2,
-      height: getGameWidth(this) * 0.2,
-      gotchi: this.selectedGotchi,
+      // create our player
+      this.player = new Player({
+        scene: this,
+        x: getGameWidth(this)*0.25,
+        y: getGameHeight(this)*0.87,
+        key: this.selectedGotchi?.spritesheetKey || '',
+        world: this.worldMap,
+        width: getGameWidth(this) * 0.2,
+        height: getGameWidth(this) * 0.2,
+        gotchi: this.selectedGotchi,
+      })
+
+      // create the gui
+      this.gui = new Gui({
+        scene: this, 
+        player: this.player, 
+        world: this.worldMap,
+      });
+
+      console.log('Selecting Level ' + currentLevel);
+      this.selectLevel(currentLevel);
+
+
+      // create a world map music object
+      this.musicWorldMap = this.sound.add(MUSIC_WORLD_MAP, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
+      this.musicWorldMap.play();
+
+      // create a grid level music object
+      this.musicGridLevel = this.sound.add(MUSIC_GRID_LEVEL_A, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
+
+      // create sound of click
+      this.soundClick = this.sound.add(CLICK, { loop: false }) as Phaser.Sound.HTML5AudioSound;
     })
-      .setOrigin(0.5,0.5);
-
-    // create the gui
-    this.gui = new Gui({
-      scene: this, 
-      player: this.player, 
-      world: this.worldMap,
-    });
-
-    // start off by selecting level 1
-    // when we get round to it, will start on whatever level a player finished
-    // on last time they played (will be stored on server against their address)
-    this.selectLevel(1);
-
   }
 
   public selectLevel(levelNumber: number) {
-    // set our current level number
-    this.selectedLevel = levelNumber;
+    // first check we can access the level
+    if (this.worldMap && this.unlockedLevels >= levelNumber) {
+      // set our current level number
+      this.currentLevel = levelNumber;
+      
+      // call onSelectLevel 'callbacks' for all our objects
+      this.player?.onSelectLevel(levelNumber);
+      this.worldMap?.onSelectLevel(levelNumber);
+      this.gui?.onSelectLevel(levelNumber);
+    }
 
-    // call onSelectLevel 'callbacks' for all our objects
-    this.player?.onSelectLevel(levelNumber);
-    this.worldMap?.onSelectLevel(levelNumber);
-    this.gui?.onSelectLevel(levelNumber);
+    // play click sound
+    this.soundClick?.play();
+  }
+
+  public saveCurrentLevel() {
+    this.socket?.emit('saveCurrentLevel', this.currentLevel);
   }
 
   public startLevel() {
@@ -88,7 +131,7 @@ export class GameScene extends Phaser.Scene {
           scene: this,
           player: this.player,
           randomGotchis: this.randomGotchis,
-          levelConfig: levels[this.selectedLevel - 1],
+          levelConfig: levels[this.currentLevel - 1],
         })  
       }
     } else {
@@ -99,16 +142,122 @@ export class GameScene extends Phaser.Scene {
     this.player?.onStartLevel();
     this.worldMap?.onStartLevel();
     this.gui?.onStartLevel();
+
+    // change music
+    this.musicWorldMap?.stop();
+    this.musicGridLevel?.setVolume(1);
+    this.musicGridLevel?.play();
+
+    // fade out world map music and fade in grid level music
+    // this.add.tween({
+    //   targets: this.musicWorldMap,
+    //   volume: 0,
+    //   duration: 500,
+    //   onComplete: () => {
+    //     this.musicWorldMap?.stop();
+    //   }
+    // });
+
+    // this.musicGridLevel?.play();
+    // this.musicGridLevel?.setVolume(0);
+    // this.add.tween({
+    //   targets: this.musicGridLevel,
+    //   volume: 1,
+    //   duration: 500,
+    //   onComplete: () => {
+    //     this.musicGridLevel?.play();
+    //   },
+    // });
   }
 
   public endLevel() {
     // destroy the grid level object
     this.gridLevel?.onEndLevel();
+    delete this.gridLevel;
 
     // call endLevel() for all our objects
     this.player?.onEndLevel();
     this.worldMap?.onEndLevel();
     this.gui?.onEndLevel();
+
+    // fade out grid music and fade in world map music
+    this.add.tween({
+      targets: this.musicGridLevel,
+      volume: 0,
+      duration: 1500,
+      onComplete: () => {
+        this.musicGridLevel?.stop();
+        this.musicWorldMap?.setVolume(0);
+        this.musicWorldMap?.play();
+        this.add.tween({
+          targets: this.musicWorldMap,
+          volume: 1,
+          duration: 1500,
+        });
+      }
+    });
+    
+  }
+
+  public setLevelScores(levelScores: Array<LevelScores>, unlockedLevels: number) {
+    // set all levels to 0
+    for (let i = 0; i < unlockedLevels; i++) {
+      this.levelScores[i] = {
+        levelNumber: i+1,
+        highScore: 0,
+        stars: 0,
+      }
+    }
+
+    // go through levelscores parameter and fill in where data exists
+    levelScores.map( ls => {
+      this.levelScores[ls.levelNumber-1] = {
+        levelNumber: ls.levelNumber,
+        highScore: ls.highScore,
+        stars: ls.stars,
+      }
+    })
+
+    // output to show we got everythin
+    console.log("Game scene level data set:");
+    console.log(this.levelScores);
+  }
+
+  public handleLevelResults(level: number, score: number, stars: number) {
+    // check if we can unlock a new level
+    if (level === this.unlockedLevels && stars > 0) {
+      // tell the world map to enable button for next level
+      this.worldMap?.setUnlockedLevels(level+1);
+      this.unlockedLevels = level + 1;
+
+      // tell database to increase number of unlocked levels for the user
+      this.socket?.emit('setUnlockedLevels', level+1);
+
+      // create a new level score locally
+      this.levelScores[level] = {
+        levelNumber: level+1,
+        highScore: 0,
+        stars: 0,
+      }
+
+      // output to check it went ok
+      console.log('New level unlocked, local level scores updated:');
+      console.log(this.levelScores);
+    }
+
+    // set a new high score locally if applicable
+    if (score > this.levelScores[level-1].highScore) {
+      this.levelScores[level-1].highScore = score;
+      this.levelScores[level-1].stars = stars;
+    }
+
+    // set a new high score (if possible) in the database (high score checks handled on the server).
+    this.socket?.emit("setHighScore", level, score, stars);
+    
+  }
+
+  public getUnlockedLevels() {
+    return this.unlockedLevels;
   }
 
   public getPlayer() {
@@ -128,9 +277,9 @@ export class GameScene extends Phaser.Scene {
     this.gridLevel?.update();
     this.player?.update();
     this.worldMap?.update();
-    this.gui?.update();
-
-    
+    this.gui?.update(); 
   }
+
+  
 
 }

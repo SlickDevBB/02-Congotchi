@@ -20,6 +20,8 @@ export const BG = 'bg';
 export const FULLSCREEN = 'fullscreen';
 export const LEFT_CHEVRON = 'left_chevron';
 export const CLICK = 'click';
+export const MUSIC_WORLD_MAP = 'music_world_map';
+export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
 export const ARROW_DOWN = 'arrow_down';
 export const GOTCHI_FRONT = 'gotchi_front';
 export const GOTCHI_BACK = 'gotchi_back';
@@ -36,6 +38,7 @@ export const PINK_CIRCLE_SHADED = 'pink-circle-shaded';
 export const RED_CIRCLE_SHADED = 'red-circle-shaded';
 export const GREEN_CIRCLE_SHADED = 'green-circle-shaded';
 export const BLUE_CIRCLE_SHADED = 'blue-circle-shaded';
+export const GREY_CIRCLE_SHADED = 'grey-circle-shaded';
 export const MOVE_ICON = 'move_icon';
 export const QUESTION_MARK_ICON = 'question_mark_icon';
 export const ROTATE_ICON = 'rotate_icon';
@@ -60,6 +63,9 @@ export const GUI_3_STARS = 'gui_3_stars';
 export const CW_ROTATE_MOVE_ICON = 'cw_rotate_move_icon';
 export const ACW_ROTATE_MOVE_ICON = 'acw_rotate_move_icon';
 export const PIXEL_EXPLOSION = 'pixel_explosion';
+export const PIXEL_PINK_SPLASH = 'pixel_pink_splash'
+
+
 
 // Save all in game assets in the public folder
 export const assets: Array<Asset | SpritesheetAsset> = [
@@ -79,30 +85,40 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'AUDIO',
   },
   {
+    key: MUSIC_WORLD_MAP,
+    src: 'assets/music/Music_World_Map_Bassa Island Game Loop.ogg',
+    type: 'AUDIO',
+  },
+  {
+    key: MUSIC_GRID_LEVEL_A,
+    src: 'assets/music/Grid_Level_Carnivale Intrigue.ogg',
+    type: 'AUDIO',
+  },
+  {
     key: ARROW_DOWN,
     src: 'assets/images/arrow_down.png',
     type: 'IMAGE',
   },
-  {
-    key: GOTCHI_FRONT,
-    src: 'assets/gotchis/1_front.png',
-    type: 'IMAGE',
-  },
-  {
-    key: GOTCHI_BACK,
-    src: 'assets/gotchis/1_back.png',
-    type: 'IMAGE',
-  },
-  {
-    key: GOTCHI_LEFT,
-    src: 'assets/gotchis/1_left.png',
-    type: 'IMAGE',
-  },
-  {
-    key: GOTCHI_RIGHT,
-    src: 'assets/gotchis/1_right.png',
-    type: 'IMAGE',
-  },
+  // {
+  //   key: GOTCHI_FRONT,
+  //   src: 'assets/gotchis/1_front.png',
+  //   type: 'IMAGE',
+  // },
+  // {
+  //   key: GOTCHI_BACK,
+  //   src: 'assets/gotchis/1_back.png',
+  //   type: 'IMAGE',
+  // },
+  // {
+  //   key: GOTCHI_LEFT,
+  //   src: 'assets/gotchis/1_left.png',
+  //   type: 'IMAGE',
+  // },
+  // {
+  //   key: GOTCHI_RIGHT,
+  //   src: 'assets/gotchis/1_right.png',
+  //   type: 'IMAGE',
+  // },
   {
     key: M67_GRENADE,
     src: 'assets/images/grenade.png',
@@ -159,6 +175,11 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'IMAGE',
   },
   {
+    key: GREY_CIRCLE_SHADED,
+    src: 'assets/icons/sphere-grey.png',
+    type: 'IMAGE',
+  },
+  {
     key: MOVE_ICON,
     src: 'assets/icons/move-icon.png',
     type: 'IMAGE',
@@ -173,16 +194,16 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/icons/rotate.png',
     type: 'IMAGE',
   },
-  {
-    key: SHUFFLE_ICON,
-    src: 'assets/icons/shuffle.png',
-    type: 'IMAGE',
-  },
-  {
-    key: BONUS_ICON,
-    src: 'assets/icons/bonus.png',
-    type: 'IMAGE',
-  },
+  // {
+  //   key: SHUFFLE_ICON,
+  //   src: 'assets/icons/shuffle.png',
+  //   type: 'IMAGE',
+  // },
+  // {
+  //   key: BONUS_ICON,
+  //   src: 'assets/icons/bonus.png',
+  //   type: 'IMAGE',
+  // },
   {
     key: RED_BUTTON,
     src: 'assets/images/level-button-small-red.png',
@@ -223,16 +244,16 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/gui/play-button.png',
     type: 'IMAGE',
   },
-  {
-    key: GUI_BUTTON_FORWARD,
-    src: 'assets/gui/forward-button-1.png',
-    type: 'IMAGE',
-  },
-  {
-    key: GUI_BUTTON_BACK,
-    src: 'assets/gui/back-button-1.png',
-    type: 'IMAGE',
-  },
+  // {
+  //   key: GUI_BUTTON_FORWARD,
+  //   src: 'assets/gui/forward-button-1.png',
+  //   type: 'IMAGE',
+  // },
+  // {
+  //   key: GUI_BUTTON_BACK,
+  //   src: 'assets/gui/back-button-1.png',
+  //   type: 'IMAGE',
+  // },
   {
     key: GUI_SCORE_PANEL,
     src: 'assets/gui/score-panel-2.png',
@@ -258,16 +279,16 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/gui/3-stars.png',
     type: 'IMAGE',
   },
-  {
-    key: CW_ROTATE_MOVE_ICON,
-    src: 'assets/icons/cw-rotate-move-icon.png',
-    type: 'IMAGE',
-  },
-  {
-    key: ACW_ROTATE_MOVE_ICON,
-    src: 'assets/icons/acw-rotate-move-icon.png',
-    type: 'IMAGE',
-  },
+  // {
+  //   key: CW_ROTATE_MOVE_ICON,
+  //   src: 'assets/icons/cw-rotate-move-icon.png',
+  //   type: 'IMAGE',
+  // },
+  // {
+  //   key: ACW_ROTATE_MOVE_ICON,
+  //   src: 'assets/icons/acw-rotate-move-icon.png',
+  //   type: 'IMAGE',
+  // },
   {
     key: ARROW_ICON,
     src: 'assets/icons/arrow-icon.png',
@@ -276,6 +297,11 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: PIXEL_EXPLOSION,
     src: 'assets/effects/pixel-explosion.png',
+    type: 'IMAGE',
+  },
+  {
+    key: PIXEL_PINK_SPLASH,
+    src: 'assets/effects/pink-splash.png',
     type: 'IMAGE',
   },
 ];
