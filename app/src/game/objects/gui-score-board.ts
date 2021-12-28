@@ -90,7 +90,6 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
     }
 
     public setStarScore(stars: number) {
-        console.log('stars: ' + stars);
         if (stars < 1) this.scorePanelStars.setTexture(GUI_0_STARS);
         else if (stars < 2) this.scorePanelStars.setTexture(GUI_1_STARS);
         else if (stars < 3) this.scorePanelStars.setTexture(GUI_2_STARS);

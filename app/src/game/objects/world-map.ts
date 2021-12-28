@@ -5,7 +5,7 @@ import { GREEN_BUTTON, GREY_CIRCLE_SHADED, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIB
 import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
 import { LevelButton, Player, LevelConfig, levels, Gui, GridLevel } from ".";
 import {
-    LEFT_CHEVRON, BG, CLICK, ARROW_DOWN, GUI_BUTTON_CROSS,
+    LEFT_CHEVRON, BG, SOUND_CLICK, ARROW_DOWN, GUI_BUTTON_CROSS,
   } from 'game/assets';
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_WORLD_MASK } from "game/helpers/constants";

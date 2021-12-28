@@ -1,25 +1,19 @@
 // grid-level.ts
 // this object should focus solely on creating and handling input on a grid game board
 
-
-import { getGameWidth, getGameHeight, getRelative } from '../helpers';
+import { getGameWidth, } from '../helpers';
 import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GridObject, LevelConfig, Player } from 'game/objects';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, GUI_SCORE_PANEL, M67_GRENADE, MILKSHAKE, PORTAL_CLOSED, PORTAL_OPEN, UNCOMMON_CACTI } from 'game/assets';
+import { M67_GRENADE, MILKSHAKE, PORTAL_CLOSED,} from 'game/assets';
 import '../helpers/constants';
-import { DEPTH_GRID_LEVEL, DEPTH_GRID_OBJECTS } from '../helpers/constants';
+import { DEPTH_GRID_LEVEL } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
 import { AavegotchiGameObject } from 'types';
-import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
-import { Game } from 'phaser';
-import { Socket } from 'socket.io-client';
 
 interface Props {
   scene: Phaser.Scene;
   player: Player;
   randomGotchis: AavegotchiGameObject[] | undefined;
   levelConfig: LevelConfig;
-  // x: number,
-  // y: number,
 }
 
 // going to number rows and columns start from 1
@@ -40,7 +34,6 @@ export class GridLevel {
   public x;
   public y;
   private scene: Phaser.Scene;
-  // private gridRectangles: Phaser.GameObjects.Rectangle[] = [];
   private gridSize;
   private numberRows;
   private numberCols;
@@ -63,8 +56,6 @@ export class GridLevel {
     this.randomGotchis = randomGotchis;
     this.levelConfig = levelConfig;
     this.status = 'ACTIVE';
-
-    
 
     // create the grid level
     this.numberRows = this.levelConfig.gridObjectLayout.length;
@@ -143,7 +134,7 @@ export class GridLevel {
 
               // check we have a valid svg
               while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                console.log('we getting in here when svg data is bad?');
+                //console.log('we getting in here when svg data is bad?');
                 // increment rand count if we haven't exceeded length
                 this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
 
@@ -154,7 +145,7 @@ export class GridLevel {
                 // increment loop counter
                 loopCount++;
               }
-              console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
+              //console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
@@ -181,7 +172,7 @@ export class GridLevel {
 
               // check we have a valid svg
               while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                console.log('we getting in here when svg data is bad?');
+                //console.log('we getting in here when svg data is bad?');
                 // increment rand count if we haven't exceeded length
                 this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
 
@@ -192,7 +183,7 @@ export class GridLevel {
                 // increment loop counter
                 loopCount++;
               }
-              console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
+              //console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
@@ -219,7 +210,7 @@ export class GridLevel {
 
               // check we have a valid svg
               while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                console.log('we getting in here when svg data is bad?');
+                //console.log('we getting in here when svg data is bad?');
                 // increment rand count if we haven't exceeded length
                 this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
 
@@ -230,7 +221,7 @@ export class GridLevel {
                 // increment loop counter
                 loopCount++;
               }
-              console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
+              //console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
@@ -281,6 +272,8 @@ export class GridLevel {
 
     // find all the initial leaders and followers
     this.setupLeadersAndFollowers();
+
+    console.log('we get here?');
 
     // init all the grid colours by simply setting their gridobject to themselves
     this.gridCells.map(row => row.map( cell => {
@@ -355,7 +348,7 @@ export class GridLevel {
 
     // check if we've still got portal moves/opens
     if (this.player) {
-      if (this.player.getStat("INTERACT_PORTAL") > 0 || this.player.getStat('MOVE_PORTAL') > 0) {
+      if (this.player.getStat("INTERACT_BLUE") > 0 || this.player.getStat('MOVE_BLUE') > 0) {
         noPortalPointsLeft = false;
       }
     }
@@ -406,8 +399,15 @@ export class GridLevel {
   
   }
 
-  public getGridObject(row: number, col: number) : GridObject {
-    return this.gridCells[row][col].gridObject;
+  public getGridObject(row: number, col: number) : GridObject | 'OUT OF BOUNDS' {
+    // try see if we can access the gridobject, if not carry on and return out of bounds
+    try {
+        return this.gridCells[row][col].gridObject;
+    } catch (err) {
+      console.log(err);
+      return 'OUT OF BOUNDS';
+    }
+    
   }
 
   public getRandomEmptyGridPosition(): GridPosition {
@@ -485,7 +485,7 @@ export class GridLevel {
         for (let i = cell.gridObject.gridPosition.row-1; i < cell.gridObject.gridPosition.row + 2; i++) {
           for (let j = cell.gridObject.gridPosition.col-1; j < cell.gridObject.gridPosition.col + 2; j++) {
               const go = this.getGridObject(i, j);
-              if (go && go.getType() === 'GOTCHI' && (go as GO_Gotchi).status === 'CONGOTCHING') {
+              if (go !== 'OUT OF BOUNDS' && go.getType() === 'GOTCHI' && (go as GO_Gotchi).status === 'CONGOTCHING') {
                   (cell.gridObject as GO_Grenade).explode();
               }
           }

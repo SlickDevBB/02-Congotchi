@@ -1,5 +1,5 @@
 import {
-  LEFT_CHEVRON, BG, CLICK, ARROW_DOWN, GUI_BUTTON_CROSS, MUSIC_WORLD_MAP, MUSIC_GRID_LEVEL_A,
+  LEFT_CHEVRON, BG, SOUND_CLICK, ARROW_DOWN, GUI_BUTTON_CROSS, MUSIC_WORLD_MAP, MUSIC_GRID_LEVEL_A, SOUND_VICTORY,
 } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
@@ -39,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   private musicWorldMap?: Phaser.Sound.HTML5AudioSound;
   private musicGridLevel?: Phaser.Sound.HTML5AudioSound;
   private soundClick?: Phaser.Sound.HTML5AudioSound;
+  private soundVictory?: Phaser.Sound.HTML5AudioSound;
 
   constructor() {
     super(sceneConfig);
@@ -87,7 +88,6 @@ export class GameScene extends Phaser.Scene {
         world: this.worldMap,
       });
 
-      console.log('Selecting Level ' + currentLevel);
       this.selectLevel(currentLevel);
 
 
@@ -99,7 +99,10 @@ export class GameScene extends Phaser.Scene {
       this.musicGridLevel = this.sound.add(MUSIC_GRID_LEVEL_A, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
 
       // create sound of click
-      this.soundClick = this.sound.add(CLICK, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+      this.soundClick = this.sound.add(SOUND_CLICK, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+
+
+      this.soundVictory = this.sound.add(SOUND_VICTORY, { loop: false }) as Phaser.Sound.HTML5AudioSound;
     })
   }
 
@@ -147,27 +150,11 @@ export class GameScene extends Phaser.Scene {
     this.musicWorldMap?.stop();
     this.musicGridLevel?.setVolume(1);
     this.musicGridLevel?.play();
+  }
 
-    // fade out world map music and fade in grid level music
-    // this.add.tween({
-    //   targets: this.musicWorldMap,
-    //   volume: 0,
-    //   duration: 500,
-    //   onComplete: () => {
-    //     this.musicWorldMap?.stop();
-    //   }
-    // });
-
-    // this.musicGridLevel?.play();
-    // this.musicGridLevel?.setVolume(0);
-    // this.add.tween({
-    //   targets: this.musicGridLevel,
-    //   volume: 1,
-    //   duration: 500,
-    //   onComplete: () => {
-    //     this.musicGridLevel?.play();
-    //   },
-    // });
+  public showLevelOverScreen() {
+    this.soundVictory?.play();
+    this.musicGridLevel?.stop();
   }
 
   public endLevel() {
@@ -217,10 +204,6 @@ export class GameScene extends Phaser.Scene {
         stars: ls.stars,
       }
     })
-
-    // output to show we got everythin
-    console.log("Game scene level data set:");
-    console.log(this.levelScores);
   }
 
   public handleLevelResults(level: number, score: number, stars: number) {
@@ -239,10 +222,6 @@ export class GameScene extends Phaser.Scene {
         highScore: 0,
         stars: 0,
       }
-
-      // output to check it went ok
-      console.log('New level unlocked, local level scores updated:');
-      console.log(this.levelScores);
     }
 
     // set a new high score locally if applicable
@@ -270,6 +249,14 @@ export class GameScene extends Phaser.Scene {
 
   public getGridLevel() {
     return this.gridLevel;
+  }
+
+  public returnMainMenu() {
+    this.saveCurrentLevel();
+
+    // stop all music
+    this.musicWorldMap?.stop();
+    this.musicGridLevel?.stop();
   }
 
   update(): void {

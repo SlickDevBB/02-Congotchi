@@ -2,7 +2,7 @@
 
 import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, PORTAL_OPEN } from 'game/assets';
+import { PORTAL_OPEN, SOUND_POP, SOUND_PORTAL_OPEN } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
 
@@ -36,9 +36,12 @@ export class GO_Portal extends GridObject {
 
     // define variables for dragging object
     private ogDragGridPosition = { row: 0, col: 0 };
-    private dragAxis: 'X' | 'Y' | 'NOT_ASSIGNED' = 'NOT_ASSIGNED';
-    private dragX = 0;
-    private dragY = 0;
+    private ogX = 0;
+    private ogY = 0;
+
+    // add sound effects
+    private soundMove?: Phaser.Sound.HTML5AudioSound;
+    private soundInteract?: Phaser.Sound.HTML5AudioSound;
 
     // our constructor
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
@@ -53,6 +56,11 @@ export class GO_Portal extends GridObject {
 
         // set a specific depth
         this.setDepth(DEPTH_GO_PORTAL);
+
+        // add sound
+        this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract = this.scene.sound.add(SOUND_PORTAL_OPEN, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract.setVolume(0.5);
 
         // set behaviour for pointer click down
         this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -72,9 +80,16 @@ export class GO_Portal extends GridObject {
                 const player = gameScene.getPlayer();
 
                 if (gameScene && player) {
-                    if (player.getStat('INTERACT_PORTAL') > 0) {
-                        this.setStatus('OPEN');
-                        player.adjustStat('INTERACT_PORTAL', -1);
+                    if (player.getStat('INTERACT_BLUE') > 0) {
+                        // check the status and set to opposite
+                        this.setStatus(this.status === 'CLOSED' ? 'OPEN' : 'CLOSED');
+
+                        // adjust blue interact stat
+                        player.adjustStat('INTERACT_BLUE', -1);
+
+                        // play sound based on status
+                        if (this.status === 'OPEN') this.soundInteract?.play();
+                        else this.soundInteract?.stop();
                     }
                 }
             }
@@ -84,8 +99,8 @@ export class GO_Portal extends GridObject {
         this.on('dragstart', () => {
             // store our initial drag positions
             this.ogDragGridPosition = this.getGridPosition();
-            this.dragX = this.x;
-            this.dragY = this.y;
+            this.ogX = this.x;
+            this.ogY = this.y;
         })
 
         // set behaviour for dragging
@@ -95,7 +110,7 @@ export class GO_Portal extends GridObject {
 
             if (gameScene && player) {    
                 // if we've got movement points left we can drag
-                if (player.getStat('MOVE_PORTAL') > 0) {
+                if (player.getStat('MOVE_BLUE') > 0) {
                     // only drag objects into grids they have space for
                     const gp = this.getGridPosition();
                     const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
@@ -103,23 +118,21 @@ export class GO_Portal extends GridObject {
                     const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
                     const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
                     
-                    const adoX = this.dragX;
-                    const adoY = this.dragY;
-                    const upLimit = aboveEmpty ? adoY - this.gridLevel.getGridSize() : adoY;
-                    const downLimit = belowEmpty ? adoY + this.gridLevel.getGridSize() : adoY;
-                    const leftLimit = leftEmpty ? adoX - this.gridLevel.getGridSize() : adoX;
-                    const rightLimit = rightEmpty ? adoX + this.gridLevel.getGridSize() : adoX;
-            
-                    if (this.dragAxis === 'NOT_ASSIGNED') {
-                        // find the predominant drag axis
-                        this.dragAxis = Math.abs(dragX-this.dragX) > Math.abs(dragY-this.dragY) ? 'X' : 'Y';
-                    }
-            
-                    // move along the dominant axis
-                    if (this.dragAxis === 'X') {
+                    const upLimit = aboveEmpty ? this.ogY - this.gridLevel.getGridSize() : this.ogY;
+                    const downLimit = belowEmpty ? this.ogY + this.gridLevel.getGridSize() : this.ogY;
+                    const leftLimit = leftEmpty ? this.ogX - this.gridLevel.getGridSize() : this.ogX;
+                    const rightLimit = rightEmpty ? this.ogX + this.gridLevel.getGridSize() : this.ogX;
+
+                    // find out if we're further from original X or Y
+                    const deltaX = this.ogX - dragX;
+                    const deltaY = this.ogY - dragY;
+
+                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
                         if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
-                    } else if (this.dragAxis === 'Y') {
+                        this.y = this.ogY;
+                    } else {
                         if (dragY > upLimit && dragY < downLimit) this.y = dragY;
+                        this.x = this.ogX;
                     }
                 }
             }
@@ -129,7 +142,6 @@ export class GO_Portal extends GridObject {
             // store the grid position dragging finished in
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
             this.setGridPosition(finalGridPos.row, finalGridPos.col);
-            this.dragAxis = 'NOT_ASSIGNED';
 
             // get the player
             const player = (this.scene as GameScene).getPlayer();
@@ -138,7 +150,10 @@ export class GO_Portal extends GridObject {
             if (player) {
                 // check we didn't just end up back in original position
                 if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    player.adjustStat('MOVE_PORTAL', -1);
+                    player.adjustStat('MOVE_BLUE', -1);
+
+                    // play the move sound
+                    this.soundMove?.play();
                 }
             }
         })
@@ -219,15 +234,18 @@ export class GO_Portal extends GridObject {
                 })
 
                 // we need to check if any grenades are along our path
-                let burntLeaders = false;
+                // let burntLeaders = false;
 
+                ////////////////////////////////////////////////////////////////////////////////////////
                 // FIRST PASS - establishing the gotchi chain congotching vs. wait status //
-                // we can now move our conga leader into the portal if he's not burnt
+                ////////////////////////////////////////////////////////////////////////////////////////
+
+                // check our leader isn't burnt
                 if (congaLeader.status !== 'BURNT') {
                     congaLeader.status = 'CONGOTCHING';
                 }
 
-                // go through each congotchi in the gotchi chain and call the congaIntoPosition() function if the gotchi is top priority
+                // go through each congotchi in the gotchi chain and set status to CONGOTCHING if the gotchi is top priority
                 this.gotchiChains[i].map( (g) => {
                     // if this gotchi has priority, leader isn't waiting, and isn't burnt and no burnt leaders, conga, 
                     const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
@@ -242,118 +260,33 @@ export class GO_Portal extends GridObject {
                 // Now we need to activate grenades adjacent congotching gotchis
                 this.gridLevel.explodeGrenadesNearCongotchis();
 
+                ///////////////////////////////////////////////////////////////////////////////////////
                 // SECOND PASS - Moving gotchis taking into account their burnt status
+                ////////////////////////////////////////////////////////////////////////////////////
+
                 // we can now move our conga leader into the portal if he's not burnt
                 if (congaLeader.status !== 'BURNT') {
                     congaLeader.congaIntoPortal(this.gridPosition.row, this.gridPosition.col);
-                } else if (congaLeader.status === 'BURNT') {
-                    burntLeaders = true;
                 }
 
                 // go through each congotchi in the gotchi chain and call the congaIntoPosition() function if the gotchi is top priority
                 this.gotchiChains[i].map( (g) => {
-                    // if this gotchi has priority, leader isn't waiting, and isn't burnt, conga, 
+                    // if this gotchi has priority, isn't burnt, leader isn't waiting OR burnt, conga, 
                     const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
-                    if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && leader.status !== 'WAITING' && !burntLeaders && g.status !== 'BURNT') {
+                    const priority = this.getFollowerPriority(leader, g);
+
+                    if ( priority === 'TOP_PRIORITY' && g.status !== 'BURNT' && 
+                    leader.status !== 'WAITING' && leader.status !== 'BURNT' ) {
                         // conga our gotchi into position
                         g.congaIntoPosition(g.newRow, g.newCol);
 
                         // set our gotchi status to 'CONGOTCHING'
                         g.status = 'CONGOTCHING';
-                    } else if (g.status === 'BURNT') {
-                        burntLeaders = true;
                     } else {
                         g.status = 'WAITING';
                     }
-                    
                 })
-
-
-        
-                // // count the number of gotchis that are ready
-                // this.numReadyGotchis[i] = 0;
-                // if (this.gotchiChains[i]) {
-                //     this.gotchiChains[i].map( g => { if (g.status === 'READY') this.numReadyGotchis[i]++; });
-                // }
-
-                // // if our number of ready gotchis === number of gotchis in subchain of particular follower we can find followers/leaders and run set pos/dir functions
-                // if (this.numReadyGotchis[i] === this.numSubchainGotchis[i]) {
-                //     // check to see if our conga line should be paused
-                //     const congaPauseDelta = new Date().getTime() - this.congaPauseTimer;
-
-                //     if (congaPauseDelta > this.congaPauseDuration) {
-                //         // reset timer
-                //         this.congaPauseTimer = new Date().getTime();
-
-                //         // reset our gotchi chain to empty
-                //         this.gotchiChains[i] = [];
-
-                //         // calculate congotchi chain
-                //         congaLeader.calcCongaChain(this.gotchiChains[i]);
-
-                //         if (this.congaJumpCounter[i] > 2) {
-                //             // zero the jump counter
-                //             this.congaJumpCounter[i] = 0;
-
-                //             // if we've got a conga chain go through it and make each gotchi jump including the leader
-                //             congaLeader.congaJump();
-                //             this.gotchiChains[i].map( g => g.congaJump());
-                            
-                //             this.numSubchainGotchis[i]--;
-                //         }
-                //         else {
-                //             // if we've got a congachain go through it and assign the congotchis new positions.
-                //             this.gotchiChains[i].map( g => {
-                //                 // get the leader
-                //                 const leader = g.getLeader() as GO_Gotchi;
-                //                 if (leader) {
-                //                     // set gotchi positions and rows to go to
-                //                     g.newRow = leader.getGridPosition().row;
-                //                     g.newCol = leader.getGridPosition().col;
-                //                     g.newDir = leader.getDirection();
-                //                 }
-                //             })
-
-                //             // we can now move our conga leader into the portal 
-                //             congaLeader.congaIntoPortal(this.gridPosition.row, this.gridPosition.col);
-                //             congaLeader.status = 'CONGOTCHING';
-
-                //             // reset number sub chain gotchis
-                //             this.numSubchainGotchis[i] = 0;
-                            
-                //             // go through each congotchi and call the congaIntoPosition() function if the gotchi is top priority
-                //             this.gotchiChains[i].map( (g) => {
-                //                 // check our leader is congotching and there are no followers with preference over us
-                //                 const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
-                //                 if (leader.getType() === 'GOTCHI' 
-                //                 && leader.status === 'CONGOTCHING' 
-                //                 && this.getFollowerPriority(leader, g) === 'TOP_PRIORITY') {
-                //                     // conga our gotchi into position
-                //                     g.congaIntoPosition(g.newRow, g.newCol);
-
-                //                     // set our gotchi status to 'CONGOTCHING'
-                //                     g.status = 'CONGOTCHING';
-
-                //                     // increment our number of sub chain gotchis
-                //                     this.numSubchainGotchis[i]++;
-
-                //                 } else {
-                //                     g.status = 'WAITING';
-                //                 }
-                //             })
-                            
-                //             // increment the jump counter
-                //             this.congaJumpCounter[i]++;
-                            
-                //         }
-
-                        
-                //     }
-                // }
             }
-                
-            
-            
         }
     }
 

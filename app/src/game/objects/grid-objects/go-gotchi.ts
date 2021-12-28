@@ -2,7 +2,7 @@
 
 import { GO_Empty, GO_Props, GridLevel, GridObject } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT, CW_ROTATE_MOVE_ICON, ACW_ROTATE_MOVE_ICON, ARROW_ICON } from 'game/assets';
+import { ARROW_ICON, SOUND_BELL, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI } from 'game/helpers/constants';
 import { AavegotchiGameObject } from 'types';
@@ -41,16 +41,10 @@ interface CountGotchi {
     public scoreBonus = 5;
     private scoreBonusText;
 
-    // declare icon for rotate and move on hover
-    // private rotateMoveIcon: Phaser.GameObjects.Image;
-
     // declare variable for setting visibility of rotate arrows
     private rotateArrowsVisible = false;
     private overArrows = false;
     private overGotchi = false;
-
-    // declare a shift key variable
-    private shiftKey: Phaser.Input.Keyboard.Key;
 
     // store the active pointer
     private mousePointer: Phaser.Input.Pointer;
@@ -66,19 +60,22 @@ interface CountGotchi {
 
     // timer is for click events
     private timer = 0;
-    private mouseTimer = 0;
 
     // define variables for dragging object
     private ogDragGridPosition = { row: 0, col: 0 };
-    private dragAxis: 'X' | 'Y' | 'NOT_ASSIGNED' = 'NOT_ASSIGNED';
-    private dragX = 0;
-    private dragY = 0;
+    private ogX = 0;
+    private ogY = 0;
 
     // define public variables for conga
     public newRow = 0;
     public newCol = 0;
     public newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
     public status: 'READY' | 'CONGOTCHING' | 'JUMPING' | 'WAITING' | 'BURNT' = 'READY';
+
+    // add sound effects
+    private soundMove?: Phaser.Sound.HTML5AudioSound;
+    private soundInteract?: Phaser.Sound.HTML5AudioSound;
+    private soundBell?: Phaser.Sound.HTML5AudioSound;
 
     constructor({ scene, gridLevel, gridRow, gridCol, key, gotchi, gridSize, objectType }: GO_Gotchi_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GOTCHI'});
@@ -106,12 +103,15 @@ interface CountGotchi {
 
         // set a specific depth
         this.setDepth(DEPTH_GO_GOTCHI);
+
+        // add sound
+        this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundBell = this.scene.sound.add(SOUND_BELL, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundBell.setVolume(0.5);
     
         // add to the scene
         this.scene.add.existing(this);
-
-        // create the shift key
-        this.shiftKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
         // save the mouse
         this.mousePointer = this.scene.input.activePointer;
@@ -137,11 +137,17 @@ interface CountGotchi {
             .on('pointerup', () => {
                 // check we've got enough interaction points
                 const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'DOWN') {
+                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'DOWN') {
                     this.setDirection('DOWN');
-                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    this.adjustPlayerStat('INTERACT_PINK', -1)
                     // in case we were burnt change status back to 'ready'
                     this.status = 'READY';
+
+                    // play the interact sound
+                    this.soundInteract?.play();
+
+                    // hide arrows
+                    this.setRotateArrowsVisible(false);
                 }
             })
         );
@@ -153,11 +159,17 @@ interface CountGotchi {
             .on('pointerup', () => {
                 // check we've got enough interaction points
                 const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'LEFT') {
+                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'LEFT') {
                     this.setDirection('LEFT');
-                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    this.adjustPlayerStat('INTERACT_PINK', -1)
                     // in case we were burnt change status back to 'ready'
                     this.status = 'READY';
+
+                    // play the interact sound
+                    this.soundInteract?.play();
+
+                    // hide arrows
+                    this.setRotateArrowsVisible(false);
                 }
             })
         );
@@ -169,11 +181,17 @@ interface CountGotchi {
             .on('pointerup', () => {
                 // check we've got enough interaction points
                 const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'UP') {
+                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'UP') {
                     this.setDirection('UP');
-                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    this.adjustPlayerStat('INTERACT_PINK', -1)
                     // in case we were burnt change status back to 'ready'
                     this.status = 'READY';
+
+                    // play the interact sound
+                    this.soundInteract?.play();
+
+                    // hide arrows
+                    this.setRotateArrowsVisible(false);
                 }
             })
         );
@@ -185,11 +203,17 @@ interface CountGotchi {
             .on('pointerup', () => {
                 // check we've got enough interaction points
                 const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_GOTCHI') > 0 && this.getDirection() !== 'RIGHT') {
+                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'RIGHT') {
                     this.setDirection('RIGHT');
-                    this.adjustPlayerStat('INTERACT_GOTCHI', -1)
+                    this.adjustPlayerStat('INTERACT_PINK', -1)
                     // in case we were burnt change status back to 'ready'
                     this.status = 'READY';
+
+                    // play the interact sound
+                    this.soundInteract?.play();
+
+                    // hide arrows
+                    this.setRotateArrowsVisible(false);
                 }
             })    
         );
@@ -231,9 +255,12 @@ interface CountGotchi {
             if (delta < 200) {
                 // check we've got enough interact points
                 const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_GOTCHI') > 0) {
+                if (player && player.getStat('INTERACT_PINK') > 0) {
                     // we have enough interact points so toggle visible arrow status
                     this.rotateArrowsVisible = !this.rotateArrowsVisible;
+
+                    // play the interact sound
+                    // this.soundInteract?.play();
                 }
             }
         });
@@ -246,8 +273,8 @@ interface CountGotchi {
         this.on('dragstart', () => {
             // store our initial drag positions
             this.ogDragGridPosition = this.getGridPosition();
-            this.dragX = this.x;
-            this.dragY = this.y;
+            this.ogX = this.x;
+            this.ogY = this.y;
         })
 
         // set behaviour for dragging
@@ -257,34 +284,29 @@ interface CountGotchi {
 
             if (gameScene && player) {    
                 // if we've got movement points left we can drag
-                if (player.getStat('MOVE_GOTCHI') > 0) {
+                if (player.getStat('MOVE_PINK') > 0) {
                     // only drag objects into grids they have space for
                     const gp = this.getGridPosition();
                     const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
                     const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
                     const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
                     const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
-
-                    // console.log(this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col));
-                    // console.log(this.gridLevel.getGridObject(gp.row+1, gp.col));
                     
-                    const adoX = this.dragX;
-                    const adoY = this.dragY;
-                    const upLimit = aboveEmpty ? adoY - this.gridLevel.getGridSize() : adoY;
-                    const downLimit = belowEmpty ? adoY + this.gridLevel.getGridSize() : adoY;
-                    const leftLimit = leftEmpty ? adoX - this.gridLevel.getGridSize() : adoX;
-                    const rightLimit = rightEmpty ? adoX + this.gridLevel.getGridSize() : adoX;
-            
-                    if (this.dragAxis === 'NOT_ASSIGNED') {
-                        // find the predominant drag axis
-                        this.dragAxis = Math.abs(dragX-this.dragX) > Math.abs(dragY-this.dragY) ? 'X' : 'Y';
-                    }
-            
-                    // move along the dominant axis
-                    if (this.dragAxis === 'X') {
+                    const upLimit = aboveEmpty ? this.ogY - this.gridLevel.getGridSize() : this.ogY;
+                    const downLimit = belowEmpty ? this.ogY + this.gridLevel.getGridSize() : this.ogY;
+                    const leftLimit = leftEmpty ? this.ogX - this.gridLevel.getGridSize() : this.ogX;
+                    const rightLimit = rightEmpty ? this.ogX + this.gridLevel.getGridSize() : this.ogX;
+
+                    // find out if we're further from original X or Y
+                    const deltaX = this.ogX - dragX;
+                    const deltaY = this.ogY - dragY;
+
+                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
                         if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
-                    } else if (this.dragAxis === 'Y') {
+                        this.y = this.ogY;
+                    } else {
                         if (dragY > upLimit && dragY < downLimit) this.y = dragY;
+                        this.x = this.ogX;
                     }
                 }
             }
@@ -294,13 +316,15 @@ interface CountGotchi {
             // store the grid position dragging finished in
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
             this.setGridPosition(finalGridPos.row, finalGridPos.col);
-            this.dragAxis = 'NOT_ASSIGNED';
 
-            // adjust the player stat
+            // adjust the player stat if we're in different grid position from start of drag
             if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    this.adjustPlayerStat('MOVE_GOTCHI', -1);
+                    this.adjustPlayerStat('MOVE_PINK', -1);
                     // in case we were burnt change status back to 'ready'
                     this.status = 'READY';
+
+                    // play the move sound
+                    this.soundMove?.play();
             }
         })
 
@@ -359,7 +383,8 @@ interface CountGotchi {
     }
 
     // create stat adjustment
-    public adjustPlayerStat(stat: 'INTERACT_GOTCHI' | 'MOVE_GOTCHI' | 'MOVE_AGGRO' | 'INTERACT_AGGRO' | 'INTERACT_PORTAL' | 'MOVE_PORTAL' | 'MOVE_BOOSTER' | 'INTERACT_BOOSTER', value: number) {
+    public adjustPlayerStat(stat: 'INTERACT_PINK' | 'MOVE_PINK' | 'MOVE_RED' | 'INTERACT_RED' | 
+    'INTERACT_BLUE' | 'MOVE_BLUE' | 'MOVE_GREEN' | 'INTERACT_GREEN', value: number) {
         // get the player
         const player = (this.scene as GameScene).getPlayer();
     
@@ -374,16 +399,15 @@ interface CountGotchi {
         // go to the cell our gotchi is facing and see if there's a gotchi in it
         let potentialLeader;
         switch (this.getDirection()) {
-            case 'DOWN': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col) as GridObject; break;
-            case 'LEFT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1) as GridObject; break;
-            case 'UP': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col) as GridObject; break;
-            case 'RIGHT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1) as GridObject; break;
+            case 'DOWN': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col); break;
+            case 'LEFT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1); break;
+            case 'UP': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col); break;
+            case 'RIGHT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1); break;
             default: break;
-            
         }
 
         // double check the grid object we found is a gotchi
-        if (potentialLeader?.getType() === 'GOTCHI') {
+        if (potentialLeader !== 'OUT OF BOUNDS' && potentialLeader?.getType() === 'GOTCHI') {
             // check the gotchi isn't looking straight back at us
             let lookingAtUs = false;
             switch (this.getDirection()) {
@@ -403,20 +427,32 @@ interface CountGotchi {
     public findFollowers() {
         // check each direction to see if there is a gotchi looking at us
         const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
-        this.followers[0] = (downGotchi && downGotchi.getType() === 'GOTCHI' && (downGotchi as GO_Gotchi).getDirection() === 'UP') ? 
-            downGotchi : 0;
+        if (downGotchi !== 'OUT OF BOUNDS' &&
+            downGotchi.getType() === 'GOTCHI' &&
+            (downGotchi as GO_Gotchi).getDirection() === 'UP') {
+                this.followers[0] = downGotchi;
+        } else this.followers[0] = 0;
 
         const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
-        this.followers[1] = (leftGotchi && leftGotchi.getType() === 'GOTCHI' && (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') ? 
-            leftGotchi : 0;
+        if (leftGotchi !== 'OUT OF BOUNDS' &&
+            leftGotchi.getType() === 'GOTCHI' &&
+            (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') {
+                this.followers[1] = leftGotchi;
+        } else this.followers[1] = 0;
 
         const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
-        this.followers[2] = (upGotchi && upGotchi.getType() === 'GOTCHI' && (upGotchi as GO_Gotchi).getDirection() === 'DOWN') ? 
-            upGotchi : 0;
+        if (upGotchi !== 'OUT OF BOUNDS' &&
+            upGotchi.getType() === 'GOTCHI' &&
+            (upGotchi as GO_Gotchi).getDirection() === 'DOWN') {
+                this.followers[2] = upGotchi;
+        } else this.followers[2] = 0;
 
         const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
-        this.followers[3] = (rightGotchi && rightGotchi.getType() === 'GOTCHI' && (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') ? 
-            rightGotchi : 0;
+        if (rightGotchi !== 'OUT OF BOUNDS' &&
+            rightGotchi.getType() === 'GOTCHI' &&
+            (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') {
+                this.followers[3] = rightGotchi;
+        } else this.followers[3] = 0; 
     }
 
     public setLeader(leader: GO_Gotchi | 0) {
@@ -476,6 +512,7 @@ interface CountGotchi {
 
     public setRotateArrowsVisible(visible: boolean) {
         this.arrows.map(arrow => arrow.setVisible(visible));
+        this.rotateArrowsVisible = visible;
     }
 
     public setRandomDirection() {
@@ -562,6 +599,7 @@ interface CountGotchi {
                         this.destroy();
                     }
                 });
+
                 // create a temporary score text
                 const score = this.scene.add.text(this.x, this.y,
                     this.scoreBonus.toString(),
@@ -582,6 +620,8 @@ interface CountGotchi {
                     onComplete: () => { score.destroy() }
                 })
                 
+                // play a bell sound
+                this.soundBell?.play();
             },
             true,
             this.congaStepDuration,

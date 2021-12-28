@@ -19,14 +19,19 @@ export interface SpritesheetAsset extends Asset {
 export const BG = 'bg';
 export const FULLSCREEN = 'fullscreen';
 export const LEFT_CHEVRON = 'left_chevron';
-export const CLICK = 'click';
+
+export const SOUND_CLICK = 'sound_click';
+export const SOUND_POP = 'sound_pop';
+export const SOUND_SLURP = 'sound_slurp'
+export const SOUND_EXPLOSION = 'sound_explosion';
+export const SOUND_PORTAL_OPEN = 'sound_portal_open';
+export const SOUND_BELL = 'sound_bell';
+export const SOUND_VICTORY = 'sound_victory';
+
 export const MUSIC_WORLD_MAP = 'music_world_map';
 export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
+
 export const ARROW_DOWN = 'arrow_down';
-export const GOTCHI_FRONT = 'gotchi_front';
-export const GOTCHI_BACK = 'gotchi_back';
-export const GOTCHI_LEFT = 'gotchi_left';
-export const GOTCHI_RIGHT = 'gotchi_right';
 export const M67_GRENADE = 'm67_grenade';
 export const MILKSHAKE = 'milkshake';
 export const UNCOMMON_CACTI = 'uncommon_cacti';
@@ -41,9 +46,9 @@ export const BLUE_CIRCLE_SHADED = 'blue-circle-shaded';
 export const GREY_CIRCLE_SHADED = 'grey-circle-shaded';
 export const MOVE_ICON = 'move_icon';
 export const QUESTION_MARK_ICON = 'question_mark_icon';
-export const ROTATE_ICON = 'rotate_icon';
-export const SHUFFLE_ICON = 'shuffle_icon';
-export const BONUS_ICON = 'bonus_icon';
+// export const ROTATE_ICON = 'rotate_icon';
+// export const SHUFFLE_ICON = 'shuffle_icon';
+// export const BONUS_ICON = 'bonus_icon';
 export const ARROW_ICON = 'arrow_icon';
 export const RED_BUTTON = 'red_button';
 export const PURPLE_BUTTON = 'purple_button';
@@ -53,15 +58,15 @@ export const GUI_LEVEL_SELECT_RIBBON = 'gui_level_select_ribbon';
 export const GUI_BUTTON_CROSS = 'gui_button_cross';
 export const GUI_BUTTON_TICK = 'gui_button_tick';
 export const GUI_BUTTON_PLAY = 'gui_button_play';
-export const GUI_BUTTON_FORWARD = 'gui_button_foward';
-export const GUI_BUTTON_BACK = 'gui_button_back';
+// export const GUI_BUTTON_FORWARD = 'gui_button_foward';
+// export const GUI_BUTTON_BACK = 'gui_button_back';
 export const GUI_SCORE_PANEL = 'gui_score_panel';
 export const GUI_0_STARS = 'gui_0_stars';
 export const GUI_1_STARS = 'gui_1_stars';
 export const GUI_2_STARS = 'gui_2_stars';
 export const GUI_3_STARS = 'gui_3_stars';
-export const CW_ROTATE_MOVE_ICON = 'cw_rotate_move_icon';
-export const ACW_ROTATE_MOVE_ICON = 'acw_rotate_move_icon';
+// export const CW_ROTATE_MOVE_ICON = 'cw_rotate_move_icon';
+// export const ACW_ROTATE_MOVE_ICON = 'acw_rotate_move_icon';
 export const PIXEL_EXPLOSION = 'pixel_explosion';
 export const PIXEL_PINK_SPLASH = 'pixel_pink_splash'
 
@@ -80,8 +85,38 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'SVG',
   },
   {
-    key: CLICK,
+    key: SOUND_CLICK,
     src: 'assets/sounds/click.mp3',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_POP,
+    src: 'assets/sounds/pop.ogg',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_SLURP,
+    src: 'assets/sounds/slurp.ogg',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_EXPLOSION,
+    src: 'assets/sounds/explosion.ogg',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_PORTAL_OPEN,
+    src: 'assets/sounds/portalOpen.mp3',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_BELL,
+    src: 'assets/sounds/bell.ogg',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_VICTORY,
+    src: 'assets/sounds/victory.ogg',
     type: 'AUDIO',
   },
   {
@@ -94,31 +129,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/music/Grid_Level_Carnivale Intrigue.ogg',
     type: 'AUDIO',
   },
+
   {
     key: ARROW_DOWN,
     src: 'assets/images/arrow_down.png',
     type: 'IMAGE',
   },
-  // {
-  //   key: GOTCHI_FRONT,
-  //   src: 'assets/gotchis/1_front.png',
-  //   type: 'IMAGE',
-  // },
-  // {
-  //   key: GOTCHI_BACK,
-  //   src: 'assets/gotchis/1_back.png',
-  //   type: 'IMAGE',
-  // },
-  // {
-  //   key: GOTCHI_LEFT,
-  //   src: 'assets/gotchis/1_left.png',
-  //   type: 'IMAGE',
-  // },
-  // {
-  //   key: GOTCHI_RIGHT,
-  //   src: 'assets/gotchis/1_right.png',
-  //   type: 'IMAGE',
-  // },
   {
     key: M67_GRENADE,
     src: 'assets/images/grenade.png',
@@ -189,19 +205,9 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/icons/question-mark-icon.png',
     type: 'IMAGE',
   },
-  {
-    key: ROTATE_ICON,
-    src: 'assets/icons/rotate.png',
-    type: 'IMAGE',
-  },
   // {
-  //   key: SHUFFLE_ICON,
-  //   src: 'assets/icons/shuffle.png',
-  //   type: 'IMAGE',
-  // },
-  // {
-  //   key: BONUS_ICON,
-  //   src: 'assets/icons/bonus.png',
+  //   key: ROTATE_ICON,
+  //   src: 'assets/icons/rotate.png',
   //   type: 'IMAGE',
   // },
   {
@@ -244,16 +250,6 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/gui/play-button.png',
     type: 'IMAGE',
   },
-  // {
-  //   key: GUI_BUTTON_FORWARD,
-  //   src: 'assets/gui/forward-button-1.png',
-  //   type: 'IMAGE',
-  // },
-  // {
-  //   key: GUI_BUTTON_BACK,
-  //   src: 'assets/gui/back-button-1.png',
-  //   type: 'IMAGE',
-  // },
   {
     key: GUI_SCORE_PANEL,
     src: 'assets/gui/score-panel-2.png',
@@ -279,16 +275,6 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/gui/3-stars.png',
     type: 'IMAGE',
   },
-  // {
-  //   key: CW_ROTATE_MOVE_ICON,
-  //   src: 'assets/icons/cw-rotate-move-icon.png',
-  //   type: 'IMAGE',
-  // },
-  // {
-  //   key: ACW_ROTATE_MOVE_ICON,
-  //   src: 'assets/icons/acw-rotate-move-icon.png',
-  //   type: 'IMAGE',
-  // },
   {
     key: ARROW_ICON,
     src: 'assets/icons/arrow-icon.png',

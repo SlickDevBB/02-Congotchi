@@ -2,7 +2,7 @@
 // this object controls display of all gui elements
 
 import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
-import { GREEN_BUTTON, CLICK, GUI_SCORE_PANEL, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON, GUI_BUTTON_PLAY, GUI_BUTTON_FORWARD, GUI_BUTTON_BACK, GUI_BUTTON_CROSS, GUI_0_STARS, GUI_1_STARS, GUI_3_STARS, GUI_2_STARS } from "game/assets";
+import { GREEN_BUTTON, SOUND_CLICK, GUI_SCORE_PANEL, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON, GUI_BUTTON_PLAY, GUI_BUTTON_CROSS, GUI_0_STARS, GUI_1_STARS, GUI_3_STARS, GUI_2_STARS, SOUND_VICTORY } from "game/assets";
 import { LevelButton, Player, LevelConfig, levels, GridLevel, WorldMap, GuiScoreBoard } from ".";
 // import { Math } from "phaser";
 import { GameScene } from "game/scenes/game-scene";
@@ -31,7 +31,9 @@ export class Gui {
     private exitButton: Phaser.GameObjects.Image;
     private scoreBoard: GuiScoreBoard;
     private mainMenuButton?: Phaser.GameObjects.Image;
+    
     private clickSound?: Phaser.Sound.BaseSound;
+
     
     private player: Player;
     private world: WorldMap;
@@ -105,7 +107,7 @@ export class Gui {
                     this.scene.endLevel();
                 } else {
                     // we've hit exit when on world map, save the current level and get out of here
-                    (this.scene as GameScene).saveCurrentLevel();
+                    (this.scene as GameScene).returnMainMenu();
                     this.clickSound?.play();
                     window.history.back();
                 }
@@ -119,7 +121,7 @@ export class Gui {
         });
 
         // create the back button click sound
-        this.clickSound = this.scene.sound.add(CLICK, { loop: false });
+        this.clickSound = this.scene.sound.add(SOUND_CLICK, { loop: false });
     }
 
     
@@ -263,6 +265,8 @@ export class Gui {
             // scale: this.exitButton.scale*1.5,
             duration: 250,
         });
+
+        (this.scene as GameScene).showLevelOverScreen();
     }
 
     public update() {

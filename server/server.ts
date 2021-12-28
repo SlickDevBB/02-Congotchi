@@ -119,7 +119,7 @@ io.on('connection', function (socket: Socket) {
       // if preview gotchi return
       if (isPreviewGotchi) return;
 
-      console.log('Attempting to set current level');
+      console.log('Attempting to set current level to: ' + levelNumber);
       const saveOwner = connectedGotchis[userId].gotchi.owner.id;
       try {
         // get address ref and doc
@@ -130,7 +130,7 @@ io.on('connection', function (socket: Socket) {
         if (addressDoc.exists) {
           const docData = { 
             owner: saveOwner,
-            unlockedLevels: addressRef.data().unlockedLevels,
+            unlockedLevels: addressDoc.data().unlockedLevels,
             currentLevel: levelNumber,
           }
           await addressRef.set(docData);

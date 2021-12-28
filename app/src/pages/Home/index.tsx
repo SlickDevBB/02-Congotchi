@@ -233,15 +233,20 @@ const Home = () => {
         <Modal onHandleClose={() => setShowRulesModal(false)}>
           <div className={styles.modalContent}>
             <h1>Congotchi!!!</h1>
-            <p>Oh no frens! Gotchis from all over the Reaalm are lost! It is up to you to find and locate them and bring them back to the warm chambers of the Citaadel!</p>
-            <p>MOVE gotchis into lines so that they can conga back into portals</p>
-            <p>ROTATE gotchis if needed for better angles</p>
-            <p>Disarm GRENADES to avoid hurting your conga line</p>
-            <p>Remove stubborn CACTI to make movement easier</p>
-            <p>Collect MILKSHAKES while moving for extra points</p>
-            <p>Summon PORTALS to bring gotchis home and get points</p> 
-            <p>RESHUFFLE the board if needed for a fresh look</p>
-            <p>And the more BONUS you have, the more points you get!</p>
+            <p>Oh no frens! AAVEGOTCHIS from all over the REAALM are lost! It is up to you and your chosen gotchi to locate them and bring them back to the warm chambers of the Citaadel!</p>
+            <p>Throughout the REAALM you and your gotchi will play many levels, and in each, you must MOVE and INTERACT with lost gotchis and grid objects to
+              form gotchi conga lines that finish at portals. Open those portals to conga the gotchis home!</p>
+            <p>Grid objects come in 4 colours. PINK, RED, GREEN and BLUE. Player gotchis with attributes closer to the left side of the normal
+              distribution curve can INTERACT with more grid objects. Player gotchis with attributes closer to the right side of the curve
+              fare better when trying to MOVE grid objects.
+            </p>
+            <p>
+            PINK grid objects are associated with NRG<br></br>
+            RED grid objects are associated with AGG<br></br>
+            GREEN grid objects are associated with SPK<br></br>
+            BLUE grid objects are associated with BRN
+            </p>
+            <p>Now get out there and start saving some gotchis!</p>
           </div>
         </Modal>
       )}

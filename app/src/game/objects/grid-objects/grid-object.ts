@@ -1,7 +1,6 @@
 // grid-object.ts - base class for all grid objects
 import { GO_Empty, GridLevel } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GOTCHI_BACK, GOTCHI_FRONT, GOTCHI_LEFT, GOTCHI_RIGHT } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GRID_OBJECTS } from 'game/helpers/constants';
 
