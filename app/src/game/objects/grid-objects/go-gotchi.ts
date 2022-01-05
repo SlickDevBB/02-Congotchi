@@ -2,7 +2,7 @@
 
 import { GO_Empty, GO_Props, GridLevel, GridObject } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { ARROW_ICON, SOUND_BELL, SOUND_POP } from 'game/assets';
+import { ARROW_ICON, PARTICLE_CONFETTI, SOUND_BELL, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI } from 'game/helpers/constants';
 import { AavegotchiGameObject } from 'types';
@@ -38,7 +38,7 @@ interface CountGotchi {
     private arrows: Array<Phaser.GameObjects.Image> = [];
 
     // score bonus is how many points you get for getting this gotchi into a portal
-    public scoreBonus = 5;
+    public scoreBonus = 10;
     private scoreBonusText;
 
     // declare variable for setting visibility of rotate arrows
@@ -53,10 +53,14 @@ interface CountGotchi {
     private directionGuide: Phaser.GameObjects.Ellipse;
 
     // conga side is a variable for tracking which side we conga on
-    private congaSide: 'LEFT' | 'RIGHT' = Math.round(Math.random()) === 1 ? 'LEFT' : 'RIGHT';
+    // private congaSide: 'LEFT' | 'RIGHT' = Math.round(Math.random()) === 1 ? 'LEFT' : 'RIGHT';
+    private congaSide: 'LEFT' | 'RIGHT' = 'LEFT';
 
     // duration variable for conga steps
-    private congaStepDuration = 200;
+    private congaStepDuration = 60/140*1000;
+
+    // congaCount is used to count steps until a jump
+    private congaCount = 0;
 
     // timer is for click events
     private timer = 0;
@@ -70,12 +74,16 @@ interface CountGotchi {
     public newRow = 0;
     public newCol = 0;
     public newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
-    public status: 'READY' | 'CONGOTCHING' | 'JUMPING' | 'WAITING' | 'BURNT' = 'READY';
+    public status: 'READY_TO_CONGA' | 'CONGOTCHING' | 'JUMPING' | 'FINISHED_CONGA' | 'WAITING' | 'BURNT' | 'TELEPORTING' = 'WAITING';
 
     // add sound effects
     private soundMove?: Phaser.Sound.HTML5AudioSound;
     private soundInteract?: Phaser.Sound.HTML5AudioSound;
     private soundBell?: Phaser.Sound.HTML5AudioSound;
+
+    // create particle effects
+    private particleConfetti?: Phaser.GameObjects.Particles.ParticleEmitterManager;
+    private emitterConfetti?: Phaser.GameObjects.Particles.ParticleEmitter;
 
     constructor({ scene, gridLevel, gridRow, gridCol, key, gotchi, gridSize, objectType }: GO_Gotchi_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GOTCHI'});
@@ -113,6 +121,31 @@ interface CountGotchi {
         // add to the scene
         this.scene.add.existing(this);
 
+        this.particleConfetti = this.scene.add.particles(PARTICLE_CONFETTI);
+        this.particleConfetti.setDepth(this.depth + 10);
+        //  Create an emitter by passing in a config object directly to the Particle Manager
+
+        // create emitter with some slightly randomized attributes for each gotchi
+        const angleRand = (Math.random()-0.5)*10;
+        const speedRand = (Math.random()-0.5)*50;
+        const lifespanRand = (Math.random()-0.5)*100;
+        const quantityRand = Math.floor((Math.random()-0.5)*5);
+
+        this.emitterConfetti = this.particleConfetti.createEmitter({
+            frame: [ 'red', 'blue', 'green', 'yellow' ],
+            x: this.x,
+            y: this.y,
+            angle: { min: -100+angleRand, max: -80+angleRand },
+            gravityY: 2000,
+            speed: 500+speedRand,
+            lifespan: 750+lifespanRand,
+            quantity: 15+quantityRand,
+            scale: { start: 0.1, end: 0 },
+            blendMode: 'COPY'
+        })
+        .setScrollFactor(0)
+        .stop();
+
         // save the mouse
         this.mousePointer = this.scene.input.activePointer;
         
@@ -128,7 +161,8 @@ interface CountGotchi {
                 })
             .setOrigin(0,0)
             .setScrollFactor(0)
-            .setDepth(this.depth+1);
+            .setDepth(this.depth+10)
+            .setStroke('#000000', 3);
 
         // create down arrow
         this.arrows.push(
@@ -140,8 +174,8 @@ interface CountGotchi {
                 if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'DOWN') {
                     this.setDirection('DOWN');
                     this.adjustPlayerStat('INTERACT_PINK', -1)
-                    // in case we were burnt change status back to 'ready'
-                    this.status = 'READY';
+                    // in case we were burnt change status back to 'WAITING'
+                    this.status = 'WAITING';
 
                     // play the interact sound
                     this.soundInteract?.play();
@@ -162,8 +196,8 @@ interface CountGotchi {
                 if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'LEFT') {
                     this.setDirection('LEFT');
                     this.adjustPlayerStat('INTERACT_PINK', -1)
-                    // in case we were burnt change status back to 'ready'
-                    this.status = 'READY';
+                    // in case we were burnt change status back to 'WAITING'
+                    this.status = 'WAITING';
 
                     // play the interact sound
                     this.soundInteract?.play();
@@ -184,8 +218,8 @@ interface CountGotchi {
                 if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'UP') {
                     this.setDirection('UP');
                     this.adjustPlayerStat('INTERACT_PINK', -1)
-                    // in case we were burnt change status back to 'ready'
-                    this.status = 'READY';
+                    // in case we were burnt change status back to 'WAITING'
+                    this.status = 'WAITING';
 
                     // play the interact sound
                     this.soundInteract?.play();
@@ -206,8 +240,8 @@ interface CountGotchi {
                 if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'RIGHT') {
                     this.setDirection('RIGHT');
                     this.adjustPlayerStat('INTERACT_PINK', -1)
-                    // in case we were burnt change status back to 'ready'
-                    this.status = 'READY';
+                    // in case we were burnt change status back to 'WAITING'
+                    this.status = 'WAITING';
 
                     // play the interact sound
                     this.soundInteract?.play();
@@ -222,6 +256,7 @@ interface CountGotchi {
         this.arrows.map(arrow => {
             arrow.setDisplaySize(this.gridSize, this.gridSize)
             .setDepth(DEPTH_GOTCHI_ICON)
+            .setAlpha(0.5)
             .setScrollFactor(0)
             .setVisible(false)
             .setInteractive()
@@ -320,8 +355,8 @@ interface CountGotchi {
             // adjust the player stat if we're in different grid position from start of drag
             if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
                     this.adjustPlayerStat('MOVE_PINK', -1);
-                    // in case we were burnt change status back to 'ready'
-                    this.status = 'READY';
+                    // in case we were burnt change status back to 'WAITING'
+                    this.status = 'WAITING';
 
                     // play the move sound
                     this.soundMove?.play();
@@ -530,19 +565,29 @@ interface CountGotchi {
             row,
             col,
             () => {
+                this.congaCount++;
                 this.setDirection(this.newDir);
-                this.status = 'READY';
+                if (this.congaCount < 3) {
+                    setTimeout( () => {
+                        this.status = 'WAITING' 
+                        // this.gridLevel.setTimeOfLastCongaOrJump();
+                    } , this.congaStepDuration*0.5);
+                } else {
+                    this.congaJump();
+                    this.congaCount = 0;
+                }
             },
             false,
-            this.congaStepDuration,
+            this.congaStepDuration*0.5,
+            'Back.easeOut'
         )
 
         // add another tween for our gotchi which rotates him a bit to look conga'ish
         this.scene.add.tween({
             targets: this,
-            angle: this.congaSide === 'LEFT' ? -10 : 10,
-            duration: this.congaStepDuration,
-            ease: 'Quad.easeOut',
+            angle: this.congaSide === 'LEFT' ? -20 : 20,
+            duration: this.congaStepDuration*0.5,
+            ease: 'Bounce.easeOut',
             onComplete: () => {
                 // change conga side
                 this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
@@ -554,31 +599,50 @@ interface CountGotchi {
     }
 
     public congaJump() {
-        // get the gui and display some action text
-        (this.scene as GameScene).getGui()?.showActionText('CONGOTCHI!!!');
-
         // change anim to happy
         this.anims.play(this.getDirection().toLowerCase() + '_happy');
+
+        this.emitterConfetti?.start();
+        setTimeout( () => {
+            this.emitterConfetti?.stop();
+        }, 75);
 
         const prevStatus = this.status;
 
         this.status = 'JUMPING';
 
+        // pump up the score bonus
+        this.scoreBonus += 5;
+
+        // tween a jump
         this.scene.add.tween({
             targets: this,
-            y: this.y - this.displayHeight*0.3,
-            duration: this.congaStepDuration*0.5,
+            y: this.y - this.displayHeight*0.5,
+            duration: this.congaStepDuration*0.25,
             ease: 'Quad.easeOut',
-            yoyo: true,
             onComplete: () => {
-                this.status = prevStatus;
+                this.scene.add.tween({
+                    targets: this,
+                    y: this.y + this.displayHeight*0.5,
+                    duration: this.congaStepDuration*0.25,
+                    ease: 'Quad.easeIn',
+                    onComplete: () => { 
+                        setTimeout( () => {
+                        this.status = 'WAITING' 
+                        // this.gridLevel.setTimeOfLastCongaOrJump();
+                        this.gridLevel.stopCongaMusic();
+                        }, this.congaStepDuration );
+                    }
+                })
             }
-        })
+        });
+        
 
+        // tween gotchi into vertical position
         this.scene.add.tween({
             targets: this,
             angle: 0,
-            duration: this.congaStepDuration*0.5,
+            duration: this.congaStepDuration*0.25,
         })
     }
 
@@ -587,8 +651,11 @@ interface CountGotchi {
             row,
             col,
             () => {
+                this.status = 'TELEPORTING';
+
                 // adjust the score
                 (this.scene as GameScene).getGui()?.adjustScore(this.scoreBonus);
+
                 // spiral the gotchi into the portal
                 this.scene.add.tween({
                     targets: this,
@@ -621,10 +688,10 @@ interface CountGotchi {
                 })
                 
                 // play a bell sound
-                this.soundBell?.play();
+                // this.soundBell?.play();
             },
             true,
-            this.congaStepDuration,
+            this.congaStepDuration*0.5,
         )
 
         return this;
@@ -696,6 +763,10 @@ interface CountGotchi {
             this.arrows[2].setPosition(this.x, this.y-this.gridSize);
             this.arrows[3].setPosition(this.x+this.gridSize, this.y);
         }
+
+        // make sure particles follow us
+        // this.particleConfetti?.setPosition(this.x, this.y);
+        this.emitterConfetti?.setPosition(this.x, this.y);
 
         // update visibility of all arrows
         this.arrows.map(arrow => {

@@ -3,7 +3,7 @@
 
 import { getGameWidth, } from '../helpers';
 import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GridObject, LevelConfig, Player } from 'game/objects';
-import { M67_GRENADE, MILKSHAKE, PORTAL_CLOSED,} from 'game/assets';
+import { M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PORTAL_CLOSED, SOUND_CONGA, SOUND_VICTORY,} from 'game/assets';
 import '../helpers/constants';
 import { DEPTH_GRID_LEVEL } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
@@ -46,6 +46,24 @@ export class GridLevel {
   private initialGotchiCount = 0;
   private status: 'ACTIVE' | 'INACTIVE';
 
+  private musicGridLevel?: Phaser.Sound.HTML5AudioSound;
+  private musicConga?: Phaser.Sound.HTML5AudioSound;
+  private congaMusicPlaying = false;
+
+
+  // private soundCongaA?: Phaser.Sound.HTML5AudioSound;
+  // private soundCongaB?: Phaser.Sound.HTML5AudioSound;
+  // private soundCongaC?: Phaser.Sound.HTML5AudioSound;
+  // private soundCongaD?: Phaser.Sound.HTML5AudioSound;
+
+    private congaCounter = 0;
+
+
+  private soundVictory?: Phaser.Sound.HTML5AudioSound;
+
+  // time variables to help track last congotch or jump
+  private timeLastCongaOrJump = 0;
+
   // our score variable
   private score = 0;
 
@@ -64,6 +82,22 @@ export class GridLevel {
     this.gridSize = getGameWidth(this.scene)/(this.numberCols + padGrid*2);
     this.x = this.gridSize*padGrid;
     this.y = 3*this.gridSize;
+
+    // create a grid level music object and start playing
+    this.musicGridLevel = this.scene.sound.add(MUSIC_GRID_LEVEL_A, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
+    this.musicGridLevel.play();
+
+    this.musicConga = this.scene.sound.add(SOUND_CONGA, {loop: false}) as Phaser.Sound.HTML5AudioSound;
+
+    
+        // // create conga music when congotching/jumping/teleporting etc.
+        // this.soundCongaA = this.scene.sound.add(SOUND_CONGA_A, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        // this.soundCongaB = this.scene.sound.add(SOUND_CONGA_B, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        // this.soundCongaC = this.scene.sound.add(SOUND_CONGA_C, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        // this.soundCongaD = this.scene.sound.add(SOUND_CONGA_D, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+
+    // create the victory sound
+    this.soundVictory = this.scene.sound.add(SOUND_VICTORY, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
     // fill out the gridCells member based on the config file
     for (let i = 0; i < this.numberRows; i++) {
@@ -273,8 +307,6 @@ export class GridLevel {
     // find all the initial leaders and followers
     this.setupLeadersAndFollowers();
 
-    console.log('we get here?');
-
     // init all the grid colours by simply setting their gridobject to themselves
     this.gridCells.map(row => row.map( cell => {
       this.setGridObject(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col, cell.gridObject);
@@ -286,8 +318,6 @@ export class GridLevel {
     }));
   }
 
-
-
   public makeRectangle(row: number, col: number) {
     return this.scene.add.rectangle(
       this.x + this.gridSize*col, this.y + this.gridSize*row, 
@@ -298,40 +328,6 @@ export class GridLevel {
       .setOrigin(0,0)
       .setDepth(DEPTH_GRID_LEVEL)
       .setScrollFactor(0)
-  }
-
-  // set all the leader/follower relationships
-  public setupLeadersAndFollowers() {
-    // for every gotchi in level check what's around it
-    this.gridCells.map(row => row.map( cell => {
-      if (cell.gridObject.getType() === 'GOTCHI') {
-        (cell.gridObject as GO_Gotchi).findLeader();
-        (cell.gridObject as GO_Gotchi).findFollowers();
-      }
-    }));
-  }
-
-  // runCongaPortals() --- checks for gotchis near open portals and congas them in
-  public runCongaPortals() {
-    // first look for any open portals
-    this.gridCells.map( row => row.map( cell => {
-      if (cell.gridObject.getType() === 'PORTAL' && (cell.gridObject as GO_Portal).getStatus() === 'OPEN') {
-        // run our conga chains
-        (cell.gridObject as GO_Portal).runCongaChains();
-      }
-    }));
-  }
-
-  public isGotchiGangReady() {
-    let gotchisReady = true;
-    // go through all grid objects and see if any gotchis are congotching
-    this.gridCells.map( row => row.map( cell => {
-      if (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'CONGOTCHING') {
-        // we have a gotchi not ready so set gotchisREady to false
-        gotchisReady = false;
-      }
-    }));
-    return gotchisReady;
   }
 
   public isLevelOver() {
@@ -472,6 +468,15 @@ export class GridLevel {
 
     this.status = 'INACTIVE';
 
+    // fade out music
+    this.scene.add.tween({
+      targets: this.musicGridLevel,
+      volume: 0,
+      duration: 1500,
+      onComplete: () => {
+        this.musicGridLevel?.stop();
+      }
+    })
   }
 
   public getStatus() {
@@ -485,7 +490,7 @@ export class GridLevel {
         for (let i = cell.gridObject.gridPosition.row-1; i < cell.gridObject.gridPosition.row + 2; i++) {
           for (let j = cell.gridObject.gridPosition.col-1; j < cell.gridObject.gridPosition.col + 2; j++) {
               const go = this.getGridObject(i, j);
-              if (go !== 'OUT OF BOUNDS' && go.getType() === 'GOTCHI' && (go as GO_Gotchi).status === 'CONGOTCHING') {
+              if (go !== 'OUT OF BOUNDS' && go.getType() === 'GOTCHI' && (go as GO_Gotchi).status === 'READY_TO_CONGA') {
                   (cell.gridObject as GO_Grenade).explode();
               }
           }
@@ -494,9 +499,68 @@ export class GridLevel {
     }))
   }
 
+  public stopCongaMusic() {
+    this.gridCells.map(row => row.map (cell => {
+      if (cell.gridObject.getType() === 'PORTAL') {
+        (cell.gridObject as GO_Portal).stopCongaMusic();
+      }
+    }))
+  }
+
+  public setTimeOfLastCongaOrJump() {
+    this.timeLastCongaOrJump = new Date().getTime();
+  }
+
+  public getTimeSinceLastCongaOrJump() {
+    return new Date().getTime() - this.timeLastCongaOrJump;
+  }
+
+  public isCongaRunning() {
+    let congaRunning = false;
+    // go through all grid objects and see if any gotchis are congotching
+    this.gridCells.map( row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'CONGOTCHING') {
+        congaRunning = true;
+      }
+    }));
+    return congaRunning;
+  }
+
+  public isGotchisJumping() {
+    let gotchisJumping = false;
+    // go through all grid objects and see if any gotchis are congotching
+    this.gridCells.map( row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'JUMPING') {
+        gotchisJumping = true;
+      }
+    }));
+    return gotchisJumping;
+  }
+
+  // set all the leader/follower relationships
+  public setupLeadersAndFollowers() {
+    // for every gotchi in level check what's around it
+    this.gridCells.map(row => row.map( cell => {
+      if (cell.gridObject.getType() === 'GOTCHI') {
+        (cell.gridObject as GO_Gotchi).findLeader();
+        (cell.gridObject as GO_Gotchi).findFollowers();
+      }
+    }));
+  }
+
+  // runCongaPortals() --- checks for gotchis near open portals and congas them in
+  public runCongaPortals() {
+    // first look for any open portals
+    this.gridCells.map( row => row.map( cell => {
+      if (cell.gridObject.getType() === 'PORTAL' && (cell.gridObject as GO_Portal).getStatus() === 'OPEN') {
+        // run our conga chains
+        (cell.gridObject as GO_Portal).runCongaChains();
+      }
+    }));
+  }
 
   update(): void {
-        // update our star score depending on gotchis saved
+    // update our star score depending on gotchis saved
     let remainingGotchiCount = 0;
     const gui = (this.scene as GameScene).getGui();
     this.gridCells.map(row => row.map( cell => {
@@ -521,6 +585,7 @@ export class GridLevel {
     // if level is over call our scenes end level function
     if (this.isLevelOver() && !this.levelOver) {
       this.levelOver = true;
+
       // set a timeout to end the level
       setTimeout( () => {
         (this.scene as GameScene).getGui()?.showLevelOverScreen();
@@ -528,7 +593,7 @@ export class GridLevel {
     } 
 
     // if gotchis are ready (nobody congotching) we can do stuff
-    if (this.isGotchiGangReady()) {
+    if (!this.isCongaRunning() && !this.isGotchisJumping()) {
 
       // setup all leader and follower relationships for gotchis
       this.setupLeadersAndFollowers(); 
@@ -536,9 +601,23 @@ export class GridLevel {
       // conga gotchi lines next to any open portals
       this.runCongaPortals();
 
+      // play conga sound
+      // if (this.congaCounter === 0) this.soundCongaA?.play();
+      // else if (this.congaCounter === 1) this.soundCongaB?.play();
+      // else if (this.congaCounter === 2) this.soundCongaC?.play();
+      // else this.soundCongaD?.play();
+
+      // this.congaCounter++;
+      // if (this.congaCounter > 3) this.congaCounter = 0;
     }
 
-    
+    if (this.isCongaRunning() || this.isGotchisJumping()) {
+      this.musicGridLevel?.pause();
+      // this.musicConga?.resume();
+    } else {
+      this.musicGridLevel?.resume();
+      // this.musicConga?.pause();
+    }
 
     // call update for all our grid objects
     this.gridCells.map(row => row.map(cell => {

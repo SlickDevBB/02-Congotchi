@@ -2,7 +2,7 @@
 
 import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { PORTAL_OPEN, SOUND_CONGA, SOUND_POP, SOUND_PORTAL_OPEN } from 'game/assets';
+import { PORTAL_OPEN, SOUND_POP, SOUND_PORTAL_OPEN } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
 
@@ -31,18 +31,6 @@ export class GO_Portal extends GridObject {
     private numSubchainGotchis: number[] = [0, 0, 0, 0];
     private congaJumpCounter = [0, 0, 0, 0];
 
-
-  private soundCongaA?: Phaser.Sound.HTML5AudioSound;
-  private soundCongaB?: Phaser.Sound.HTML5AudioSound;
-  private soundCongaC?: Phaser.Sound.HTML5AudioSound;
-  private soundCongaD?: Phaser.Sound.HTML5AudioSound;
-
-
-  private musicConga?: Phaser.Sound.HTML5AudioSound;
-  private congaMusicPlaying = false;
-
-    private congaCounter = 0;
-
     // timer is for click events
     private timer = 0;
 
@@ -53,7 +41,7 @@ export class GO_Portal extends GridObject {
 
     // add sound effects
     private soundMove?: Phaser.Sound.HTML5AudioSound;
-    // private soundInteract?: Phaser.Sound.HTML5AudioSound;
+    private soundInteract?: Phaser.Sound.HTML5AudioSound;
 
     // our constructor
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
@@ -71,8 +59,8 @@ export class GO_Portal extends GridObject {
 
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
-
-        this.musicConga = this.scene.sound.add(SOUND_CONGA, {loop: false}) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract = this.scene.sound.add(SOUND_PORTAL_OPEN, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract.setVolume(0.5);
 
         // set behaviour for pointer click down
         this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -100,8 +88,8 @@ export class GO_Portal extends GridObject {
                         player.adjustStat('INTERACT_BLUE', -1);
 
                         // play sound based on status
-                        // if (this.status === 'OPEN') this.soundInteract?.play();
-                        // else this.soundInteract?.stop();
+                        if (this.status === 'OPEN') this.soundInteract?.play();
+                        else this.soundInteract?.stop();
                     }
                 }
             }
@@ -249,18 +237,18 @@ export class GO_Portal extends GridObject {
                 // FIRST PASS - establishing the gotchi chain CONGOTCHING vs. WAIT status //
                 ////////////////////////////////////////////////////////////////////////////////////////
 
-                // if our leader isn't burnt we can set his status to ready to conga
-                if (congaLeader.status === 'WAITING') {
-                    congaLeader.status = 'READY_TO_CONGA';
+                // if our leader isn't burnt we can set his status to congotching
+                if (congaLeader.status !== 'BURNT') {
+                    congaLeader.status = 'CONGOTCHING';
                 }
 
                 // go through each congotchi in the gotchi chain and set status to CONGOTCHING if the gotchi is top priority
                 this.gotchiChains[i].map( (g) => {
                     // if this gotchi has top priority and the leader isn't waiting, set them to congotching 
                     const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
-                    if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && leader.status === 'READY_TO_CONGA') {
+                    if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && leader.status !== 'WAITING') {
                         // set our gotchi status to 'CONGOTCHING'
-                        g.status = 'READY_TO_CONGA';
+                        g.status = 'CONGOTCHING';
                     } else {
                         g.status = 'WAITING';
                     }
@@ -270,37 +258,33 @@ export class GO_Portal extends GridObject {
                 this.gridLevel.explodeGrenadesNearCongotchis();
 
                 ///////////////////////////////////////////////////////////////////////////////////////
-                // SECOND PASS - Moving gotchis if burning didn't affect their status
+                // SECOND PASS - Moving gotchis taking into account their burnt status
                 ////////////////////////////////////////////////////////////////////////////////////
 
                 // we can now move our conga leader into the portal if he's not burnt
-                if (congaLeader.status === 'READY_TO_CONGA') {
+                if (congaLeader.status !== 'BURNT') {
                     congaLeader.congaIntoPortal(this.gridPosition.row, this.gridPosition.col);
-                    congaLeader.status = 'CONGOTCHING';
-                    
-                    if (!this.congaMusicPlaying) {
-                        this.musicConga?.play();
-                        this.congaMusicPlaying = true;
-                    }
-                } 
+                }
 
                 // go through each congotchi in the gotchi chain and call the congaIntoPosition() function if possible
                 this.gotchiChains[i].map( (g) => {
-                    if (g.status === 'READY_TO_CONGA') {
+                    // if this gotchi has priority, isn't burnt, leader isn't waiting OR burnt, conga, 
+                    const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
+                    const priority = this.getFollowerPriority(leader, g);
+
+                    if ( priority === 'TOP_PRIORITY' && g.status !== 'BURNT' && 
+                    leader.status !== 'WAITING' && leader.status !== 'BURNT' ) {
                         // conga our gotchi into position
                         g.congaIntoPosition(g.newRow, g.newCol);
 
                         // set our gotchi status to 'CONGOTCHING'
-                        g.status = 'CONGOTCHING';
+                        // g.status = 'CONGOTCHING';
+                    } else {
+                        g.status = 'WAITING';
                     }
                 })
             }
         }
-    }
-
-    public stopCongaMusic() {
-        this.congaMusicPlaying = false;
-        this.musicConga?.stop();
     }
 
     public getStatus() {

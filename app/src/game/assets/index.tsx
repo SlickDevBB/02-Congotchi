@@ -1,7 +1,8 @@
 export interface Asset {
   key: string;
   src: string;
-  type: 'IMAGE' | 'SVG' | 'SPRITESHEET' | 'AUDIO';
+  type: 'IMAGE' | 'SVG' | 'SPRITESHEET' | 'AUDIO' | 'ATLAS';
+  atlasSrc?: string;
   data?: {
     frameWidth?: number;
     frameHeight?: number;
@@ -16,6 +17,16 @@ export interface SpritesheetAsset extends Asset {
   };
 }
 
+export interface AtlasAsset extends Asset {
+  type: 'ATLAS';
+  atlasSrc: string;
+  data: {
+    frameWidth: number;
+    frameHeight: number;
+  };
+}
+
+
 export const BG = 'bg';
 export const FULLSCREEN = 'fullscreen';
 export const LEFT_CHEVRON = 'left_chevron';
@@ -27,6 +38,7 @@ export const SOUND_EXPLOSION = 'sound_explosion';
 export const SOUND_PORTAL_OPEN = 'sound_portal_open';
 export const SOUND_BELL = 'sound_bell';
 export const SOUND_VICTORY = 'sound_victory';
+export const SOUND_CONGA = 'sound_conga';
 
 export const MUSIC_WORLD_MAP = 'music_world_map';
 export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
@@ -70,7 +82,7 @@ export const GUI_3_STARS = 'gui_3_stars';
 export const PIXEL_EXPLOSION = 'pixel_explosion';
 export const PIXEL_PINK_SPLASH = 'pixel_pink_splash'
 
-
+export const PARTICLE_CONFETTI = 'particle_confetti';
 
 // Save all in game assets in the public folder
 export const assets: Array<Asset | SpritesheetAsset> = [
@@ -117,6 +129,11 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: SOUND_VICTORY,
     src: 'assets/sounds/victory.ogg',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_CONGA,
+    src: 'assets/sounds/conga_130bpm.ogg',
     type: 'AUDIO',
   },
   {
@@ -289,5 +306,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     key: PIXEL_PINK_SPLASH,
     src: 'assets/effects/pink-splash.png',
     type: 'IMAGE',
+  },
+
+  {
+    key: PARTICLE_CONFETTI,
+    src: 'assets/effects/confetti.png',
+    atlasSrc: 'assets/effects/flares.json',
+    type: 'ATLAS',
   },
 ];

@@ -1,6 +1,6 @@
 import { AavegotchiGameObject, AavegotchiObject, Tuple } from "types";
 import { getGameHeight, getGameWidth } from "game/helpers";
-import { assets, SpritesheetAsset } from "game/assets";
+import { assets, AtlasAsset, SpritesheetAsset } from "game/assets";
 import { constructSpritesheet } from "../helpers/spritesheet";
 import { customiseSvg } from "helpers/aavegotchi";
 import { Socket } from "socket.io-client";
@@ -180,6 +180,13 @@ export class BootScene extends Phaser.Scene {
           (file as SpritesheetAsset).data
         );
         break;
+      case "ATLAS":
+      this.load.atlas(
+        file.key,
+        file.src,
+        (file as AtlasAsset).atlasSrc,
+      )
+      break;
       default:
         break;
     }

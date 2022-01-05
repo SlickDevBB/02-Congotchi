@@ -266,7 +266,11 @@ export class Gui {
             duration: 250,
         });
 
-        (this.scene as GameScene).showLevelOverScreen();
+        // (this.scene as GameScene).showLevelOverScreen();
+    }
+
+    public destroy() {
+        // does nothing right now
     }
 
     public update() {

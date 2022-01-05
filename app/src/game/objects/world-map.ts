@@ -1,7 +1,7 @@
 // world-map.ts
 // this is the main level selector object that our gotchi traverses
 
-import { GREEN_BUTTON, GREY_CIRCLE_SHADED, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, RED_BUTTON } from "game/assets";
+import { GREEN_BUTTON, GREY_CIRCLE_SHADED, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, MUSIC_WORLD_MAP, RED_BUTTON } from "game/assets";
 import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
 import { LevelButton, Player, LevelConfig, levels, Gui, GridLevel } from ".";
 import {
@@ -33,6 +33,9 @@ export class WorldMap extends Phaser.GameObjects.Image {
     private backButton?: Phaser.GameObjects.Image;
     private backSound?: Phaser.Sound.BaseSound;
     private worldMask: Phaser.GameObjects.Rectangle;
+
+    // create a music object
+  private musicWorldMap?: Phaser.Sound.HTML5AudioSound;
 
 
     // call constructor
@@ -78,6 +81,9 @@ export class WorldMap extends Phaser.GameObjects.Image {
             .setScrollFactor(0)
             .setOrigin(0,0);
 
+        // create a world map music object
+      this.musicWorldMap = this.scene.sound.add(MUSIC_WORLD_MAP, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
+      this.musicWorldMap.play();
     }
 
     public setUnlockedLevels(unlockedLevelNum: number) {
@@ -198,6 +204,9 @@ export class WorldMap extends Phaser.GameObjects.Image {
                 duration: 250,
             })
         }
+
+        // stop playing world map music
+        this.musicWorldMap?.stop();
     }
 
     public onEndLevel() {
@@ -219,6 +228,20 @@ export class WorldMap extends Phaser.GameObjects.Image {
                 duration: 250,
             })
         }
+
+        // fade back in world map music
+        this.musicWorldMap?.setVolume(0);
+        this.musicWorldMap?.play();
+        this.scene.add.tween({
+            targets: this.musicWorldMap,
+            volume: 1,
+            duration: 1500,
+        })
+    }
+
+    destroy() {
+        super.destroy();
+        this.musicWorldMap?.stop();
     }
 
     update() {

@@ -1,5 +1,5 @@
 import {
-  LEFT_CHEVRON, BG, SOUND_CLICK, ARROW_DOWN, GUI_BUTTON_CROSS, MUSIC_WORLD_MAP, MUSIC_GRID_LEVEL_A, SOUND_VICTORY,
+  LEFT_CHEVRON, BG, SOUND_CLICK, ARROW_DOWN, GUI_BUTTON_CROSS, MUSIC_WORLD_MAP, MUSIC_GRID_LEVEL_A, SOUND_VICTORY, SOUND_CONGA,
 } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
@@ -35,11 +35,8 @@ export class GameScene extends Phaser.Scene {
   public unlockedLevels = 1;
   public levelScores: Array<LevelScores> = [];
 
-  // create a music object
-  private musicWorldMap?: Phaser.Sound.HTML5AudioSound;
-  private musicGridLevel?: Phaser.Sound.HTML5AudioSound;
   private soundClick?: Phaser.Sound.HTML5AudioSound;
-  private soundVictory?: Phaser.Sound.HTML5AudioSound;
+  
 
   constructor() {
     super(sceneConfig);
@@ -90,19 +87,9 @@ export class GameScene extends Phaser.Scene {
 
       this.selectLevel(currentLevel);
 
-
-      // create a world map music object
-      this.musicWorldMap = this.sound.add(MUSIC_WORLD_MAP, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
-      this.musicWorldMap.play();
-
-      // create a grid level music object
-      this.musicGridLevel = this.sound.add(MUSIC_GRID_LEVEL_A, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
-
       // create sound of click
       this.soundClick = this.sound.add(SOUND_CLICK, { loop: false }) as Phaser.Sound.HTML5AudioSound;
-
-
-      this.soundVictory = this.sound.add(SOUND_VICTORY, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+      
     })
   }
 
@@ -145,16 +132,6 @@ export class GameScene extends Phaser.Scene {
     this.player?.onStartLevel();
     this.worldMap?.onStartLevel();
     this.gui?.onStartLevel();
-
-    // change music
-    this.musicWorldMap?.stop();
-    this.musicGridLevel?.setVolume(1);
-    this.musicGridLevel?.play();
-  }
-
-  public showLevelOverScreen() {
-    this.soundVictory?.play();
-    this.musicGridLevel?.stop();
   }
 
   public endLevel() {
@@ -166,25 +143,7 @@ export class GameScene extends Phaser.Scene {
     this.player?.onEndLevel();
     this.worldMap?.onEndLevel();
     this.gui?.onEndLevel();
-
-    // fade out grid music and fade in world map music
-    this.add.tween({
-      targets: this.musicGridLevel,
-      volume: 0,
-      duration: 1500,
-      onComplete: () => {
-        this.musicGridLevel?.stop();
-        this.musicWorldMap?.setVolume(0);
-        this.musicWorldMap?.play();
-        this.add.tween({
-          targets: this.musicWorldMap,
-          volume: 1,
-          duration: 1500,
-        });
-      }
-    });
-    
-  }
+    }
 
   public setLevelScores(levelScores: Array<LevelScores>, unlockedLevels: number) {
     // set all levels to 0
@@ -254,9 +213,10 @@ export class GameScene extends Phaser.Scene {
   public returnMainMenu() {
     this.saveCurrentLevel();
 
-    // stop all music
-    this.musicWorldMap?.stop();
-    this.musicGridLevel?.stop();
+    // call destroy on player, gui and worldmap
+    this.player?.destroy();
+    this.worldMap?.destroy();
+    this.gui?.destroy();
   }
 
   update(): void {

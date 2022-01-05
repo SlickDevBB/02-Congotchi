@@ -80,7 +80,7 @@ export interface GO_Props {
       }
     }
 
-    public setGridPosition(row: number, col: number, customOnComplete?: () => any, keepOldObject = false, tweenDuration = 100) {
+    public setGridPosition(row: number, col: number, customOnComplete?: () => any, keepOldObject = false, tweenDuration = 100, customEase = 'linear') {
       // store our old row and column
       const oldRow = this.gridPosition.row;
       const oldCol = this.gridPosition.col;  
@@ -95,7 +95,7 @@ export interface GO_Props {
           x: newX,
           y: newY,
           duration: tweenDuration,
-          ease: 'Quad.easeOut',
+          ease: customEase,
           onComplete: () => { 
             // run any custom onComplete code passed to us
             if (customOnComplete) customOnComplete(); 
