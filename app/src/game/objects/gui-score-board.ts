@@ -35,9 +35,6 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
         this.xInit = x;
         this.yInit = y;
 
-        // add our socket
-        // this.socket = this.scene.game.registry.values.socket;
-
         // add the scoreboard to the scene
         this.scene.add.existing(this);
 

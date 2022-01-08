@@ -118,7 +118,7 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   },
   {
     key: SOUND_PORTAL_OPEN,
-    src: 'assets/sounds/portalOpen.mp3',
+    src: 'assets/sounds/portalOpenShort.ogg',
     type: 'AUDIO',
   },
   {
@@ -169,12 +169,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   },
   {
     key: PORTAL_OPEN,
-    src: 'assets/images/h2_open.svg',
+    src: 'assets/images/h1_open.svg',
     type: 'IMAGE',
   },
   {
     key: PORTAL_CLOSED,
-    src: 'assets/images/h2_closed.svg',
+    src: 'assets/images/h1_closed.svg',
     type: 'IMAGE',
   },
   {

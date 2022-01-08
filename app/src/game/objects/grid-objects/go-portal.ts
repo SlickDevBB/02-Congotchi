@@ -27,21 +27,21 @@ export class GO_Portal extends GridObject {
     private congaPauseTimer = 0;
 
     // variables for controlling conga logic
-    private numReadyGotchis: number[] = [0, 0, 0, 0];
-    private numSubchainGotchis: number[] = [0, 0, 0, 0];
-    private congaJumpCounter = [0, 0, 0, 0];
+    // private numReadyGotchis: number[] = [0, 0, 0, 0];
+    // private numSubchainGotchis: number[] = [0, 0, 0, 0];
+    // private congaJumpCounter = [0, 0, 0, 0];
 
-
-  private soundCongaA?: Phaser.Sound.HTML5AudioSound;
-  private soundCongaB?: Phaser.Sound.HTML5AudioSound;
-  private soundCongaC?: Phaser.Sound.HTML5AudioSound;
-  private soundCongaD?: Phaser.Sound.HTML5AudioSound;
-
-
-  private musicConga?: Phaser.Sound.HTML5AudioSound;
-  private congaMusicPlaying = false;
+    private musicConga?: Phaser.Sound.HTML5AudioSound;
+    private congaMusicPlaying = false;
 
     private congaCounter = 0;
+    private jumpCounter = 0;
+
+    private congaJustFinished = false;
+    private lastRunWasConga = false;
+
+    private newConga = true;
+    private sumCongaGotchis = 0;
 
     // timer is for click events
     private timer = 0;
@@ -53,7 +53,7 @@ export class GO_Portal extends GridObject {
 
     // add sound effects
     private soundMove?: Phaser.Sound.HTML5AudioSound;
-    // private soundInteract?: Phaser.Sound.HTML5AudioSound;
+    private soundInteract?: Phaser.Sound.HTML5AudioSound;
 
     // our constructor
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
@@ -69,9 +69,10 @@ export class GO_Portal extends GridObject {
         // set a specific depth
         this.setDepth(DEPTH_GO_PORTAL);
 
-        // add sound
+        // add sound and conga music
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
-
+        this.soundInteract = this.scene.sound.add(SOUND_PORTAL_OPEN, {loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract.setVolume(0.2);
         this.musicConga = this.scene.sound.add(SOUND_CONGA, {loop: false}) as Phaser.Sound.HTML5AudioSound;
 
         // set behaviour for pointer click down
@@ -100,8 +101,8 @@ export class GO_Portal extends GridObject {
                         player.adjustStat('INTERACT_BLUE', -1);
 
                         // play sound based on status
-                        // if (this.status === 'OPEN') this.soundInteract?.play();
-                        // else this.soundInteract?.stop();
+                        if (this.status === 'OPEN') this.soundInteract?.play();
+                        else this.soundInteract?.stop();
                     }
                 }
             }
@@ -194,107 +195,252 @@ export class GO_Portal extends GridObject {
 
     // getFollowerPriority() tells us the priority number of the follower passed ot the function
     public getFollowerPriority(leader: GO_Gotchi, follower: GO_Gotchi): string {
-        // first find out if the follower is a down, left, up or right
-        let priority: 'TOP_PRIORITY' | 'LOW_PRIORITY' | 'ERROR' = 'TOP_PRIORITY';
-        const leaderFollowers = leader.getFollowers();
-        if (leaderFollowers[0] === follower) {
-            // we are the down gotchi and have priority
-            priority = 'TOP_PRIORITY';
-        }
-        else if (leaderFollowers[1] === follower) {
-            if (leaderFollowers[0]) priority = 'LOW_PRIORITY';
-        }
-        else if (leaderFollowers[2] === follower) {
-            if (leaderFollowers[0] || leaderFollowers[1]) priority = 'LOW_PRIORITY'
-        }
-        else if (leaderFollowers[3] === follower) {
-            if (leaderFollowers[0] || leaderFollowers[1] || leaderFollowers[2]) priority = 'LOW_PRIORITY';
-        }
-        else {
-            priority = 'ERROR';
-        }
+        if (leader && follower) {
+            // first find out if the follower is a down, left, up or right
+            let priority: 'TOP_PRIORITY' | 'LOW_PRIORITY' | 'ERROR' = 'TOP_PRIORITY';
+            const leaderFollowers = leader.getFollowers();
+            if (leaderFollowers[0] === follower) {
+                // we are the down gotchi and have priority
+                priority = 'TOP_PRIORITY';
+            }
+            else if (leaderFollowers[1] === follower) {
+                if (leaderFollowers[0]) priority = 'LOW_PRIORITY';
+            }
+            else if (leaderFollowers[2] === follower) {
+                if (leaderFollowers[0] || leaderFollowers[1]) priority = 'LOW_PRIORITY'
+            }
+            else if (leaderFollowers[3] === follower) {
+                if (leaderFollowers[0] || leaderFollowers[1] || leaderFollowers[2]) priority = 'LOW_PRIORITY';
+            }
+            else {
+                priority = 'ERROR';
+            }
 
-        return priority;
+            return priority;
+        } else {
+            return 'ERROR';
+        }
+    }
+
+    public consoleGotchiChain(chain: Array<GO_Gotchi[]>) {
+        for (let j = 0; j < 4; j++) {
+            let i = 0;
+            if (chain[j]) {
+                chain[j].map( g => {
+                    console.log('Gotchi ' + i + ' status: ' + g.status);
+                    i++;
+                })
+            }
+        }
     }
 
     // this code should run every single update loop of the grid level
+    // returns TRUE if a conga is run, returns FALSE if no conga is run
     public runCongaChains() {
 
         // find all gotchis adjacent the portal
         this.findCongaLeaders();
 
+        ////////////////////////////////////////////////////////////////////////////////////////
+        // FIRST PASS - determine which gotchis are READY_TO_CONGA (don't worry about line waiting yet)
+        ////////////////////////////////////////////////////////////////////////////////////////
+
         // go through each possible conga leader
         for (let i = 0; i < 4; i++) {
+            // create a local conga leader const
+            const congaLeader = this.congaLeaders[i] as GO_Gotchi;
 
-            // see if we have a conga leader
-            if (this.congaLeaders[i]) {
-                // create a local conga leader const
-                const congaLeader = this.congaLeaders[i] as GO_Gotchi;
+            // create empty array
+            this.gotchiChains[i] = [];
 
-                // create a blank gotchi chain and populate it
-                this.gotchiChains[i] = [];
+            // see if we have a conga leader and they're not burnt
+            if (congaLeader &&  congaLeader.status !== 'BURNT') {
+                // First set leader status to ready
+                congaLeader.status = 'READY_TO_CONGA';
+
+                // calc up gotchi chain
                 congaLeader.calcCongaChain(this.gotchiChains[i]);
 
                 // go through conga chain and assign the congotchis new positions to target.
                 this.gotchiChains[i].map( g => {
                     const leader = g.getLeader() as GO_Gotchi;
-                    if (leader) {
+                    if (leader && leader.status !== 'BURNT') {
                         g.newRow = leader.getGridPosition().row;
                         g.newCol = leader.getGridPosition().col;
                         g.newDir = leader.getDirection();
-                    }
+
+                        // if gotchi is top priority and not burnt, set status to ready
+                        if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && g.status !== 'BURNT') {
+                            g.status = 'READY_TO_CONGA';
+                        }
+                    } 
                 });
+            }
+        }
 
-                ////////////////////////////////////////////////////////////////////////////////////////
-                // FIRST PASS - establishing the gotchi chain CONGOTCHING vs. WAIT status //
-                ////////////////////////////////////////////////////////////////////////////////////////
+        // As we now know which gotchis are READY_TO_CONGA, detonate any adjacent grenades
+        this.gridLevel.explodeGrenadesNearCongotchis();
 
-                // if our leader isn't burnt we can set his status to ready to conga
-                if (congaLeader.status === 'WAITING') {
-                    congaLeader.status = 'READY_TO_CONGA';
-                }
+        this.consoleGotchiChain(this.gotchiChains);
+        const a = 0;
 
-                // go through each congotchi in the gotchi chain and set status to CONGOTCHING if the gotchi is top priority
+        ///////////////////////////////////////////////////////////////////////////////////////
+        // SECOND PASS - Re-evaluate gotchi chains and set any gotchis behind burnt ones to waiting
+        ////////////////////////////////////////////////////////////////////////////////////
+
+        // go through each possible conga leader
+        for (let i = 0; i < 4; i++) {
+            // create a local conga leader const
+            const congaLeader = this.congaLeaders[i] as GO_Gotchi;
+
+            // see if we have a conga leader
+            if (congaLeader) {
+                // go through each gotchi and if it has an upchain state of 'burnt' set current gotchi to WAITING
                 this.gotchiChains[i].map( (g) => {
-                    // if this gotchi has top priority and the leader isn't waiting, set them to congotching 
-                    const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
-                    if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && leader.status === 'READY_TO_CONGA') {
-                        // set our gotchi status to 'CONGOTCHING'
-                        g.status = 'READY_TO_CONGA';
-                    } else {
-                        g.status = 'WAITING';
+                    if (g.isUpchainStatus('BURNT')) {
+                        if (g.status !== 'BURNT') {
+                            g.status = 'WAITING';
+                        }
                     }
-                })
+                })  
+            }
+        }
 
-                // As we now know which gotchis are congotching, detonate any adjacent grenades
-                this.gridLevel.explodeGrenadesNearCongotchis();
+        this.consoleGotchiChain(this.gotchiChains);
+        const b = 0;
 
-                ///////////////////////////////////////////////////////////////////////////////////////
-                // SECOND PASS - Moving gotchis if burning didn't affect their status
-                ////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
+        // THIRD PASS - Re-evaluate the gotchi chains taking into account burnt ones
+        ////////////////////////////////////////////////////////////////////////////////////
+
+        // go through each possible conga leader
+        for (let i = 0; i < 4; i++) {
+            // create a local conga leader const
+            const congaLeader = this.congaLeaders[i] as GO_Gotchi;
+
+            // make gotchi chain array empty again
+            this.gotchiChains[i] = [];
+
+            // see if we have a conga leader and they're not burnt
+            if (congaLeader &&  congaLeader.status !== 'BURNT') {
+                // First set leader status to ready
+                congaLeader.status = 'READY_TO_CONGA';
+
+                // calc up gotchi chain
+                congaLeader.calcCongaChain(this.gotchiChains[i]);
+
+                // go through conga chain and assign the congotchis new positions to target.
+                this.gotchiChains[i].map( g => {
+                    const leader = g.getLeader() as GO_Gotchi;
+                    if (leader && leader.status !== 'BURNT') {
+                        // if gotchi is top priority and not burnt, set status to ready
+                        if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && g.status !== 'BURNT') {
+                            g.status = 'READY_TO_CONGA';
+                        } else if (g.status !== 'BURNT') {
+                            g.status = 'WAITING';
+                        }
+                    } 
+                });
+            }
+        }
+
+        this.consoleGotchiChain(this.gotchiChains);
+        const c = 0;
+
+        ///////////////////////////////////////////////////////////////////////////////////////
+        // FOURTH PASS - Move gotchis based on their final status
+        ////////////////////////////////////////////////////////////////////////////////////
+
+        // create a variable to tell us if a gotchi went into a portal (for counting)
+        let gotchiSentToPortal = false;
+
+        // go through each possible conga leader
+        for (let i = 0; i < 4; i++) {
+
+            // create a local conga leader const
+            const congaLeader = this.congaLeaders[i] as GO_Gotchi;
+
+            // see if we have a conga leader
+            if (congaLeader) {
+                // check our count to see if it is time to jump
+                const jumpAtEnd = this.congaCounter !== 0 && (this.congaCounter+1) % 3 == 0;
 
                 // we can now move our conga leader into the portal if he's not burnt
                 if (congaLeader.status === 'READY_TO_CONGA') {
                     congaLeader.congaIntoPortal(this.gridPosition.row, this.gridPosition.col);
                     congaLeader.status = 'CONGOTCHING';
-                    
-                    if (!this.congaMusicPlaying) {
-                        this.musicConga?.play();
-                        this.congaMusicPlaying = true;
-                    }
-                } 
+
+                    // make a note we sent a gotchi to the portal
+                    gotchiSentToPortal = true;
+
+                    // increment the conga-able gotchis
+                    if (this.newConga) this.sumCongaGotchis++;
+                }    
 
                 // go through each congotchi in the gotchi chain and call the congaIntoPosition() function if possible
                 this.gotchiChains[i].map( (g) => {
-                    if (g.status === 'READY_TO_CONGA') {
-                        // conga our gotchi into position
-                        g.congaIntoPosition(g.newRow, g.newCol);
+                    // get the current gotchis leader
+                    const leader = this.gridLevel.getGridObject(g.newRow, g.newCol) as GO_Gotchi;
 
-                        // set our gotchi status to 'CONGOTCHING'
-                        g.status = 'CONGOTCHING';
+                    // if leader congotching, we should be too unless we got burnt
+                    if (leader.status === 'CONGOTCHING') {
+                        if (g.status === 'READY_TO_CONGA') {
+                            // conga our gotchi into position
+                            g.congaIntoPosition(g.newRow, g.newCol, jumpAtEnd);                
+                        } else if (g.status === 'WAITING') {
+                            g.congaStationary(jumpAtEnd);
+                        }
+                    } else {
+                        g.status = 'WAITING';
+                        g.congaStationary(jumpAtEnd);
+                        
                     }
+                    if (this.newConga) this.sumCongaGotchis++;
                 })
+            } 
+        }
+
+        this.consoleGotchiChain(this.gotchiChains);
+        const d = 0;
+
+        // if at least one gotchi entered a portal increment the conga counter
+        if (gotchiSentToPortal) {
+            // if our conga counter is at 0 we've started to conga!
+            if (this.congaCounter === 0) {
+                this.gridLevel.congaLineStarted();
             }
+
+            // if this is first gotchi into the portal crank that conga music
+            if (this.congaCounter === 0 || this.congaCounter % 3 === 0) {
+                this.musicConga?.play();
+            } 
+
+            // increment conga counter
+            this.congaCounter++;
+        } 
+
+        // if conga counter equals sum of gotchis we've finished
+        if (this.congaCounter > 0 && this.congaCounter === this.sumCongaGotchis) {
+            // call the grid levels line finished function
+            this.gridLevel.congaLineFinished();
+
+            // our line finished! lets reset conga counting variables
+            this.congaCounter = 0;
+            this.sumCongaGotchis = 0;
+            this.newConga = true;
+
+            // fade out the conga music
+            this.scene.add.tween({
+                targets: this.musicConga,
+                volume: 0,
+                duration: 2000,
+                onComplete: () => {
+                    this.musicConga?.stop();
+                    this.musicConga?.setVolume(1);
+                }
+            });            
+        } else {
+            this.newConga = false;
         }
     }
 

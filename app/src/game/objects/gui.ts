@@ -33,7 +33,6 @@ export class Gui {
     private mainMenuButton?: Phaser.GameObjects.Image;
     
     private clickSound?: Phaser.Sound.BaseSound;
-
     
     private player: Player;
     private world: WorldMap;
@@ -104,8 +103,14 @@ export class Gui {
             .on('pointerdown', () => {
                 // check if we've got an active level
                 if (this.scene.getGridLevel()?.getStatus() === 'ACTIVE') {
-                    this.scene.endLevel();
-                } else {
+                    // if a conga isn't running we should show victory screen
+                    if (!this.scene.getGridLevel()?.isCongaRunning()) {
+                        this.showLevelOverScreen();
+                    }  
+                } else if (this.scene.getGridLevel()?.getStatus() === 'LEVEL_OVER_SCREEN') {
+                    (this.scene as GameScene).endLevel();
+                }
+                else {
                     // we've hit exit when on world map, save the current level and get out of here
                     (this.scene as GameScene).returnMainMenu();
                     this.clickSound?.play();
@@ -262,11 +267,11 @@ export class Gui {
             targets: this.exitButton,
             x: getGameWidth(this.scene)*0.87,
             y: getGameHeight(this.scene)*0.43,
-            // scale: this.exitButton.scale*1.5,
             duration: 250,
-        });
+        }); 
 
-        // (this.scene as GameScene).showLevelOverScreen();
+        // let this know its level over screen
+        (this.scene as GameScene).getGridLevel()?.setStatus('LEVEL_OVER_SCREEN');
     }
 
     public destroy() {
@@ -277,7 +282,12 @@ export class Gui {
         // update gui score board
         this.scoreBoard.update();
 
-        // if we're not in a level update the score
+        // if we have an active level and a conga is running exit should be greyed out
+        if (this.scene.getGridLevel()?.getStatus() === 'ACTIVE' && this.scene.getGridLevel()?.isCongaRunning()) {
+            this.exitButton.setAlpha(0.5);
+        } else {
+            this.exitButton.setAlpha(1);
+        }
     }
 
 }

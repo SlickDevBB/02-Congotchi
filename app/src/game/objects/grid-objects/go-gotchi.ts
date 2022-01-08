@@ -51,6 +51,7 @@ interface CountGotchi {
 
     // need a little circle to use as a direction guide
     private directionGuide: Phaser.GameObjects.Ellipse;
+    private directionLine: Phaser.GameObjects.Line;
 
     // conga side is a variable for tracking which side we conga on
     // private congaSide: 'LEFT' | 'RIGHT' = Math.round(Math.random()) === 1 ? 'LEFT' : 'RIGHT';
@@ -74,7 +75,7 @@ interface CountGotchi {
     public newRow = 0;
     public newCol = 0;
     public newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
-    public status: 'READY_TO_CONGA' | 'CONGOTCHING' | 'JUMPING' | 'FINISHED_CONGA' | 'WAITING' | 'BURNT' | 'TELEPORTING' = 'WAITING';
+    public status: 'READY_TO_CONGA' | 'READY_TO_JUMP' | 'CONGOTCHING' | 'JUMPING' | 'FINISHED_CONGA' | 'WAITING' | 'BURNT' | 'TELEPORTING' = 'WAITING';
 
     // add sound effects
     private soundMove?: Phaser.Sound.HTML5AudioSound;
@@ -148,6 +149,13 @@ interface CountGotchi {
 
         // save the mouse
         this.mousePointer = this.scene.input.activePointer;
+
+        this.on('pointerover', () => {
+            console.log('My status: ' + this.status);
+            // if (this.isUpchainStatus('BURNT')) {
+            //     console.log('Upchain I have a burnt leader');
+            // }
+        })
         
         // create scorebonus text
         this.scoreBonusText = this.scene.add.text(
@@ -271,6 +279,24 @@ interface CountGotchi {
             .setAlpha(0.9)
             .setScrollFactor(0);
 
+        const getLineX = (direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT') => {
+            // test
+        }
+
+        // create our direction line
+        this.directionLine = this.scene.add.line(
+            0, 
+            0,
+            0,
+            0,
+            0,
+            0,
+            0xff00ff)
+            .setDepth(1000)
+            .setAlpha(0.9)
+            .setScrollFactor(0)
+            // .setOrigin(0,0);
+
         // enable draggable input
         this.setInteractive();
         this.scene.input.setDraggable(this);
@@ -347,20 +373,40 @@ interface CountGotchi {
             }
         });
 
+        // this.on('dragend', (pointer: Phaser.Input.Pointer) => {
+        //     // store the grid position dragging finished in
+        //     const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
+        //     this.setGridPosition(finalGridPos.row, finalGridPos.col);
+
+        //     // adjust the player stat if we're in different grid position from start of drag
+        //     if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+        //             this.adjustPlayerStat('MOVE_PINK', -1);
+        //             // in case we were burnt change status back to 'WAITING'
+        //             this.status = 'WAITING';
+
+        //             // play the move sound
+        //             this.soundMove?.play();
+        //     }
+        // })
+
         this.on('dragend', (pointer: Phaser.Input.Pointer) => {
             // store the grid position dragging finished in
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-            this.setGridPosition(finalGridPos.row, finalGridPos.col);
+            this.setGridPosition(finalGridPos.row, finalGridPos.col, () => {
 
-            // adjust the player stat if we're in different grid position from start of drag
-            if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                // adjust the player stat if we're in different grid position from start of drag
+                if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
                     this.adjustPlayerStat('MOVE_PINK', -1);
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
 
                     // play the move sound
                     this.soundMove?.play();
-            }
+                }
+
+            });
+
+            
         })
 
         // // Add animations
@@ -427,6 +473,20 @@ interface CountGotchi {
         if (player) player.adjustStat(stat, -1);
     }
 
+    // a function to see if there is a certain status up the chain
+    public isUpchainStatus(status: 'READY_TO_CONGA' | 'READY_TO_JUMP' | 'CONGOTCHING' | 'JUMPING' | 'FINISHED_CONGA' | 'WAITING' | 'BURNT' | 'TELEPORTING'): boolean {
+        const leader = this.leader as GO_Gotchi;
+        if (leader) {
+            if (leader.status === status) {
+                return true;
+            } else {
+                return leader.isUpchainStatus(status);
+            }
+        } else {
+            return false;
+        }
+    }
+
     public findLeader() {
         // start by setting leader to 0
         this.leader = 0;
@@ -442,7 +502,7 @@ interface CountGotchi {
         }
 
         // double check the grid object we found is a gotchi
-        if (potentialLeader !== 'OUT OF BOUNDS' && potentialLeader?.getType() === 'GOTCHI') {
+        if (potentialLeader !== 'OUT OF BOUNDS' && potentialLeader?.getType() === 'GOTCHI' && (potentialLeader as GO_Gotchi).status !== 'BURNT') {
             // check the gotchi isn't looking straight back at us
             let lookingAtUs = false;
             switch (this.getDirection()) {
@@ -559,30 +619,52 @@ interface CountGotchi {
         return this;
     }
 
-    public congaIntoPosition(row: number, col: number) {
-        // call our set grid position that moves our gotchi
-        this.setGridPosition(
-            row,
-            col,
-            () => {
-                this.congaCount++;
-                this.setDirection(this.newDir);
-                if (this.congaCount < 3) {
-                    setTimeout( () => {
-                        this.status = 'WAITING' 
-                        // this.gridLevel.setTimeOfLastCongaOrJump();
-                    } , this.congaStepDuration*0.5);
-                } else {
-                    this.congaJump();
-                    this.congaCount = 0;
-                }
-            },
-            false,
-            this.congaStepDuration*0.5,
-            'Back.easeOut'
-        )
+    public congaIntoPosition(row: number, col: number, jumpAtEnd: boolean) {
+        // setTimeout( () => {
 
-        // add another tween for our gotchi which rotates him a bit to look conga'ish
+        this.status = 'CONGOTCHING';
+
+            // call our set grid position that moves our gotchi
+            this.setGridPosition(
+                row,
+                col,
+                () => {
+                    // this.congaCount++;
+                    this.setDirection(this.newDir);
+                    if (!jumpAtEnd) {
+                        setTimeout( () => {
+                            this.status = 'WAITING' 
+                        } , this.congaStepDuration*0.5);
+                    } else {
+                        this.congaJump();
+                    //     this.congaCount = 0;
+                    }
+                },
+                false,
+                this.congaStepDuration*0.5,
+                'Back.easeOut'
+            )
+
+            // add another tween for our gotchi which rotates him a bit to look conga'ish
+            this.scene.add.tween({
+                targets: this,
+                angle: this.congaSide === 'LEFT' ? -20 : 20,
+                duration: this.congaStepDuration*0.5,
+                ease: 'Bounce.easeOut',
+                onComplete: () => {
+                    // change conga side
+                    this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
+                }
+            })
+
+        // }, this.congaStepDuration*0.5);
+
+        return this;
+
+    }
+
+    public congaStationary(jumpAtEnd: boolean) {
+        // add a tween for our gotchi which rotates him a bit to look conga'ish
         this.scene.add.tween({
             targets: this,
             angle: this.congaSide === 'LEFT' ? -20 : 20,
@@ -591,11 +673,13 @@ interface CountGotchi {
             onComplete: () => {
                 // change conga side
                 this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
+                if (jumpAtEnd) {
+                    this.congaJump();
+                }
             }
         })
 
         return this;
-
     }
 
     public congaJump() {
@@ -628,9 +712,8 @@ interface CountGotchi {
                     ease: 'Quad.easeIn',
                     onComplete: () => { 
                         setTimeout( () => {
-                        this.status = 'WAITING' 
-                        // this.gridLevel.setTimeOfLastCongaOrJump();
-                        this.gridLevel.stopCongaMusic();
+                        this.status = 'WAITING';
+                        // this.gridLevel.stopCongaMusic();
                         }, this.congaStepDuration );
                     }
                 })
@@ -700,6 +783,7 @@ interface CountGotchi {
     destroy() {
         super.destroy();
         this.directionGuide.destroy();
+        this.directionLine.destroy();
         this.arrows.map(arrow => arrow.destroy());
         this.scoreBonusText.destroy();
     }
@@ -748,12 +832,28 @@ interface CountGotchi {
             this.y-this.gridSize*.5,);
         this.scoreBonusText.text = this.scoreBonus.toString();
 
-        // update direction guide position
+        // update direction guide and line position
         switch (this.getDirection()) {
-            case 'DOWN': { this.directionGuide.setPosition(this.x, this.y+this.displayHeight/2); break; }
-            case 'LEFT': { this.directionGuide.setPosition(this.x-this.displayWidth/2, this.y); break; }
-            case 'UP': { this.directionGuide.setPosition(this.x, this.y-this.displayHeight/2); break; }
-            case 'RIGHT': { this.directionGuide.setPosition(this.x+this.displayWidth/2, this.y); break; }
+            case 'DOWN': { 
+                this.directionGuide.setPosition(this.x, this.y+this.displayHeight/2); 
+                this.directionLine.setTo(this.x, this.y+this.displayHeight/4, this.x, this.y+this.displayHeight/2);
+                break; 
+            }
+            case 'LEFT': { 
+                this.directionGuide.setPosition(this.x-this.displayWidth/2, this.y); 
+                this.directionLine.setTo(this.x-this.displayWidth/4, this.y, this.x-this.displayWidth/2, this.y);
+                break; 
+            }
+            case 'UP': { 
+                this.directionGuide.setPosition(this.x, this.y-this.displayHeight/2); 
+                this.directionLine.setTo(this.x, this.y-this.displayHeight/4, this.x, this.y-this.displayHeight/2);
+                break; 
+            }
+            case 'RIGHT': { 
+                this.directionGuide.setPosition(this.x+this.displayWidth/2, this.y); 
+                this.directionLine.setTo(this.x+this.displayWidth/4, this.y, this.x+this.displayWidth/2, this.y);
+                break; 
+            }
         }
 
         // make sure rotate arrows follow their gotchi

@@ -80,7 +80,7 @@ export class LevelButton extends Phaser.GameObjects.Image {
                 startPoint, controlPoint1, controlPoint2,endPoint,
             ));
             
-            this.curveGraphics.lineStyle(5, 0xff00ff, 0.9);
+            this.curveGraphics.lineStyle(5, 0xff00ff, 0.5);
             this.buttonLinkCurves[this.buttonLinkCurves.length-1].draw(this.curveGraphics);
 
             // we also need to add this button to the new buttons links
