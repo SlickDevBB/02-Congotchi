@@ -94,15 +94,21 @@ export class GO_Portal extends GridObject {
 
                 if (gameScene && player) {
                     if (player.getStat('INTERACT_BLUE') > 0) {
-                        // check the status and set to opposite
-                        this.setStatus(this.status === 'CLOSED' ? 'OPEN' : 'CLOSED');
+                        // store the grid position pointer was lefted in finished in
+                        const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
-                        // adjust blue interact stat
-                        player.adjustStat('INTERACT_BLUE', -1);
+                        // show arrows only if we're still in the same grid as when the pointer went down
+                        if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
+                            // check the status and set to opposite
+                            this.setStatus(this.status === 'CLOSED' ? 'OPEN' : 'CLOSED');
 
-                        // play sound based on status
-                        if (this.status === 'OPEN') this.soundInteract?.play();
-                        else this.soundInteract?.stop();
+                            // adjust blue interact stat
+                            player.adjustStat('INTERACT_BLUE', -1);
+
+                            // play sound based on status
+                            if (this.status === 'OPEN') this.soundInteract?.play();
+                            else this.soundInteract?.stop();
+                        }
                     }
                 }
             }
@@ -281,9 +287,6 @@ export class GO_Portal extends GridObject {
         // As we now know which gotchis are READY_TO_CONGA, detonate any adjacent grenades
         this.gridLevel.explodeGrenadesNearCongotchis();
 
-        this.consoleGotchiChain(this.gotchiChains);
-        const a = 0;
-
         ///////////////////////////////////////////////////////////////////////////////////////
         // SECOND PASS - Re-evaluate gotchi chains and set any gotchis behind burnt ones to waiting
         ////////////////////////////////////////////////////////////////////////////////////
@@ -305,9 +308,6 @@ export class GO_Portal extends GridObject {
                 })  
             }
         }
-
-        this.consoleGotchiChain(this.gotchiChains);
-        const b = 0;
 
         ///////////////////////////////////////////////////////////////////////////////////////
         // THIRD PASS - Re-evaluate the gotchi chains taking into account burnt ones
@@ -344,9 +344,6 @@ export class GO_Portal extends GridObject {
             }
         }
 
-        this.consoleGotchiChain(this.gotchiChains);
-        const c = 0;
-
         ///////////////////////////////////////////////////////////////////////////////////////
         // FOURTH PASS - Move gotchis based on their final status
         ////////////////////////////////////////////////////////////////////////////////////
@@ -363,7 +360,7 @@ export class GO_Portal extends GridObject {
             // see if we have a conga leader
             if (congaLeader) {
                 // check our count to see if it is time to jump
-                const jumpAtEnd = this.congaCounter !== 0 && (this.congaCounter+1) % 3 == 0;
+                const jumpAtEnd = this.jumpCounter !== 0 && (this.jumpCounter+1) % 3 == 0;
 
                 // we can now move our conga leader into the portal if he's not burnt
                 if (congaLeader.status === 'READY_TO_CONGA') {
@@ -372,6 +369,7 @@ export class GO_Portal extends GridObject {
 
                     // make a note we sent a gotchi to the portal
                     gotchiSentToPortal = true;
+                    this.congaCounter++;
 
                     // increment the conga-able gotchis
                     if (this.newConga) this.sumCongaGotchis++;
@@ -400,33 +398,33 @@ export class GO_Portal extends GridObject {
             } 
         }
 
-        this.consoleGotchiChain(this.gotchiChains);
-        const d = 0;
-
         // if at least one gotchi entered a portal increment the conga counter
         if (gotchiSentToPortal) {
             // if our conga counter is at 0 we've started to conga!
-            if (this.congaCounter === 0) {
+            if (this.jumpCounter === 0) {
                 this.gridLevel.congaLineStarted();
+                console.log('Conga started!');
             }
 
             // if this is first gotchi into the portal crank that conga music
-            if (this.congaCounter === 0 || this.congaCounter % 3 === 0) {
+            if (this.jumpCounter === 0 || this.jumpCounter % 3 === 0) {
                 this.musicConga?.play();
             } 
 
-            // increment conga counter
-            this.congaCounter++;
+            // increment jump counter
+            this.jumpCounter++;
         } 
 
         // if conga counter equals sum of gotchis we've finished
         if (this.congaCounter > 0 && this.congaCounter === this.sumCongaGotchis) {
             // call the grid levels line finished function
             this.gridLevel.congaLineFinished();
+            console.log('Conga Finished!');
 
             // our line finished! lets reset conga counting variables
             this.congaCounter = 0;
             this.sumCongaGotchis = 0;
+            this.jumpCounter = 0;
             this.newConga = true;
 
             // fade out the conga music
@@ -439,7 +437,7 @@ export class GO_Portal extends GridObject {
                     this.musicConga?.setVolume(1);
                 }
             });            
-        } else {
+        } else if (this.congaCounter > 0 || this.sumCongaGotchis > 0) {
             this.newConga = false;
         }
     }

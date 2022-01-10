@@ -61,14 +61,20 @@ export class GO_Grenade extends GridObject {
                 // check we've got enough interact points
                 const player = (this.scene as GameScene).getPlayer();
                 if (player && player.getStat('INTERACT_RED') > 0) {
-                    // we have enough so make bomb explode
-                    this.explode();
+                    // store the grid position pointer was lefted in finished in
+                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
-                    // reduce stat
-                    player.adjustStat('INTERACT_RED', -1);
+                    // show arrows only if we're still in the same grid as when the pointer went down
+                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
+                        // we have enough so make bomb explode
+                        this.explode();
 
-                    // play the interact sound
-                    this.soundInteract?.play();
+                        // reduce stat
+                        player.adjustStat('INTERACT_RED', -1);
+
+                        // play the interact sound
+                        this.soundInteract?.play();
+                    }
                 }
             }
         });

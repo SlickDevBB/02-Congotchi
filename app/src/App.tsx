@@ -4,6 +4,7 @@ import Home from 'pages/Home';
 import Leaderboard from 'pages/Leaderboard';
 import Settings from 'pages/Settings';
 import Play from 'pages/Play';
+import About from 'pages/About';
 import {
   Switch,
   Route,
@@ -23,6 +24,10 @@ const nav: Array<{ path: string, component: () => JSX.Element, exact?: boolean }
   {
     path: '/settings',
     component: Settings,
+  },
+  {
+    path: '/about',
+    component: About,
   },
   {
     path: '/play',

@@ -38,6 +38,7 @@ export const SOUND_EXPLOSION = 'sound_explosion';
 export const SOUND_PORTAL_OPEN = 'sound_portal_open';
 export const SOUND_BELL = 'sound_bell';
 export const SOUND_VICTORY = 'sound_victory';
+export const SOUND_DEFEAT = 'sound_defeat';
 export const SOUND_CONGA = 'sound_conga';
 
 export const MUSIC_WORLD_MAP = 'music_world_map';
@@ -128,7 +129,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   },
   {
     key: SOUND_VICTORY,
-    src: 'assets/sounds/victory.ogg',
+    src: 'assets/sounds/sfx-victory1.mp3',
+    type: 'AUDIO',
+  },
+  {
+    key: SOUND_DEFEAT,
+    src: 'assets/sounds/sfx-defeat4.mp3',
     type: 'AUDIO',
   },
   {
@@ -294,7 +300,7 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   },
   {
     key: ARROW_ICON,
-    src: 'assets/icons/arrow-icon.png',
+    src: 'assets/icons/arrow-icon_v2.png',
     type: 'IMAGE',
   },
   {

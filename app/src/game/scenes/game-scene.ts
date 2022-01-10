@@ -143,7 +143,15 @@ export class GameScene extends Phaser.Scene {
     this.player?.onEndLevel();
     this.worldMap?.onEndLevel();
     this.gui?.onEndLevel();
-    }
+  }
+
+  public showLevelOverScreen() {
+    // call all the level over screen functions
+    this.gui?.onLevelOverScreen();
+    this.gridLevel?.onLevelOverScreen();
+    this.player?.onLevelOverScreen();
+    this.worldMap?.onLevelOverScreen();
+  }
 
   public setLevelScores(levelScores: Array<LevelScores>, unlockedLevels: number) {
     // set all levels to 0

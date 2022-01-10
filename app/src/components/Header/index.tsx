@@ -73,6 +73,14 @@ export const Header = () => {
           >
             Settings
           </NavLink>
+          <NavLink
+            onClick={() => playSound('click')}
+            to="/about"
+            className={styles.navLink}
+            activeClassName={styles.activeNavLink}
+          >
+            About
+          </NavLink>
         </ul>
         <WalletButton />
       </nav>
@@ -109,6 +117,14 @@ export const Header = () => {
             >
               Settings
             </NavLink>
+            <NavLink
+            onClick={() => playSound('click')}
+            to="/about"
+            className={styles.navLink}
+            activeClassName={styles.activeNavLink}
+          >
+            About
+          </NavLink>
             <WalletButton />
           </nav>
         </SideTray>

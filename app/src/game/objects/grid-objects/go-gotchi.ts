@@ -124,7 +124,6 @@ interface CountGotchi {
 
         this.particleConfetti = this.scene.add.particles(PARTICLE_CONFETTI);
         this.particleConfetti.setDepth(this.depth + 10);
-        //  Create an emitter by passing in a config object directly to the Particle Manager
 
         // create emitter with some slightly randomized attributes for each gotchi
         const angleRand = (Math.random()-0.5)*10;
@@ -152,9 +151,6 @@ interface CountGotchi {
 
         this.on('pointerover', () => {
             console.log('My status: ' + this.status);
-            // if (this.isUpchainStatus('BURNT')) {
-            //     console.log('Upchain I have a burnt leader');
-            // }
         })
         
         // create scorebonus text
@@ -264,7 +260,7 @@ interface CountGotchi {
         this.arrows.map(arrow => {
             arrow.setDisplaySize(this.gridSize, this.gridSize)
             .setDepth(DEPTH_GOTCHI_ICON)
-            .setAlpha(0.5)
+            .setAlpha(0.75)
             .setScrollFactor(0)
             .setVisible(false)
             .setInteractive()
@@ -275,7 +271,7 @@ interface CountGotchi {
         // create our direction guide
         this.directionGuide = this.scene.add.ellipse(this.x, this.y,
             this.displayWidth*0.12, this.displayWidth*0.12, 0xff00ff)
-            .setDepth(1000)
+            .setDepth(this.depth+1)
             .setAlpha(0.9)
             .setScrollFactor(0);
 
@@ -292,10 +288,9 @@ interface CountGotchi {
             0,
             0,
             0xff00ff)
-            .setDepth(1000)
+            .setDepth(this.depth+1)
             .setAlpha(0.9)
-            .setScrollFactor(0)
-            // .setOrigin(0,0);
+            .setScrollFactor(0);
 
         // enable draggable input
         this.setInteractive();
@@ -317,11 +312,14 @@ interface CountGotchi {
                 // check we've got enough interact points
                 const player = (this.scene as GameScene).getPlayer();
                 if (player && player.getStat('INTERACT_PINK') > 0) {
-                    // we have enough interact points so toggle visible arrow status
-                    this.rotateArrowsVisible = !this.rotateArrowsVisible;
+                    // store the grid position pointer was lefted in finished in
+                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
-                    // play the interact sound
-                    // this.soundInteract?.play();
+                    // show arrows only if we're still in the same grid as when the pointer went down
+                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
+                        // we have enough interact points so toggle visible arrow status
+                        this.rotateArrowsVisible = !this.rotateArrowsVisible;
+                    }
                 }
             }
         });
@@ -372,22 +370,6 @@ interface CountGotchi {
                 }
             }
         });
-
-        // this.on('dragend', (pointer: Phaser.Input.Pointer) => {
-        //     // store the grid position dragging finished in
-        //     const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-        //     this.setGridPosition(finalGridPos.row, finalGridPos.col);
-
-        //     // adjust the player stat if we're in different grid position from start of drag
-        //     if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-        //             this.adjustPlayerStat('MOVE_PINK', -1);
-        //             // in case we were burnt change status back to 'WAITING'
-        //             this.status = 'WAITING';
-
-        //             // play the move sound
-        //             this.soundMove?.play();
-        //     }
-        // })
 
         this.on('dragend', (pointer: Phaser.Input.Pointer) => {
             // store the grid position dragging finished in

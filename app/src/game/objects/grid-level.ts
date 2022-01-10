@@ -3,7 +3,7 @@
 
 import { getGameWidth, } from '../helpers';
 import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GridObject, LevelConfig, Player } from 'game/objects';
-import { M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PORTAL_CLOSED, SOUND_CONGA, SOUND_VICTORY,} from 'game/assets';
+import { M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PORTAL_CLOSED, SOUND_CONGA, SOUND_DEFEAT, SOUND_VICTORY,} from 'game/assets';
 import '../helpers/constants';
 import { DEPTH_GRID_LEVEL } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
@@ -44,18 +44,14 @@ export class GridLevel {
   private levelConfig: LevelConfig; 
   private levelOverOccurred = false;
   private initialGotchiCount = 0;
-  private status: 'ACTIVE' | 'LEVEL_OVER_SCREEN' | 'INACTIVE';
+  private status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN';
+  private victoryStatus: 'VICTORY' | 'DEFEAT' = 'DEFEAT';
 
   private musicGridLevel?: Phaser.Sound.HTML5AudioSound;
-
   private soundVictory?: Phaser.Sound.HTML5AudioSound;
+  private soundDefeat?: Phaser.Sound.HTML5AudioSound;
 
-  // // time variables to help track last congotch or jump
-  // private timeLastCongaOrJump = 0;
-
-  // // our score variable
-  // private score = 0;
-
+  // fire up our constructor
   constructor({ scene, player, randomGotchis, levelConfig, }: Props) {
     // store our scene, player and levelConfig
     this.scene = scene;
@@ -78,6 +74,7 @@ export class GridLevel {
 
     // create the victory sound
     this.soundVictory = this.scene.sound.add(SOUND_VICTORY, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+    this.soundDefeat = this.scene.sound.add(SOUND_DEFEAT, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
     // fill out the gridCells member based on the config file
     for (let i = 0; i < this.numberRows; i++) {
@@ -310,12 +307,15 @@ export class GridLevel {
       .setScrollFactor(0)
   }
 
-  public isLevelOver() {
+  // function to check for a victory
+  public isVictory() {
     // first check if levelOverOccurred is true
     if (this.levelOverOccurred) {
-      return true;
-    } else {
-      // declare a level over variable
+      return false;
+    } 
+    else {
+      // 
+      // create booleans to see if any gotchis left and any portal points left
       let noGotchisLeft = true;
       let noPortalPointsLeft = true;
 
@@ -333,7 +333,8 @@ export class GridLevel {
         }
       }
 
-      return (noGotchisLeft || noPortalPointsLeft);
+      this.levelOverOccurred = (noGotchisLeft || noPortalPointsLeft);
+      return this.levelOverOccurred;
     }
   }
 
@@ -464,11 +465,31 @@ export class GridLevel {
     })
   }
 
+  public onLevelOverScreen() {
+    // do level over screen stuff
+    this.status = 'LEVEL_OVER_SCREEN';
+
+    // stop grid level music
+    this.musicGridLevel?.stop();
+
+    // depending on status play end of level music
+    if (this.victoryStatus === 'VICTORY') this.soundVictory?.play();
+    else this.soundDefeat?.play();
+  }
+
   public setStatus(status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN') {
     this.status = status;
   }
 
   public getStatus() {
+    return this.status;
+  }
+
+  public setVictoryStatus(status: 'VICTORY' | 'DEFEAT') {
+    this.victoryStatus = status;
+  }
+
+  public getVictoryStatus() {
     return this.status;
   }
 
@@ -572,16 +593,13 @@ export class GridLevel {
     }
 
     // if level is over call our scenes end level function
-    if (this.isLevelOver() && !this.levelOverOccurred) {
-      this.levelOverOccurred = true;
-
-      // this.soundVictory?.play();
-      // this.musicGridLevel?.stop();
-      // this.stopCongaMusic();
-
+    if (this.isVictory()) {
+      // change our victory status
+      this.victoryStatus = 'VICTORY';
+      
       // set a timeout to end the level
       setTimeout( () => {
-        (this.scene as GameScene).getGui()?.showLevelOverScreen();
+        (this.scene as GameScene).showLevelOverScreen();
       }, 1000);
     } 
 

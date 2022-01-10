@@ -101,12 +101,13 @@ export class Gui {
             .setOrigin(0.5,0.5)
             .setInteractive()
             .on('pointerdown', () => {
-                // check if we've got an active level
+                // if level was active and we escaped we didn't get a natural victory
                 if (this.scene.getGridLevel()?.getStatus() === 'ACTIVE') {
                     // if a conga isn't running we should show victory screen
                     if (!this.scene.getGridLevel()?.isCongaRunning()) {
-                        this.showLevelOverScreen();
+                        (this.scene as GameScene).showLevelOverScreen();
                     }  
+                
                 } else if (this.scene.getGridLevel()?.getStatus() === 'LEVEL_OVER_SCREEN') {
                     (this.scene as GameScene).endLevel();
                 }
@@ -258,7 +259,7 @@ export class Gui {
         })
     }
 
-    public showLevelOverScreen() {
+    public onLevelOverScreen() {
         // move the scoreboard into the end of level results position
         this.scoreBoard.showLevelOverResults();
         
@@ -270,8 +271,11 @@ export class Gui {
             duration: 250,
         }); 
 
+        // // call the game scenes onLevelOverScreen() function
+        // (this.scene as GameScene).showLevelOverScreen();
+
         // let this know its level over screen
-        (this.scene as GameScene).getGridLevel()?.setStatus('LEVEL_OVER_SCREEN');
+        // (this.scene as GameScene).getGridLevel()?.setStatus('LEVEL_OVER_SCREEN');
     }
 
     public destroy() {

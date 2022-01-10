@@ -239,6 +239,10 @@ export class WorldMap extends Phaser.GameObjects.Image {
         })
     }
 
+    public onLevelOverScreen() {
+        // do level over screen stuff
+      }
+
     destroy() {
         super.destroy();
         this.musicWorldMap?.stop();

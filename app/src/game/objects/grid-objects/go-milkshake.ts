@@ -63,14 +63,20 @@ export class GO_Milkshake extends GridObject {
                 // check we've got enough interact points
                 const player = (this.scene as GameScene).getPlayer();
                 if (player && player.getStat('INTERACT_GREEN') > 0) {
-                    // we have enough interact points so drink up
-                    this.quenchThirst();
+                    // store the grid position pointer was lefted in finished in
+                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
-                    // decrease interact points
-                    player.adjustStat('INTERACT_GREEN', -1);
+                    // show arrows only if we're still in the same grid as when the pointer went down
+                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
+                        // we have enough interact points so drink up
+                        this.quenchThirst();
 
-                    // play the interact sound
-                    this.soundInteract?.play();
+                        // decrease interact points
+                        player.adjustStat('INTERACT_GREEN', -1);
+
+                        // play the interact sound
+                        this.soundInteract?.play();
+                    }
                 }
                 
             }

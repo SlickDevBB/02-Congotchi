@@ -443,6 +443,10 @@ export class Player extends Phaser.GameObjects.Sprite {
     });
   }
 
+  public onLevelOverScreen() {
+    // do level over screen stuff
+  }
+
   public panCameraToPlayer() {
     this.scene.add.tween({
       targets: this.scene.cameras.main,
