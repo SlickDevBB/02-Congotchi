@@ -18,27 +18,12 @@ export class GO_Portal extends GridObject {
     private status: 'OPEN' | 'CLOSED' = 'CLOSED';
     private congaLeaders: Array<GO_Gotchi | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
     private gotchiChains: Array<GO_Gotchi>[] = [];
-    
-    // need a boolean while gotchis in motion during a conga
-    private gotchiChainRunning = [false, false, false, false];
-
-    // these variables used for pausing the conga line after each step
-    private congaPauseDuration = 50;
-    private congaPauseTimer = 0;
-
-    // variables for controlling conga logic
-    // private numReadyGotchis: number[] = [0, 0, 0, 0];
-    // private numSubchainGotchis: number[] = [0, 0, 0, 0];
-    // private congaJumpCounter = [0, 0, 0, 0];
 
     private musicConga?: Phaser.Sound.HTML5AudioSound;
-    private congaMusicPlaying = false;
+    // private congaMusicPlaying = false;
 
     private congaCounter = 0;
     private jumpCounter = 0;
-
-    private congaJustFinished = false;
-    private lastRunWasConga = false;
 
     private newConga = true;
     private sumCongaGotchis = 0;
@@ -180,21 +165,29 @@ export class GO_Portal extends GridObject {
 
     public findCongaLeaders() {
         // check each direction to see if there is a gotchi looking at us
-        const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col) as GO_Gotchi;
-        this.congaLeaders[0] = (downGotchi && downGotchi.getType() === 'GOTCHI' && downGotchi.getDirection() === 'UP') ? 
-            downGotchi : 0;
+        const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
+        if (downGotchi !== 'OUT OF BOUNDS') {
+            this.congaLeaders[0] = (downGotchi.getType() === 'GOTCHI' && (downGotchi as GO_Gotchi).getDirection() === 'UP') ? 
+                (downGotchi as GO_Gotchi) : 0;
+        }
 
-        const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1) as GO_Gotchi;
-        this.congaLeaders[1] = (leftGotchi && leftGotchi.getType() === 'GOTCHI' && leftGotchi.getDirection() === 'RIGHT') ? 
-            leftGotchi : 0;
+        const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
+        if (leftGotchi !== 'OUT OF BOUNDS') {
+            this.congaLeaders[1] = (leftGotchi.getType() === 'GOTCHI' && (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') ? 
+                (leftGotchi as GO_Gotchi) : 0;
+        }
 
-        const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col) as GO_Gotchi;
-        this.congaLeaders[2] = (upGotchi && upGotchi.getType() === 'GOTCHI' && upGotchi.getDirection() === 'DOWN') ? 
-            upGotchi : 0;
+        const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
+        if (upGotchi !== 'OUT OF BOUNDS') {
+            this.congaLeaders[2] = (upGotchi.getType() === 'GOTCHI' && (upGotchi as GO_Gotchi).getDirection() === 'DOWN') ? 
+                (upGotchi as GO_Gotchi) : 0;
+        }
 
-        const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1) as GO_Gotchi;
-        this.congaLeaders[3] = (rightGotchi && rightGotchi.getType() === 'GOTCHI' && rightGotchi.getDirection() === 'LEFT') ? 
-            rightGotchi : 0;
+        const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
+        if (rightGotchi !== 'OUT OF BOUNDS') {
+            this.congaLeaders[3] = (rightGotchi.getType() === 'GOTCHI' && (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') ? 
+                (rightGotchi as GO_Gotchi) : 0;
+        }
 
         return this.congaLeaders;
     }
@@ -440,11 +433,6 @@ export class GO_Portal extends GridObject {
         } else if (this.congaCounter > 0 || this.sumCongaGotchis > 0) {
             this.newConga = false;
         }
-    }
-
-    public stopCongaMusic() {
-        this.congaMusicPlaying = false;
-        this.musicConga?.stop();
     }
 
     public getStatus() {

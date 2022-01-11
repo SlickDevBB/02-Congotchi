@@ -94,79 +94,104 @@ export class WorldMap extends Phaser.GameObjects.Image {
     }
 
     private createLevelButtons() {
-        // level 1
-        this.levelButtons[0] = new LevelButton({
-            scene: this.scene,
-            x: 0.23*this.displayWidth,
-            y: 0.65*this.displayHeight,
-            key: GREY_CIRCLE_SHADED,
-            levelNumber: 1,
-        })
-        .on('pointerdown', () => (this.scene as GameScene).selectLevel(1));
+        // loop through the levels level config object and create levels
+        for (let i = 0; i < levels.length; i++) {
+            // create a new level button
+            this.levelButtons[i] = new LevelButton({
+                scene: this.scene,
+                x: levels[i].pos[0]*this.displayWidth,
+                y: levels[i].pos[1]*this.displayHeight,
+                key: GREY_CIRCLE_SHADED,
+                levelNumber: levels[i].levelNumber,
+            })
+            .on('pointerdown', () => (this.scene as GameScene).selectLevel(i+1));
 
-        // level 2
-        this.levelButtons[1] = new LevelButton({
-            scene: this.scene,
-            x: 0.285*this.displayWidth,
-            y: 0.485*this.displayHeight,
-            key: GREY_CIRCLE_SHADED,
-            levelNumber: 2,
-        })
-        .on('pointerdown', () => (this.scene as GameScene).selectLevel(2));
+            // if we have curve positions we can link back to last level
+            if (levels[i].curveApos.length > 0) {
+                    this.levelButtons[i].createLink(this.levelButtons[i-1], 
+                    new Phaser.Math.Vector2(levels[i].curveApos[0]*this.displayWidth, levels[i].curveApos[1]*this.displayHeight),
+                    new Phaser.Math.Vector2(levels[i].curveBpos[0]*this.displayWidth, levels[i].curveBpos[1]*this.displayHeight),
+                );
+            }
+        }
 
-        // create link form level 1 to 2
-        this.levelButtons[0].createLink(this.levelButtons[1], 
-            new Phaser.Math.Vector2(0.285*this.displayWidth, 0.62*this.displayHeight),
-            new Phaser.Math.Vector2(0.24*this.displayWidth, 0.5*this.displayHeight),
-        );
 
-        // level 3
-        this.levelButtons[2] = new LevelButton({
-            scene: this.scene,
-            x: 0.206*this.displayWidth,
-            y: 0.386*this.displayHeight,
-            key: GREY_CIRCLE_SHADED,
-            levelNumber: 3,
-        })
-        .on('pointerdown', () => (this.scene as GameScene).selectLevel(3));
+        // // level 1
+        // this.levelButtons[0] = new LevelButton({
+        //     scene: this.scene,
+        //     x: 0.23*this.displayWidth,
+        //     y: 0.65*this.displayHeight,
+        //     key: GREY_CIRCLE_SHADED,
+        //     levelNumber: 1,
+        // })
+        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(1));
 
-        // create link form level 2 to 3
-        this.levelButtons[1].createLink(this.levelButtons[2], 
-            new Phaser.Math.Vector2(0.288*this.displayWidth, 0.4*this.displayHeight),
-            new Phaser.Math.Vector2(0.24*this.displayWidth, 0.37*this.displayHeight),
-        );
+        // // level 2
+        // this.levelButtons[1] = new LevelButton({
+        //     scene: this.scene,
+        //     x: 0.285*this.displayWidth,
+        //     y: 0.485*this.displayHeight,
+        //     key: GREY_CIRCLE_SHADED,
+        //     levelNumber: 2,
+        // })
+        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(2));
 
-        // level 4
-        this.levelButtons[3] = new LevelButton({
-            scene: this.scene,
-            x: 0.06*this.displayWidth,
-            y: 0.4*this.displayHeight,
-            key: GREY_CIRCLE_SHADED,
-            levelNumber: 4,
-        })
-        .on('pointerdown', () => (this.scene as GameScene).selectLevel(4));
+        // // create link to level 2
+        // this.levelButtons[1].createLink(this.levelButtons[0], 
+        //     new Phaser.Math.Vector2(0.24*this.displayWidth, 0.5*this.displayHeight),
+        //     new Phaser.Math.Vector2(0.285*this.displayWidth, 0.62*this.displayHeight),
+        // );
 
-        // create link form level 2 to 3
-        this.levelButtons[2].createLink(this.levelButtons[3], 
-            new Phaser.Math.Vector2(0.12*this.displayWidth, 0.4*this.displayHeight),
-            new Phaser.Math.Vector2(0.12*this.displayWidth, 0.47*this.displayHeight),
-        );
+        // // level 3
+        // this.levelButtons[2] = new LevelButton({
+        //     scene: this.scene,
+        //     x: 0.206*this.displayWidth,
+        //     y: 0.386*this.displayHeight,
+        //     key: GREY_CIRCLE_SHADED,
+        //     levelNumber: 3,
+        // })
+        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(3));
 
-        // level 5
-        this.levelButtons[4] = new LevelButton({
-            scene: this.scene,
-            x: 0.115*this.displayWidth,
-            y: 0.273*this.displayHeight,
-            key: GREY_CIRCLE_SHADED,
-            levelNumber: 5,
-        })
-        .on('pointerdown', () => (this.scene as GameScene).selectLevel(5));
+        // // create link form level 3 back to 2
+        // this.levelButtons[2].createLink(this.levelButtons[1], 
+        //     new Phaser.Math.Vector2(0.24*this.displayWidth, 0.37*this.displayHeight),
+        //     new Phaser.Math.Vector2(0.288*this.displayWidth, 0.4*this.displayHeight),
+            
+        // );
 
-        // create link form level 2 to 3
-        this.levelButtons[3].createLink(this.levelButtons[4], 
-            new Phaser.Math.Vector2(0.029*this.displayWidth, 0.279*this.displayHeight),
-            new Phaser.Math.Vector2(0.038*this.displayWidth, 0.2*this.displayHeight),
-        );
+        // // level 4
+        // this.levelButtons[3] = new LevelButton({
+        //     scene: this.scene,
+        //     x: 0.06*this.displayWidth,
+        //     y: 0.4*this.displayHeight,
+        //     key: GREY_CIRCLE_SHADED,
+        //     levelNumber: 4,
+        // })
+        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(4));
+
+        // // create link form level 4 back to 3
+        // this.levelButtons[3].createLink(this.levelButtons[2], 
+        //     new Phaser.Math.Vector2(0.12*this.displayWidth, 0.47*this.displayHeight),
+        //     new Phaser.Math.Vector2(0.12*this.displayWidth, 0.4*this.displayHeight),
+            
+        // );
+
+        // // level 5
+        // this.levelButtons[4] = new LevelButton({
+        //     scene: this.scene,
+        //     x: 0.115*this.displayWidth,
+        //     y: 0.273*this.displayHeight,
+        //     key: GREY_CIRCLE_SHADED,
+        //     levelNumber: 5,
+        // })
+        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(5));
+
+        // // create link form level 2 to 3
+        // this.levelButtons[4].createLink(this.levelButtons[3], 
+        //     new Phaser.Math.Vector2(0.038*this.displayWidth, 0.2*this.displayHeight),
+        //     new Phaser.Math.Vector2(0.029*this.displayWidth, 0.279*this.displayHeight),
+            
+        // );
 
 
         
@@ -255,17 +280,12 @@ export class WorldMap extends Phaser.GameObjects.Image {
 
         this.debugText.setText([
             'World Parameters:',
-            // '  Width: ' + Math.floor(this.worldWidth) + 'px',
-            // '  Height: ' + Math.floor(this.worldHeight) + 'px',
             '  Ptr % Width:  ' + (this.scene.cameras.main.scrollX/this.worldWidth + pointer.x/this.worldWidth).toFixed(3),
             '  Ptr % Height: ' + (this.scene.cameras.main.scrollY/this.worldHeight + pointer.y/this.worldHeight).toFixed(3),
-            // 'Screen Parameters:',
-            // '  Ptr px: ' + Math.floor(pointer.x),
-            // '  Ptr px: ' + Math.floor(pointer.y),
             '  Camera X: ' + (this.scene.cameras.main.scrollX/this.worldWidth).toFixed(3),
             '  Camera Y: ' + (this.scene.cameras.main.scrollY/this.worldHeight).toFixed(3),
-            // '  Camera Zoom: ' + this.worldCam.zoom,
         ]);
+        this.debugText.setPosition(0.2*this.displayWidth, 0.5*this.displayHeight);
 
     }
 

@@ -107,7 +107,6 @@ export class Gui {
                     if (!this.scene.getGridLevel()?.isCongaRunning()) {
                         (this.scene as GameScene).showLevelOverScreen();
                     }  
-                
                 } else if (this.scene.getGridLevel()?.getStatus() === 'LEVEL_OVER_SCREEN') {
                     (this.scene as GameScene).endLevel();
                 }

@@ -846,8 +846,7 @@ interface CountGotchi {
             this.arrows[3].setPosition(this.x+this.gridSize, this.y);
         }
 
-        // make sure particles follow us
-        // this.particleConfetti?.setPosition(this.x, this.y);
+        // make sure particles follow our grid object
         this.emitterConfetti?.setPosition(this.x, this.y);
 
         // update visibility of all arrows

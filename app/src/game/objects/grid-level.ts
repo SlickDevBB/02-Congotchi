@@ -509,14 +509,6 @@ export class GridLevel {
     }))
   }
 
-  public stopCongaMusic() {
-    this.gridCells.map(row => row.map (cell => {
-      if (cell.gridObject.getType() === 'PORTAL') {
-        (cell.gridObject as GO_Portal).stopCongaMusic();
-      }
-    }))
-  }
-
   public congaLineStarted() {
     this.musicGridLevel?.stop();
   }

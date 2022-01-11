@@ -5,6 +5,7 @@ import { GridPosition } from '../grid-level';
 import { PIXEL_EXPLOSION, PORTAL_OPEN, SOUND_EXPLOSION, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
+import { GO_Milkshake } from './go-milkshake';
 
 interface Congotchi {
     gotchi: GO_Gotchi;
@@ -15,7 +16,7 @@ interface Congotchi {
 }
   
 export class GO_Grenade extends GridObject {
-    private status: 'OPEN' | 'CLOSED' = 'CLOSED';
+    private status: 'LIVE' | 'EXPLODED' = 'LIVE';
 
     // timer is for click events
     private timer = 0;
@@ -146,43 +147,60 @@ export class GO_Grenade extends GridObject {
     }
 
     public explode() {
-        // create an explosion tween
-        const explosionImage = this.scene.add.image(
-            this.x,
-            this.y,
-            PIXEL_EXPLOSION
-        )
-        .setDisplaySize(this.displayWidth*3, this.displayHeight*3)
-        .setDepth(this.depth+1)
-        .setOrigin(0.5, 0.5)
-        .setAlpha(1)
-        .setScrollFactor(0);
+        // check grenade hasn't already exploded
+        if (this.status === 'LIVE') {
+            // change status
+            this.status = 'EXPLODED';
 
-        this.scene.add.tween({
-            targets: explosionImage,
-            alpha: 0,
-            duration: 500,
-            onComplete: () => { 
-                explosionImage.destroy() 
-                this.destroy()
-            },
-        })
+            // create an explosion tween
+            const explosionImage = this.scene.add.image(
+                this.x,
+                this.y,
+                PIXEL_EXPLOSION
+            )
+            .setDisplaySize(this.displayWidth*3, this.displayHeight*3)
+            .setDepth(this.depth+1)
+            .setOrigin(0.5, 0.5)
+            .setAlpha(1)
+            .setScrollFactor(0);
 
-        // go through a 3x3 grid of all objects and set any gotchis to burnt status
-        for (let i = this.gridPosition.row-1; i < this.gridPosition.row + 2; i++) {
-            for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
-                const go = this.gridLevel.getGridObject(i, j);
-                if (go !== 'OUT OF BOUNDS' && go.getType() === 'GOTCHI') {
-                    (go as GO_Gotchi).status = 'BURNT';
+            this.scene.add.tween({
+                targets: explosionImage,
+                alpha: 0,
+                duration: 250,
+                onComplete: () => { 
+                    explosionImage.destroy() 
+                    this.destroy()
+                },
+            })
+
+            // go through a 3x3 grid of all objects and set any gotchis to burnt status and explode any other bombs and destroy milkshakes
+            for (let i = this.gridPosition.row-1; i < this.gridPosition.row + 2; i++) {
+                for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
+                    const go = this.gridLevel.getGridObject(i, j);
+                    if (go !== 'OUT OF BOUNDS') {
+                        if (go.getType() === 'GOTCHI') {
+                            (go as GO_Gotchi).status = 'BURNT';
+                        }
+                        else if (go.getType() === 'GRENADE') {
+                            setTimeout(() => (go as GO_Grenade).explode(), 300);
+                        }
+                        else if (go.getType() === 'MILKSHAKE') {
+                            (go as GO_Milkshake).destroy();
+                            // I have no idea but i have to do a weird timeout for this to work properly????
+                            // instantly setting to empty grid object doesn't seem to be recognized
+                            setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),250);
+                        }
+                    } 
                 }
             }
+
+            // I have no idea but i have to do a weird timeout for this to work properly????
+            // instantly setting to empty grid object doesn't seem to be recognized
+            setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),250);
+
+            this.setVisible(false);
         }
-
-        // I have no idea but i have to do a weird timeout for this to work properly????
-        // instantly setting to empty grid object doesn't seem to be recognized
-        setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),500);
-
-        this.setVisible(false);
     }
 
     update(): void {

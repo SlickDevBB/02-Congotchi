@@ -176,12 +176,15 @@ export class GameScene extends Phaser.Scene {
   public handleLevelResults(level: number, score: number, stars: number) {
     // check if we can unlock a new level
     if (level === this.unlockedLevels && stars > 0) {
-      // tell the world map to enable button for next level
-      this.worldMap?.setUnlockedLevels(level+1);
-      this.unlockedLevels = level + 1;
+      // see if theres a new level to unlock
+      if (level < levels.length) {
+        // tell the world map to enable button for next level
+        this.worldMap?.setUnlockedLevels(level+1);
+        this.unlockedLevels = level + 1;
 
-      // tell database to increase number of unlocked levels for the user
-      this.socket?.emit('setUnlockedLevels', level+1);
+        // tell database to increase number of unlocked levels for the user
+        this.socket?.emit('setUnlockedLevels', level+1);
+      }
 
       // create a new level score locally
       this.levelScores[level] = {
