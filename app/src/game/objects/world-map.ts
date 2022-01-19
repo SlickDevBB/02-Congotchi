@@ -1,15 +1,11 @@
 // world-map.ts
 // this is the main level selector object that our gotchi traverses
 
-import { GREEN_BUTTON, GREY_CIRCLE_SHADED, GUI_BUTTON_PLAY, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, MUSIC_WORLD_MAP, RED_BUTTON } from "game/assets";
-import { getGameHeight, getGameWidth, getRelative } from "game/helpers";
-import { LevelButton, Player, LevelConfig, levels, Gui, GridLevel } from ".";
-import {
-    LEFT_CHEVRON, BG, SOUND_CLICK, ARROW_DOWN, GUI_BUTTON_CROSS,
-  } from 'game/assets';
+import { GREY_CIRCLE_SHADED, MUSIC_WORLD_MAP } from "game/assets";
+import { getGameHeight, getGameWidth, } from "game/helpers";
+import { LevelButton, levels, } from ".";
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_WORLD_MASK } from "game/helpers/constants";
-import { Socket } from "socket.io-client";
 
 interface Props {
     scene: GameScene;
@@ -57,10 +53,13 @@ export class WorldMap extends Phaser.GameObjects.Image {
         this.cursorKeys = this.scene.input.keyboard.createCursorKeys();
 
         // create the debug text
-        const fontHeight = getGameHeight(this.scene)/50;
-        this.debugText = this.scene.add.text(10, 10, 'Debug Info', { font: fontHeight+'px Courier', color: '#ff0000' });
+        const fontHeight = getGameHeight(this.scene)/50*1.25;
+        this.debugText = this.scene.add.text(10, 100, 'Debug Info', { font: fontHeight+'px Courier', color: '#ff0000' });
         this.debugText.setScrollFactor(0);
-        this.debugText.setStroke("#000000", 1);
+        this.debugText.setStroke("#ffffff", 4);
+        // this.debugText.setShadow(3, 3, '#ffffff');
+        this.debugText.setVisible(process.env.NODE_ENV === 'development');
+        this.debugText.setDepth(10000);
 
         // get the main scene camera and set its initial scroll position
         this.worldCam = this.scene.cameras.main;
@@ -107,93 +106,13 @@ export class WorldMap extends Phaser.GameObjects.Image {
             .on('pointerdown', () => (this.scene as GameScene).selectLevel(i+1));
 
             // if we have curve positions we can link back to last level
-            if (levels[i].curveApos.length > 0) {
+            if (levels[i].curveThisPos.length > 0) {
                     this.levelButtons[i].createLink(this.levelButtons[i-1], 
-                    new Phaser.Math.Vector2(levels[i].curveApos[0]*this.displayWidth, levels[i].curveApos[1]*this.displayHeight),
-                    new Phaser.Math.Vector2(levels[i].curveBpos[0]*this.displayWidth, levels[i].curveBpos[1]*this.displayHeight),
+                    new Phaser.Math.Vector2(levels[i].curveThisPos[0]*this.displayWidth, levels[i].curveThisPos[1]*this.displayHeight),
+                    new Phaser.Math.Vector2(levels[i].curvePrevPos[0]*this.displayWidth, levels[i].curvePrevPos[1]*this.displayHeight),
                 );
             }
         }
-
-
-        // // level 1
-        // this.levelButtons[0] = new LevelButton({
-        //     scene: this.scene,
-        //     x: 0.23*this.displayWidth,
-        //     y: 0.65*this.displayHeight,
-        //     key: GREY_CIRCLE_SHADED,
-        //     levelNumber: 1,
-        // })
-        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(1));
-
-        // // level 2
-        // this.levelButtons[1] = new LevelButton({
-        //     scene: this.scene,
-        //     x: 0.285*this.displayWidth,
-        //     y: 0.485*this.displayHeight,
-        //     key: GREY_CIRCLE_SHADED,
-        //     levelNumber: 2,
-        // })
-        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(2));
-
-        // // create link to level 2
-        // this.levelButtons[1].createLink(this.levelButtons[0], 
-        //     new Phaser.Math.Vector2(0.24*this.displayWidth, 0.5*this.displayHeight),
-        //     new Phaser.Math.Vector2(0.285*this.displayWidth, 0.62*this.displayHeight),
-        // );
-
-        // // level 3
-        // this.levelButtons[2] = new LevelButton({
-        //     scene: this.scene,
-        //     x: 0.206*this.displayWidth,
-        //     y: 0.386*this.displayHeight,
-        //     key: GREY_CIRCLE_SHADED,
-        //     levelNumber: 3,
-        // })
-        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(3));
-
-        // // create link form level 3 back to 2
-        // this.levelButtons[2].createLink(this.levelButtons[1], 
-        //     new Phaser.Math.Vector2(0.24*this.displayWidth, 0.37*this.displayHeight),
-        //     new Phaser.Math.Vector2(0.288*this.displayWidth, 0.4*this.displayHeight),
-            
-        // );
-
-        // // level 4
-        // this.levelButtons[3] = new LevelButton({
-        //     scene: this.scene,
-        //     x: 0.06*this.displayWidth,
-        //     y: 0.4*this.displayHeight,
-        //     key: GREY_CIRCLE_SHADED,
-        //     levelNumber: 4,
-        // })
-        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(4));
-
-        // // create link form level 4 back to 3
-        // this.levelButtons[3].createLink(this.levelButtons[2], 
-        //     new Phaser.Math.Vector2(0.12*this.displayWidth, 0.47*this.displayHeight),
-        //     new Phaser.Math.Vector2(0.12*this.displayWidth, 0.4*this.displayHeight),
-            
-        // );
-
-        // // level 5
-        // this.levelButtons[4] = new LevelButton({
-        //     scene: this.scene,
-        //     x: 0.115*this.displayWidth,
-        //     y: 0.273*this.displayHeight,
-        //     key: GREY_CIRCLE_SHADED,
-        //     levelNumber: 5,
-        // })
-        // .on('pointerdown', () => (this.scene as GameScene).selectLevel(5));
-
-        // // create link form level 2 to 3
-        // this.levelButtons[4].createLink(this.levelButtons[3], 
-        //     new Phaser.Math.Vector2(0.038*this.displayWidth, 0.2*this.displayHeight),
-        //     new Phaser.Math.Vector2(0.029*this.displayWidth, 0.279*this.displayHeight),
-            
-        // );
-
-
         
     }
 
@@ -285,7 +204,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
             '  Camera X: ' + (this.scene.cameras.main.scrollX/this.worldWidth).toFixed(3),
             '  Camera Y: ' + (this.scene.cameras.main.scrollY/this.worldHeight).toFixed(3),
         ]);
-        this.debugText.setPosition(0.2*this.displayWidth, 0.5*this.displayHeight);
+        // this.debugText.setPosition(0.2*this.displayWidth, 0.5*this.displayHeight);
 
     }
 

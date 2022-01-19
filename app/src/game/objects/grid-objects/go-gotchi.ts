@@ -1,38 +1,20 @@
-// grid-object-base-class.ts - base class for all grid objects
+// go-gotchi.ts - gotchi class
 
-import { GO_Empty, GO_Props, GridLevel, GridObject } from 'game/objects';
-import { GridPosition } from '../grid-level';
+import { GO_Props, GridObject, GridLevel } from 'game/objects';
 import { ARROW_ICON, PARTICLE_CONFETTI, SOUND_BELL, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI } from 'game/helpers/constants';
-import { AavegotchiGameObject } from 'types';
-import { timeStamp } from 'console';
-import { queryAllByDisplayValue } from '@testing-library/dom';
-import { Game } from 'phaser';
 import { getGameHeight } from 'game/helpers';
 
-export interface GO_Gotchi_Props {
-    scene: Phaser.Scene;
-    gridLevel: GridLevel;
-    gridRow: number;
-    gridCol: number;
-    key: string;
-    gotchi: AavegotchiGameObject;
-    frame?: number;
-    gridSize: number;
-    objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI',
-  }
-
-interface CountGotchi {
-    count: number,
-    gotchi: GO_Gotchi | 0,
+export interface GO_Gotchi_Props extends GO_Props {
+    direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
 }
   
-  export class GO_Gotchi extends GridObject {
+export class GO_Gotchi extends GridObject {
     private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
     private leader: GridObject | 0 = 0;
     private followers: Array<GridObject | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
-    private gotchi: AavegotchiGameObject;
+    // private gotchi: AavegotchiGameObject;
 
     // create arrows which are used to depict direction changes
     private arrows: Array<Phaser.GameObjects.Image> = [];
@@ -60,9 +42,6 @@ interface CountGotchi {
     // duration variable for conga steps
     private congaStepDuration = 60/140*1000;
 
-    // congaCount is used to count steps until a jump
-    private congaCount = 0;
-
     // timer is for click events
     private timer = 0;
 
@@ -86,14 +65,8 @@ interface CountGotchi {
     private particleConfetti?: Phaser.GameObjects.Particles.ParticleEmitterManager;
     private emitterConfetti?: Phaser.GameObjects.Particles.ParticleEmitter;
 
-    constructor({ scene, gridLevel, gridRow, gridCol, key, gotchi, gridSize, objectType }: GO_Gotchi_Props) {
-        super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GOTCHI'});
-
-        // save our gridlevel
-        this.gridLevel = gridLevel;  
-        this.gridSize = gridSize;
-        this.objectType = objectType;
-        this.gotchi = gotchi;
+    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType = 'GOTCHI', direction = 'DOWN' }: GO_Gotchi_Props) {//gotchi, gridSize, objectType }: GO_Gotchi_Props) {
+        super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType});
 
         // set our background colour
         this.setBgSquareColour('PINK');
@@ -108,19 +81,23 @@ interface CountGotchi {
         this.scene.physics.world.enable(this);
   
         // set to size of grids from game
-        this.setDisplaySize(gridSize, gridSize);
+        this.setDisplaySize(gridSize*.95, gridSize*.95);
 
         // set a specific depth
         this.setDepth(DEPTH_GO_GOTCHI);
+
+        // add to the scene
+        this.scene.add.existing(this);
+
+        // enable draggable input
+        this.setInteractive();
+        this.scene.input.setDraggable(this);
 
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
         this.soundInteract = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
         this.soundBell = this.scene.sound.add(SOUND_BELL, { loop: false }) as Phaser.Sound.HTML5AudioSound;
         this.soundBell.setVolume(0.5);
-    
-        // add to the scene
-        this.scene.add.existing(this);
 
         this.particleConfetti = this.scene.add.particles(PARTICLE_CONFETTI);
         this.particleConfetti.setDepth(this.depth + 10);
@@ -275,10 +252,6 @@ interface CountGotchi {
             .setAlpha(0.9)
             .setScrollFactor(0);
 
-        const getLineX = (direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT') => {
-            // test
-        }
-
         // create our direction line
         this.directionLine = this.scene.add.line(
             0, 
@@ -292,16 +265,12 @@ interface CountGotchi {
             .setAlpha(0.9)
             .setScrollFactor(0);
 
-        // enable draggable input
-        this.setInteractive();
-        this.scene.input.setDraggable(this);
+        
 
         // set behaviour for pointer click down
         this.on('pointerdown', () => {
             // get the time at which we clicked
             this.timer = new Date().getTime();
-
-            console.log(this);
         });
 
         // set behaviour for pointer up event
@@ -371,7 +340,7 @@ interface CountGotchi {
             }
         });
 
-        this.on('dragend', (pointer: Phaser.Input.Pointer) => {
+        this.on('dragend', () => {
             // store the grid position dragging finished in
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
             this.setGridPosition(finalGridPos.row, finalGridPos.col, () => {
@@ -385,74 +354,76 @@ interface CountGotchi {
                     // play the move sound
                     this.soundMove?.play();
                 }
-
             });
-
-            
         })
 
-        // // Add animations
-        this.anims.create({
-            key: 'down',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 0 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 2, end: 2 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 4, end: 4 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'up',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 6, end: 6 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'down_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 8, end: 8 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'left_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 10, end: 10 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'right_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 12, end: 12 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-        this.anims.create({
-            key: 'up_happy',
-            frames: this.anims.generateFrameNumbers(key || '', { start: 14, end: 14 }),
-            frameRate: 2,
-            repeat: -1,
-        });
-    
-        this.anims.play('down');
+        // // Add animations if we're a gotchi (and not a rofl)
+        if (this.objectType === 'GOTCHI') {
+            this.anims.create({
+                key: 'down',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 0 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 2, end: 2 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 4, end: 4 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'up',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 6, end: 6 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'down_happy',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 8, end: 8 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'left_happy',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 10, end: 10 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'right_happy',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 12, end: 12 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.anims.create({
+                key: 'up_happy',
+                frames: this.anims.generateFrameNumbers(key || '', { start: 14, end: 14 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+        
+            this.anims.play('down');
+        }
+
+         // set our direction
+         this.setDirection(direction);
 
     }
 
     // create stat adjustment
     public adjustPlayerStat(stat: 'INTERACT_PINK' | 'MOVE_PINK' | 'MOVE_RED' | 'INTERACT_RED' | 
-    'INTERACT_BLUE' | 'MOVE_BLUE' | 'MOVE_GREEN' | 'INTERACT_GREEN', value: number) {
+    'INTERACT_BLUE' | 'MOVE_BLUE' | 'MOVE_GREEN' | 'INTERACT_GREEN', value = -1) {
         // get the player
         const player = (this.scene as GameScene).getPlayer();
     
         // decrease the players move count
-        if (player) player.adjustStat(stat, -1);
+        if (player) player.adjustStat(stat, value);
     }
 
     // a function to see if there is a certain status up the chain
@@ -483,9 +454,9 @@ interface CountGotchi {
             default: break;
         }
 
-        // double check the grid object we found is a gotchi
-        if (potentialLeader !== 'OUT OF BOUNDS' && potentialLeader?.getType() === 'GOTCHI' && (potentialLeader as GO_Gotchi).status !== 'BURNT') {
-            // check the gotchi isn't looking straight back at us
+        // double check the grid object we found is a gotchi or rofl
+        if (potentialLeader !== 'OUT OF BOUNDS' && (potentialLeader?.getType() === 'GOTCHI' || potentialLeader?.getType() === 'ROFL') && (potentialLeader as GO_Gotchi).status !== 'BURNT') {
+            // check the gotchi/rofl isn't looking straight back at us
             let lookingAtUs = false;
             switch (this.getDirection()) {
                 case 'DOWN': if ( (potentialLeader as GO_Gotchi).getDirection() === 'UP') lookingAtUs = true; break;
@@ -505,28 +476,28 @@ interface CountGotchi {
         // check each direction to see if there is a gotchi looking at us
         const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
         if (downGotchi !== 'OUT OF BOUNDS' &&
-            downGotchi.getType() === 'GOTCHI' &&
+            (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') &&
             (downGotchi as GO_Gotchi).getDirection() === 'UP') {
                 this.followers[0] = downGotchi;
         } else this.followers[0] = 0;
 
         const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
         if (leftGotchi !== 'OUT OF BOUNDS' &&
-            leftGotchi.getType() === 'GOTCHI' &&
+            (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') &&
             (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') {
                 this.followers[1] = leftGotchi;
         } else this.followers[1] = 0;
 
         const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
         if (upGotchi !== 'OUT OF BOUNDS' &&
-            upGotchi.getType() === 'GOTCHI' &&
+            (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') &&
             (upGotchi as GO_Gotchi).getDirection() === 'DOWN') {
                 this.followers[2] = upGotchi;
         } else this.followers[2] = 0;
 
         const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
         if (rightGotchi !== 'OUT OF BOUNDS' &&
-            rightGotchi.getType() === 'GOTCHI' &&
+            (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') &&
             (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') {
                 this.followers[3] = rightGotchi;
         } else this.followers[3] = 0; 
@@ -562,26 +533,29 @@ interface CountGotchi {
 
     public setDirection(direction: 'DOWN' | 'LEFT' | 'RIGHT' | 'UP') {
         this.direction = direction;
-        switch (direction) {
-            case 'DOWN': {
-                this.anims.play('down');
-                break;
-            }
-            case 'LEFT': {
-                this.anims.play('left');
-                break;
-            }
-            case 'RIGHT': {
-                this.anims.play('right');
-                break;
-            }
-            case 'UP': {
-                this.anims.play('up');
-                break;
-            }
-            default: {
-                
-                break;
+        // check we're not a rofl
+        if (this.objectType === 'GOTCHI') {
+            switch (direction) {
+                case 'DOWN': {
+                    this.anims.play('down');
+                    break;
+                }
+                case 'LEFT': {
+                    this.anims.play('left');
+                    break;
+                }
+                case 'RIGHT': {
+                    this.anims.play('right');
+                    break;
+                }
+                case 'UP': {
+                    this.anims.play('up');
+                    break;
+                }
+                default: {
+                    
+                    break;
+                }
             }
         }
         return this;
@@ -602,44 +576,39 @@ interface CountGotchi {
     }
 
     public congaIntoPosition(row: number, col: number, jumpAtEnd: boolean) {
-        // setTimeout( () => {
-
+        // update our status
         this.status = 'CONGOTCHING';
 
-            // call our set grid position that moves our gotchi
-            this.setGridPosition(
-                row,
-                col,
-                () => {
-                    // this.congaCount++;
-                    this.setDirection(this.newDir);
-                    if (!jumpAtEnd) {
-                        setTimeout( () => {
-                            this.status = 'WAITING' 
-                        } , this.congaStepDuration*0.5);
-                    } else {
-                        this.congaJump();
-                    //     this.congaCount = 0;
-                    }
-                },
-                false,
-                this.congaStepDuration*0.5,
-                'Back.easeOut'
-            )
-
-            // add another tween for our gotchi which rotates him a bit to look conga'ish
-            this.scene.add.tween({
-                targets: this,
-                angle: this.congaSide === 'LEFT' ? -20 : 20,
-                duration: this.congaStepDuration*0.5,
-                ease: 'Bounce.easeOut',
-                onComplete: () => {
-                    // change conga side
-                    this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
+        // call our set grid position that moves our gotchi
+        this.setGridPosition(
+            row,
+            col,
+            () => {
+                this.setDirection(this.newDir);
+                if (!jumpAtEnd) {
+                    setTimeout( () => {
+                        this.status = 'WAITING' 
+                    } , this.congaStepDuration*0.5);
+                } else {
+                    this.congaJump();
                 }
-            })
+            },
+            false,
+            this.congaStepDuration*0.5,
+            'Back.easeOut'
+        )
 
-        // }, this.congaStepDuration*0.5);
+        // add another tween for our gotchi which rotates him a bit to look conga'ish
+        this.scene.add.tween({
+            targets: this,
+            angle: this.congaSide === 'LEFT' ? -20 : 20,
+            duration: this.congaStepDuration*0.5,
+            ease: 'Bounce.easeOut',
+            onComplete: () => {
+                // change conga side
+                this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
+            }
+        })
 
         return this;
 
@@ -666,14 +635,12 @@ interface CountGotchi {
 
     public congaJump() {
         // change anim to happy
-        this.anims.play(this.getDirection().toLowerCase() + '_happy');
+        if (this.objectType === 'GOTCHI') this.anims.play(this.getDirection().toLowerCase() + '_happy');
 
         this.emitterConfetti?.start();
         setTimeout( () => {
             this.emitterConfetti?.stop();
         }, 75);
-
-        const prevStatus = this.status;
 
         this.status = 'JUMPING';
 
@@ -866,5 +833,5 @@ interface CountGotchi {
             this.setTint(0xffffff);
         }
     }
-  }
+}
   

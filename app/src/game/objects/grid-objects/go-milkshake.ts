@@ -1,18 +1,17 @@
 // grid-object-base-class.ts - base class for all grid objects
 
-import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
-import { GridPosition } from '../grid-level';
-import { PIXEL_PINK_SPLASH, PORTAL_OPEN, SOUND_POP, SOUND_SLURP } from 'game/assets';
+import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
+import { PIXEL_PINK_SPLASH, SOUND_POP, SOUND_SLURP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
 
-interface Congotchi {
-    gotchi: GO_Gotchi;
-    newRow: number;
-    newCol: number;
-    newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
-    status: 'READY' | 'CONGOTCHING';
-}
+// interface Congotchi {
+//     gotchi: GO_Gotchi;
+//     newRow: number;
+//     newCol: number;
+//     newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
+//     status: 'READY' | 'CONGOTCHING';
+// }
   
 export class GO_Milkshake extends GridObject {
     private status: 'OPEN' | 'CLOSED' = 'CLOSED';
@@ -30,7 +29,7 @@ export class GO_Milkshake extends GridObject {
     private soundInteract?: Phaser.Sound.HTML5AudioSound;
 
     // our constructor
-    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
+    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize }: GO_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'MILKSHAKE'});
 
         console.log('MILKHAKE CREATED');
@@ -50,13 +49,13 @@ export class GO_Milkshake extends GridObject {
         this.soundInteract = this.scene.sound.add(SOUND_SLURP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
         // set behaviour for pointer click down
-        this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        this.on('pointerdown', () => {
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
         });
 
         // set behaviour for pointer up event
-        this.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        this.on('pointerup', () => {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
@@ -153,7 +152,7 @@ export class GO_Milkshake extends GridObject {
         for (let i = this.gridPosition.row-1; i < this.gridPosition.row + 2; i++) {
             for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
                 const go = this.gridLevel.getGridObject(i, j);
-                if (go !== 'OUT OF BOUNDS' && go.getType() === 'GOTCHI') {
+                if (go !== 'OUT OF BOUNDS' && (go.getType() === 'GOTCHI' || go.getType() === 'ROFL')) {
 
                     const gotchi = (go as GO_Gotchi);
                     // increase the gotchis score bonus

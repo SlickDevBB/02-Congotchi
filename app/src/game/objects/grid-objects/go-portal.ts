@@ -1,18 +1,17 @@
 // grid-object-base-class.ts - base class for all grid objects
 
-import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
-import { GridPosition } from '../grid-level';
+import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
 import { PORTAL_OPEN, SOUND_CONGA, SOUND_POP, SOUND_PORTAL_OPEN } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
 
-interface Congotchi {
-    gotchi: GO_Gotchi;
-    newRow: number;
-    newCol: number;
-    newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
-    status: 'READY' | 'CONGOTCHING';
-}
+// interface Congotchi {
+//     gotchi: GO_Gotchi;
+//     newRow: number;
+//     newCol: number;
+//     newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
+//     status: 'READY' | 'CONGOTCHING';
+// }
   
 export class GO_Portal extends GridObject {
     private status: 'OPEN' | 'CLOSED' = 'CLOSED';
@@ -44,15 +43,35 @@ export class GO_Portal extends GridObject {
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'PORTAL'});
 
-        // enable draggable input
-        this.setInteractive();
-        this.scene.input.setDraggable(this);
+        // save our gridlevel
+        this.gridLevel = gridLevel;  
+        this.gridSize = gridSize;
+        this.objectType = objectType;
 
-        // set our bg colour
+        // set our background colour
         this.setBgSquareColour('BLUE');
+        
+        // set our grid position
+        this.gridPosition = {row: gridRow, col: gridCol };
+
+        // lets set our origin about our base point
+        this.setOrigin(0.5, 0.5);
+
+        // physics
+        this.scene.physics.world.enable(this);
+  
+        // set to size of grids from game
+        this.setDisplaySize(gridSize*.8, gridSize*.8);
 
         // set a specific depth
         this.setDepth(DEPTH_GO_PORTAL);
+
+        // add to the scene
+        this.scene.add.existing(this);
+
+        // enable draggable input
+        this.setInteractive();
+        this.scene.input.setDraggable(this);
 
         // add sound and conga music
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
@@ -61,7 +80,7 @@ export class GO_Portal extends GridObject {
         this.musicConga = this.scene.sound.add(SOUND_CONGA, {loop: false}) as Phaser.Sound.HTML5AudioSound;
 
         // set behaviour for pointer click down
-        this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        this.on('pointerdown', () => {
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
             
@@ -69,7 +88,7 @@ export class GO_Portal extends GridObject {
         });
 
         // set behaviour for pointer up event
-        this.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        this.on('pointerup', () => {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
@@ -161,31 +180,34 @@ export class GO_Portal extends GridObject {
                 }
             }
         })
+
+        
+
     }
 
     public findCongaLeaders() {
         // check each direction to see if there is a gotchi looking at us
         const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
         if (downGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[0] = (downGotchi.getType() === 'GOTCHI' && (downGotchi as GO_Gotchi).getDirection() === 'UP') ? 
+            this.congaLeaders[0] = ((downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') && (downGotchi as GO_Gotchi).getDirection() === 'UP') ? 
                 (downGotchi as GO_Gotchi) : 0;
         }
 
         const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
         if (leftGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[1] = (leftGotchi.getType() === 'GOTCHI' && (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') ? 
+            this.congaLeaders[1] = ((leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') && (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') ? 
                 (leftGotchi as GO_Gotchi) : 0;
         }
 
         const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
         if (upGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[2] = (upGotchi.getType() === 'GOTCHI' && (upGotchi as GO_Gotchi).getDirection() === 'DOWN') ? 
+            this.congaLeaders[2] = ((upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') && (upGotchi as GO_Gotchi).getDirection() === 'DOWN') ? 
                 (upGotchi as GO_Gotchi) : 0;
         }
 
         const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
         if (rightGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[3] = (rightGotchi.getType() === 'GOTCHI' && (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') ? 
+            this.congaLeaders[3] = ((rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') && (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') ? 
                 (rightGotchi as GO_Gotchi) : 0;
         }
 
@@ -274,6 +296,7 @@ export class GO_Portal extends GridObject {
                         }
                     } 
                 });
+                console.log(this.gotchiChains[i]);
             }
         }
 

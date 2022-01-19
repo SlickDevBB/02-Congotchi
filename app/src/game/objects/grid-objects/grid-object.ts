@@ -1,7 +1,6 @@
 // grid-object.ts - base class for all grid objects
-import { GO_Empty, GridLevel } from 'game/objects';
+import { GridLevel } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GRID_OBJECTS } from 'game/helpers/constants';
 
 export interface GO_Props {
@@ -12,14 +11,14 @@ export interface GO_Props {
     key: string;
     frame?: number;
     gridSize: number;
-    objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI',
+    objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'ROFL';
   }
   
-  export class GridObject extends Phaser.GameObjects.Sprite {
+export class GridObject extends Phaser.GameObjects.Sprite {
     public gridPosition: GridPosition;
     protected gridLevel: GridLevel;
     protected gridSize: number;
-    protected objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' = 'BASE_CLASS';
+    protected objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'ROFL' = 'BASE_CLASS';
     protected bgSquareColour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE' = 'NONE';
     protected bgSquare: Phaser.GameObjects.Rectangle;
 
@@ -58,7 +57,7 @@ export interface GO_Props {
         this.x, this.y, 
         this.gridSize, this.gridSize
         )
-        .setAlpha(0.33)
+        .setAlpha(0.5)
         .setStrokeStyle(1, 0xffffff)
         .setOrigin(0.5,0.5)
         .setDepth(DEPTH_GRID_OBJECTS - 1)
@@ -80,7 +79,7 @@ export interface GO_Props {
       }
     }
 
-    public setGridPosition(row: number, col: number, customOnComplete?: () => any, keepOldObject = false, tweenDuration = 100, customEase = 'linear') {
+    public setGridPosition(row: number, col: number, customOnComplete?: () => any | undefined, keepOldObject = false, tweenDuration = 100, customEase = 'linear') {
       // store our old row and column
       const oldRow = this.gridPosition.row;
       const oldCol = this.gridPosition.col;  

@@ -1,19 +1,18 @@
 // grid-object-base-class.ts - base class for all grid objects
 
-import { GO_Gotchi, GO_Props, GridLevel, GridObject, Player } from 'game/objects';
-import { GridPosition } from '../grid-level';
-import { PIXEL_EXPLOSION, PORTAL_OPEN, SOUND_EXPLOSION, SOUND_POP } from 'game/assets';
+import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
+import { PIXEL_EXPLOSION, SOUND_EXPLOSION, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
 import { GO_Milkshake } from './go-milkshake';
 
-interface Congotchi {
-    gotchi: GO_Gotchi;
-    newRow: number;
-    newCol: number;
-    newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
-    status: 'READY' | 'CONGOTCHING';
-}
+// interface Congotchi {
+//     gotchi: GO_Gotchi;
+//     newRow: number;
+//     newCol: number;
+//     newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
+//     status: 'READY' | 'CONGOTCHING';
+// }
   
 export class GO_Grenade extends GridObject {
     private status: 'LIVE' | 'EXPLODED' = 'LIVE';
@@ -31,7 +30,7 @@ export class GO_Grenade extends GridObject {
     private soundInteract?: Phaser.Sound.HTML5AudioSound;
 
     // our constructor
-    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
+    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize }: GO_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GRENADE'});
 
         // enable draggable input
@@ -49,13 +48,13 @@ export class GO_Grenade extends GridObject {
         this.soundInteract = this.scene.sound.add(SOUND_EXPLOSION, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
         // set behaviour for pointer click down
-        this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        this.on('pointerdown', () => {
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
         });
 
         // set behaviour for pointer up event
-        this.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        this.on('pointerup', () => {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
@@ -164,11 +163,15 @@ export class GO_Grenade extends GridObject {
             .setAlpha(1)
             .setScrollFactor(0);
 
+            // hide the grenade
+            this.setVisible(false);
+
             this.scene.add.tween({
                 targets: explosionImage,
                 alpha: 0,
                 duration: 250,
                 onComplete: () => { 
+                    this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col)
                     explosionImage.destroy() 
                     this.destroy()
                 },
@@ -179,27 +182,22 @@ export class GO_Grenade extends GridObject {
                 for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
                     const go = this.gridLevel.getGridObject(i, j);
                     if (go !== 'OUT OF BOUNDS') {
-                        if (go.getType() === 'GOTCHI') {
+                        if (go.getType() === 'GOTCHI' || go.getType() === 'ROFL') {
                             (go as GO_Gotchi).status = 'BURNT';
                         }
                         else if (go.getType() === 'GRENADE') {
                             setTimeout(() => (go as GO_Grenade).explode(), 300);
                         }
                         else if (go.getType() === 'MILKSHAKE') {
+                            // empty out the grid position with the milkshake ini it
+                            this.gridLevel.setEmptyGridObject(go.getGridPosition().row, go.getGridPosition().col);
+
+                            // destroy the milkshake
                             (go as GO_Milkshake).destroy();
-                            // I have no idea but i have to do a weird timeout for this to work properly????
-                            // instantly setting to empty grid object doesn't seem to be recognized
-                            setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),250);
                         }
                     } 
                 }
             }
-
-            // I have no idea but i have to do a weird timeout for this to work properly????
-            // instantly setting to empty grid object doesn't seem to be recognized
-            setTimeout(() => this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col),250);
-
-            this.setVisible(false);
         }
     }
 

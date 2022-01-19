@@ -29,7 +29,7 @@ export interface AtlasAsset extends Asset {
 
 export const BG = 'bg';
 export const FULLSCREEN = 'fullscreen';
-export const LEFT_CHEVRON = 'left_chevron';
+// export const LEFT_CHEVRON = 'left_chevron';
 
 export const SOUND_CLICK = 'sound_click';
 export const SOUND_POP = 'sound_pop';
@@ -40,6 +40,7 @@ export const SOUND_BELL = 'sound_bell';
 export const SOUND_VICTORY = 'sound_victory';
 export const SOUND_DEFEAT = 'sound_defeat';
 export const SOUND_CONGA = 'sound_conga';
+export const SOUND_SOFT_RESET = 'sound_soft_reset';
 
 export const MUSIC_WORLD_MAP = 'music_world_map';
 export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
@@ -50,6 +51,13 @@ export const MILKSHAKE = 'milkshake';
 export const UNCOMMON_CACTI = 'uncommon_cacti';
 export const PORTAL_OPEN = 'portal_open';
 export const PORTAL_CLOSED = 'portal_closed';
+
+export const COMMON_DOWN_ROFL = 'common_down_rofl';
+export const COMMON_LEFT_ROFL = 'common_left_rofl';
+export const COMMON_UP_ROFL = 'common_up_rofl';
+export const COMMON_RIGHT_ROFL = 'common_right_rofl';
+
+
 export const BLACK_CIRCLE_SHADED = 'black-circle-shaded';
 export const WHITE_CIRCLE_SHADED = 'white-circle-shaded';
 export const PINK_CIRCLE_SHADED = 'pink-circle-shaded';
@@ -71,6 +79,8 @@ export const GUI_LEVEL_SELECT_RIBBON = 'gui_level_select_ribbon';
 export const GUI_BUTTON_CROSS = 'gui_button_cross';
 export const GUI_BUTTON_TICK = 'gui_button_tick';
 export const GUI_BUTTON_PLAY = 'gui_button_play';
+export const GUI_BUTTON_FAST_FORWARD = 'gui_button_fast_forward';
+export const GUI_BUTTON_RESET = 'gui_button_reset';
 // export const GUI_BUTTON_FORWARD = 'gui_button_foward';
 // export const GUI_BUTTON_BACK = 'gui_button_back';
 export const GUI_SCORE_PANEL = 'gui_score_panel';
@@ -92,11 +102,11 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/bg/map_reaalm_nolabels.png',
     type: 'IMAGE',
   },
-  {
-    key: LEFT_CHEVRON,
-    src: 'assets/icons/chevron_left.svg',
-    type: 'SVG',
-  },
+  // {
+  //   key: LEFT_CHEVRON,
+  //   src: 'assets/icons/chevron_left.svg',
+  //   type: 'SVG',
+  // },
   {
     key: SOUND_CLICK,
     src: 'assets/sounds/click.mp3',
@@ -143,6 +153,11 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'AUDIO',
   },
   {
+    key: SOUND_SOFT_RESET,
+    src: 'assets/sounds/sending.mp3',
+    type: 'AUDIO',
+  },
+  {
     key: MUSIC_WORLD_MAP,
     src: 'assets/music/Music_World_Map_Bassa Island Game Loop.ogg',
     type: 'AUDIO',
@@ -173,14 +188,36 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/images/cacti.png',
     type: 'IMAGE',
   },
+  // add in the rofls
+  {
+    key: COMMON_DOWN_ROFL,
+    src: 'assets/rofls/151_CommonRoflFront.png',
+    type: 'IMAGE',
+  },
+  {
+    key: COMMON_LEFT_ROFL,
+    src: 'assets/rofls/151_CommonRoflLeft.png',
+    type: 'IMAGE',
+  },
+  {
+    key: COMMON_UP_ROFL,
+    src: 'assets/rofls/151_CommonRoflBack.png',
+    type: 'IMAGE',
+  },
+  {
+    key: COMMON_RIGHT_ROFL,
+    src: 'assets/rofls/151_CommonRoflRight.png',
+    type: 'IMAGE',
+  },
+
   {
     key: PORTAL_OPEN,
-    src: 'assets/images/h1_open.svg',
+    src: 'assets/images/h1_open.png',
     type: 'IMAGE',
   },
   {
     key: PORTAL_CLOSED,
-    src: 'assets/images/h1_closed.svg',
+    src: 'assets/images/h1_closed.png',
     type: 'IMAGE',
   },
   {
@@ -220,12 +257,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   },
   {
     key: MOVE_ICON,
-    src: 'assets/icons/move-icon.png',
+    src: 'assets/icons/white_hand_drag_icon.png',
     type: 'IMAGE',
   },
   {
     key: QUESTION_MARK_ICON,
-    src: 'assets/icons/question-mark-icon.png',
+    src: 'assets/icons/white_hand_click_icon.png',
     type: 'IMAGE',
   },
   // {
@@ -271,6 +308,16 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: GUI_BUTTON_PLAY,
     src: 'assets/gui/play-button.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_FAST_FORWARD,
+    src: 'assets/gui/fast-forward-button.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GUI_BUTTON_RESET,
+    src: 'assets/gui/reset-button.png',
     type: 'IMAGE',
   },
   {

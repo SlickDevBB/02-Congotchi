@@ -14,3 +14,4 @@ export * from './grid-objects/go-gotchi';
 export * from './grid-objects/go-portal';
 export * from './grid-objects/go-grenade';
 export * from './grid-objects/go-milkshake';
+export * from './grid-objects/go-rofl';

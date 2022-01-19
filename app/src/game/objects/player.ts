@@ -1,6 +1,9 @@
-import { BLACK_CIRCLE_SHADED, BLUE_CIRCLE_SHADED, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, M67_GRENADE, MILKSHAKE, MOVE_ICON, PINK_CIRCLE_SHADED, PORTAL_OPEN, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, UNCOMMON_CACTI } from "game/assets";
+// player.ts - the aavegotchi player chooses to solve puzzles with
+
+import { BLUE_CIRCLE_SHADED, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, MOVE_ICON, PINK_CIRCLE_SHADED, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
+import { GameScene } from "game/scenes/game-scene";
 import { calcStats, Stats } from "helpers/stats";
 import { AavegotchiGameObject } from "types";
 import { AarcIcon, WorldMap } from ".";
@@ -18,7 +21,7 @@ interface Props {
 }
 
 export class Player extends Phaser.GameObjects.Sprite {
-  private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
+  // private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
   public speed = 200;
 
   // object for current stats
@@ -100,7 +103,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.setDepth(DEPTH_PLAYER);
 
     // input
-    this.cursorKeys = scene.input.keyboard.createCursorKeys();
+    // this.cursorKeys = scene.input.keyboard.createCursorKeys();
     this.scene.add.existing(this);
     this.setDisplaySize(width, height);
     const iconRadius = this.displayHeight * 0.2;
@@ -267,9 +270,9 @@ export class Player extends Phaser.GameObjects.Sprite {
 
     // get the camera current position
     const camPos = new Phaser.Math.Vector2(this.scene.cameras.main.scrollX, this.scene.cameras.main.scrollY);
-    const leftPos = new Phaser.Math.Vector2(camPos.x + getGameWidth(this.scene)*0.2, camPos.y + getGameHeight(this.scene)*0.9);
-    const rightPos = new Phaser.Math.Vector2(camPos.x + getGameWidth(this.scene)*0.8, camPos.y + getGameHeight(this.scene)*0.9);
-    const OFFSET = getGameHeight(this.scene)*.05;
+    const leftPos = new Phaser.Math.Vector2(camPos.x + getGameWidth(this.scene)*0.2, camPos.y + getGameHeight(this.scene)*0.875);
+    const rightPos = new Phaser.Math.Vector2(camPos.x + getGameWidth(this.scene)*0.8, camPos.y + getGameHeight(this.scene)*0.875);
+    const OFFSET = getGameHeight(this.scene)*.075;
 
     // setup two sides of icons
     this.interactIcon.setPosition(leftPos.x, leftPos.y);
@@ -436,7 +439,11 @@ export class Player extends Phaser.GameObjects.Sprite {
                 scaleY: this.playerSavedScaleY,
                 duration: 250,
                 onComplete: () => {
+                  // play normal animation
                     this.anims.play('front');
+
+                  // the game scene may auto move us to next level if new unlocked
+                  (this.scene as GameScene).autoMoveToNextLevelIfPossible();
                 },
             })
         }
@@ -445,6 +452,11 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   public onLevelOverScreen() {
     // do level over screen stuff
+  }
+
+  public onSoftResetLevel() {
+    // call init stats again to re-evaluate base stats
+    this.initStats();
   }
 
   public panCameraToPlayer() {
@@ -461,7 +473,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         const selectedLevelButton = this.world.getLevelButton(levelNumber);
         const playerLevelButton = this.world.getLevelButton(this.levelNumber);
 
-        const OFFSET = 1.75
+        const OFFSET = 1.75;
 
         // if player doesn't have a level we need to set it to one
         if (!playerLevelButton && selectedLevelButton) {      

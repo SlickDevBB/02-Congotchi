@@ -1,9 +1,9 @@
 // grid-level.ts
 // this object should focus solely on creating and handling input on a grid game board
 
-import { getGameWidth, } from '../helpers';
-import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GridObject, LevelConfig, Player } from 'game/objects';
-import { M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PORTAL_CLOSED, SOUND_CONGA, SOUND_DEFEAT, SOUND_VICTORY,} from 'game/assets';
+import { getGameHeight, getGameWidth, } from '../helpers';
+import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GO_Rofl, GridObject, LevelConfig, Player } from 'game/objects';
+import { COMMON_DOWN_ROFL, COMMON_LEFT_ROFL, COMMON_RIGHT_ROFL, COMMON_UP_ROFL, M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PARTICLE_CONFETTI, PORTAL_CLOSED, SOUND_DEFEAT, SOUND_SOFT_RESET, SOUND_VICTORY,} from 'game/assets';
 import '../helpers/constants';
 import { DEPTH_GRID_LEVEL } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
@@ -47,9 +47,16 @@ export class GridLevel {
   private status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN';
   private victoryStatus: 'VICTORY' | 'DEFEAT' = 'DEFEAT';
 
+  private congaRunning = false;
+
   private musicGridLevel?: Phaser.Sound.HTML5AudioSound;
   private soundVictory?: Phaser.Sound.HTML5AudioSound;
   private soundDefeat?: Phaser.Sound.HTML5AudioSound;
+  private soundSoftReset?: Phaser.Sound.HTML5AudioSound;
+
+  // create particle effects for reset
+  private particleResetConfetti?: Phaser.GameObjects.Particles.ParticleEmitterManager;
+  private emitterResetConfetti?: Phaser.GameObjects.Particles.ParticleEmitter;
 
   // fire up our constructor
   constructor({ scene, player, randomGotchis, levelConfig, }: Props) {
@@ -75,233 +82,200 @@ export class GridLevel {
     // create the victory sound
     this.soundVictory = this.scene.sound.add(SOUND_VICTORY, { loop: false }) as Phaser.Sound.HTML5AudioSound;
     this.soundDefeat = this.scene.sound.add(SOUND_DEFEAT, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+    this.soundSoftReset = this.scene.sound.add(SOUND_SOFT_RESET, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
-    // fill out the gridCells member based on the config file
-    for (let i = 0; i < this.numberRows; i++) {
-      this.gridCells[i] = [];
-      for (let j = 0; j < this.numberCols; j++) {
-        switch (this.levelConfig.gridObjectLayout[i][j]) {
-          case 0: {
-            this.gridCells[i][j] = { 
-              row: i, 
-              col: j, 
-              gridObject: new GO_Inactive({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: '', gridSize: this.gridSize, objectType: 'INACTIVE',}),
-              gridRectangle: 'INACTIVE'}
-            break;
-          }
-          case 1: {
-            this.gridCells[i][j] = { 
-              row: i, 
-              col: j, 
-              gridObject: new GO_Empty({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: '', gridSize: this.gridSize, objectType: 'EMPTY',}),
-              gridRectangle: this.makeRectangle(i,j)}
-            break;
-          }
-          // DOWN GOTCHI
-          case 2: {
-            if (this.randomGotchis) {
-              // try get a new random gotchi
-              let randGotchi = this.randomGotchis[this.randomGotchiCount];
-              let randSVG = randGotchi ? randGotchi.svg : 0;
-              let loopCount = 0;
+    // create level reset confetti
+    this.particleResetConfetti = this.scene.add.particles(PARTICLE_CONFETTI);
+    this.particleResetConfetti.setDepth(1000);
 
-              // check we have a valid svg
-              while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                console.log('we getting in here when svg data is bad?');
-                // increment rand count if we haven't exceeded length
-                this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
+    this.emitterResetConfetti = this.particleResetConfetti.createEmitter({
+      frame: [ 'red', 'blue', 'green', 'yellow' ],
+      x: getGameWidth(this.scene)/2,
+      y: getGameHeight(this.scene)/2,
+      // angle: { min: -100, max: -80 },
+      gravityY: 2000,
+      speed: 1000,
+      lifespan: 1000,
+      quantity: 20,
+      scale: { start: 0.15, end: 0 },
+      blendMode: 'ADD'
+    })
+    .setScrollFactor(0)
+    .stop();
 
-                // try load in new rand gotchi
-                randGotchi = this.randomGotchis[this.randomGotchiCount];
-                randSVG = randGotchi ? randGotchi.svg : 0;
-
-                // increment loop counter
-                loopCount++;
-              }
-              console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
-              this.gridCells[i][j] = { 
-                row: i, 
-                col: j,
-                gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: this.randomGotchis[this.randomGotchiCount].spritesheetKey, gotchi: this.randomGotchis[this.randomGotchiCount], gridSize: this.gridSize, objectType: 'GOTCHI',}),
-                gridRectangle:  this.makeRectangle(i,j)
-              }
-              // increment rand count if we haven't exceeded length
-              this.randomGotchiCount = this.randomGotchiCount === this.randomGotchis.length ? 0 : this.randomGotchiCount + 1;
-            }
-            const rgo = this.gridCells[i][j].gridObject as GO_Gotchi;
-            // case 2 needs to aim down
-            if (rgo) { 
-              rgo.setDirection('DOWN'); 
-            }
-            break;
-          }
-          // LEFT GOTCHI
-          case 3: {
-            if (this.randomGotchis) {
-              // try get a new random gotchi
-              let randGotchi = this.randomGotchis[this.randomGotchiCount];
-              let randSVG = randGotchi ? randGotchi.svg : 0;
-              let loopCount = 0;
-
-              // check we have a valid svg
-              while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                //console.log('we getting in here when svg data is bad?');
-                // increment rand count if we haven't exceeded length
-                this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
-
-                // try load in new rand gotchi
-                randGotchi = this.randomGotchis[this.randomGotchiCount];
-                randSVG = randGotchi ? randGotchi.svg : 0;
-
-                // increment loop counter
-                loopCount++;
-              }
-              //console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
-              this.gridCells[i][j] = { 
-                row: i, 
-                col: j,
-                gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: this.randomGotchis[this.randomGotchiCount].spritesheetKey, gotchi: this.randomGotchis[this.randomGotchiCount], gridSize: this.gridSize, objectType: 'GOTCHI',}),
-                gridRectangle:  this.makeRectangle(i,j)
-              }
-              // increment rand count if we haven't exceeded length
-              this.randomGotchiCount = this.randomGotchiCount === this.randomGotchis.length ? 0 : this.randomGotchiCount + 1;
-            }
-            const rgo = this.gridCells[i][j].gridObject as GO_Gotchi;
-            // case 2 needs to aim down
-            if (rgo) {
-              rgo.setDirection('LEFT');
-            }
-            break;
-          }
-          // UP GOTCHI
-          case 4: {
-            if (this.randomGotchis) {
-              // try get a new random gotchi
-              let randGotchi = this.randomGotchis[this.randomGotchiCount];
-              let randSVG = randGotchi ? randGotchi.svg : 0;
-              let loopCount = 0;
-
-              // check we have a valid svg
-              while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                //console.log('we getting in here when svg data is bad?');
-                // increment rand count if we haven't exceeded length
-                this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
-
-                // try load in new rand gotchi
-                randGotchi = this.randomGotchis[this.randomGotchiCount];
-                randSVG = randGotchi ? randGotchi.svg : 0;
-
-                // increment loop counter
-                loopCount++;
-              }
-              //console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
-              this.gridCells[i][j] = { 
-                row: i, 
-                col: j,
-                gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: this.randomGotchis[this.randomGotchiCount].spritesheetKey, gotchi: this.randomGotchis[this.randomGotchiCount], gridSize: this.gridSize, objectType: 'GOTCHI',}),
-                gridRectangle:  this.makeRectangle(i,j)
-              }
-              // increment rand count if we haven't exceeded length
-              this.randomGotchiCount = this.randomGotchiCount === this.randomGotchis.length ? 0 : this.randomGotchiCount + 1;
-            }
-            const rgo = this.gridCells[i][j].gridObject as GO_Gotchi;
-            // case 2 needs to aim down
-            if (rgo) {
-              rgo.setDirection('UP');
-            }
-            break;
-          }
-          // RIGHT GOTCHI
-          case 5: {
-            if (this.randomGotchis) {
-              // try get a new random gotchi
-              let randGotchi = this.randomGotchis[this.randomGotchiCount];
-              let randSVG = randGotchi ? randGotchi.svg : 0;
-              let loopCount = 0;
-
-              // check we have a valid svg
-              while ((!randGotchi || !randSVG) && loopCount < 1000) {
-                //console.log('we getting in here when svg data is bad?');
-                // increment rand count if we haven't exceeded length
-                this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
-
-                // try load in new rand gotchi
-                randGotchi = this.randomGotchis[this.randomGotchiCount];
-                randSVG = randGotchi ? randGotchi.svg : 0;
-
-                // increment loop counter
-                loopCount++;
-              }
-              //console.log('attempting to load: ' + this.randomGotchis[this.randomGotchiCount].spritesheetKey);
-              this.gridCells[i][j] = { 
-                row: i, 
-                col: j,
-                gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: this.randomGotchis[this.randomGotchiCount].spritesheetKey, gotchi: this.randomGotchis[this.randomGotchiCount], gridSize: this.gridSize, objectType: 'GOTCHI',}),
-                gridRectangle:  this.makeRectangle(i,j)
-              }
-              // increment rand count if we haven't exceeded length
-              this.randomGotchiCount = this.randomGotchiCount === this.randomGotchis.length ? 0 : this.randomGotchiCount + 1;
-            }
-            const rgo = this.gridCells[i][j].gridObject as GO_Gotchi;
-            // case 2 needs to aim down
-            if (rgo) {
-              rgo.setDirection('RIGHT');
-            }
-            break;
-          }
-          case 6: {
-            this.gridCells[i][j] = { 
-              row: i, 
-              col: j,
-              gridObject: new GO_Portal({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: PORTAL_CLOSED, gridSize: this.gridSize, objectType: 'PORTAL',}),
-              gridRectangle: this.makeRectangle(i,j),
-            }
-            break;
-          }
-          case 7: {
-            this.gridCells[i][j] = { 
-              row: i, 
-              col: j,
-              gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: M67_GRENADE, gridSize: this.gridSize, objectType: 'GRENADE',}),
-              gridRectangle: this.makeRectangle(i,j),
-            }
-            break;
-          }
-          case 8: {
-            this.gridCells[i][j] = { 
-              row: i, 
-              col: j,
-              gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: MILKSHAKE, gridSize: this.gridSize, objectType: 'MILKSHAKE',}),
-              gridRectangle: this.makeRectangle(i,j),
-            }
-            break;
-          }
-          default: break;
-        }
-      }
-    }
-
-    // find all the initial leaders and followers
-    this.setupLeadersAndFollowers();
-
-    // init all the grid colours by simply setting their gridobject to themselves
-    this.gridCells.map(row => row.map( cell => {
-      this.setGridObject(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col, cell.gridObject);
-    }));
-
-    // count all our initial gotchis
-    this.gridCells.map(row => row.map( cell => {
-      if (cell.gridObject.getType() === 'GOTCHI') this.initialGotchiCount++;
-    }));
+    // populate the grid contents
+    this.populateGridCells();
   }
 
+  
+
+  public populateGridCells() {
+      // fill out the gridCells members based on the level config file
+      for (let i = 0; i < this.numberRows; i++) {
+        this.gridCells[i] = [];
+        for (let j = 0; j < this.numberCols; j++) {
+          switch (this.levelConfig.gridObjectLayout[i][j]) {
+            // A NON-GRID AREA
+            case 0: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j, 
+                gridObject: new GO_Inactive({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: '', gridSize: this.gridSize, objectType: 'INACTIVE',}),
+                gridRectangle: 'INACTIVE'}
+              break;
+            }
+            // EMPTY GRID CELL
+            case 1: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j, 
+                gridObject: new GO_Empty({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: '', gridSize: this.gridSize, objectType: 'EMPTY',}),
+                gridRectangle: this.makeRectangle(i,j)}
+              break;
+            }
+            // DOWN GOTCHI
+            case 2: {
+              // call our local gotchi ggenerator
+              this.generateGridCellGotchi('DOWN', i, j);
+              break;
+            }
+            // LEFT GOTCHI
+            case 3: {
+              // call our local gotchi ggenerator
+              this.generateGridCellGotchi('LEFT', i, j);  
+              break;
+            }
+            // UP GOTCHI
+            case 4: {
+              // call our local gotchi ggenerator
+              this.generateGridCellGotchi('UP', i, j);          
+              break;
+            }
+            // RIGHT GOTCHI
+            case 5: {
+              // call our local gotchi ggenerator
+              this.generateGridCellGotchi('RIGHT', i, j);
+              break;
+            }
+            // PORTAL
+            case 6: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j,
+                gridObject: new GO_Portal({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: PORTAL_CLOSED, gridSize: this.gridSize, objectType: 'PORTAL',}),
+                gridRectangle: this.makeRectangle(i,j),
+              }
+              break;
+            }
+            // GRENADE
+            case 7: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j,
+                gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: M67_GRENADE, gridSize: this.gridSize, objectType: 'GRENADE',}),
+                gridRectangle: this.makeRectangle(i,j),
+              }
+              break;
+            }
+            // MILKSHAKE
+            case 8: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j,
+                gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: MILKSHAKE, gridSize: this.gridSize, objectType: 'MILKSHAKE',}),
+                gridRectangle: this.makeRectangle(i,j),
+              }
+              break;
+            }
+            // ROFL's
+            case 12: {
+              this.generateGridCellRofl('DOWN', i, j, COMMON_DOWN_ROFL, 'COMMON');
+              break;
+            }
+            case 13: {
+              this.generateGridCellRofl('LEFT', i, j, COMMON_LEFT_ROFL, 'COMMON');
+              break;
+            }
+            case 14: {
+              this.generateGridCellRofl('UP', i, j, COMMON_UP_ROFL, 'COMMON');
+              break;
+            }
+            case 15: {
+              this.generateGridCellRofl('RIGHT', i, j, COMMON_RIGHT_ROFL, 'COMMON');
+              break;
+            }
+            default: {
+              break;
+            }
+          }
+        }
+      }
+
+      // now find all the initial leaders and followers
+      this.setupLeadersAndFollowers();
+
+      // init all the grid colours by simply setting their gridobject to themselves
+      this.gridCells.map(row => row.map( cell => {
+        this.setGridObject(cell.gridObject.gridPosition.row, cell.gridObject.gridPosition.col, cell.gridObject);
+      }));
+
+      // count all our initial gotchis
+      this.initialGotchiCount = 0;
+      this.gridCells.map(row => row.map( cell => {
+        if (cell.gridObject.getType() === 'GOTCHI') this.initialGotchiCount++;
+      }));
+      console.log('gotchis in level: ' + this.initialGotchiCount);
+  }
+
+  // helper function to make a new random gotchi
+  private generateGridCellGotchi (direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT', row: number, col: number) {
+    if (this.randomGotchis) {
+      // try get a new random gotchi
+      let randGotchi = this.randomGotchis[this.randomGotchiCount];
+      let randSVG = randGotchi ? randGotchi.svg : 0;
+      let loopCount = 0;
+
+      // check we have a valid svg
+      while ((!randGotchi || !randSVG) && loopCount < 1000) {
+        // increment rand count if we haven't exceeded length
+        this.randomGotchiCount = (this.randomGotchiCount === this.randomGotchis.length) ? 0 : this.randomGotchiCount + 1;
+
+        // try load in new rand gotchi
+        randGotchi = this.randomGotchis[this.randomGotchiCount];
+        randSVG = randGotchi ? randGotchi.svg : 0;
+
+        // increment loop counter
+        loopCount++;
+      }
+      this.gridCells[row][col] = { 
+        row: row, 
+        col: col,
+        gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: this.randomGotchis[this.randomGotchiCount].spritesheetKey, gridSize: this.gridSize, objectType: 'GOTCHI', direction: direction}),
+        gridRectangle:  this.makeRectangle(row,col)
+      }
+      // increment rand count if we haven't exceeded length
+      this.randomGotchiCount = this.randomGotchiCount === this.randomGotchis.length ? 0 : this.randomGotchiCount + 1;
+    }
+  }
+
+  // helper function to make a new ROFL
+  private generateGridCellRofl(direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT', row: number, col: number, key: string, rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'GODLIKE') {
+    this.gridCells[row][col] = { 
+      row: row, 
+      col: col,
+      gridObject: new GO_Rofl({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: COMMON_DOWN_ROFL, gridSize: this.gridSize, objectType: 'ROFL', direction: 'DOWN', rarity: 'COMMON'}),
+      gridRectangle:  this.makeRectangle(row,col)
+    }
+  }
+
+  // helper function to make our rectangles
   public makeRectangle(row: number, col: number) {
     return this.scene.add.rectangle(
       this.x + this.gridSize*col, this.y + this.gridSize*row, 
       this.gridSize, this.gridSize
       )
       .setStrokeStyle(1, 0xffffff)
-      .setFillStyle(0x000000, 0.8)
+      .setFillStyle(0x101010, 1)
       .setOrigin(0,0)
       .setDepth(DEPTH_GRID_LEVEL)
       .setScrollFactor(0)
@@ -313,8 +287,7 @@ export class GridLevel {
     if (this.levelOverOccurred) {
       return false;
     } 
-    else {
-      // 
+    else if (!this.congaRunning) {
       // create booleans to see if any gotchis left and any portal points left
       let noGotchisLeft = true;
       let noPortalPointsLeft = true;
@@ -477,6 +450,39 @@ export class GridLevel {
     else this.soundDefeat?.play();
   }
 
+  // function that allows player to reset mid level if they stuffed up
+  public onSoftResetLevel() {
+    // first delete all grid objects
+    this.gridCells.map( gc => {
+      gc.map( gcc => {
+        gcc.gridObject.destroy();
+        if (gcc.gridObject.getType() !== 'INACTIVE') {
+          const gr = gcc.gridRectangle as Phaser.GameObjects.Rectangle;
+          if (gr) gr.destroy();
+        }
+      })
+    })
+
+    // now repopulate all cells
+    this.populateGridCells();
+
+    // play our music again
+    this.musicGridLevel?.stop();
+    this.musicGridLevel?.play();
+
+    // play our particle effect
+    this.emitterResetConfetti?.start();
+    setTimeout(() => {
+      this.emitterResetConfetti?.stop();
+    }, 250);
+
+    // play the 'reset' sound
+    this.soundSoftReset?.play();
+
+    // set level over occurred to false again
+    this.levelOverOccurred = false;
+  }
+
   public setStatus(status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN') {
     this.status = status;
   }
@@ -511,6 +517,7 @@ export class GridLevel {
 
   public congaLineStarted() {
     this.musicGridLevel?.stop();
+    this.congaRunning = true;
   }
 
   public congaLineFinished() {
@@ -523,19 +530,31 @@ export class GridLevel {
       volume: 1,
       duration: 2000,
     })
+
+    this.congaRunning = false;
   }
 
-  public isCongaRunning() {
+  public isCongaStepRunning() {
+    // return this.congaRunning;
     let congaRunning = false;
-    // go through all grid objects and see if any gotchis are congotching
+
+    // go through all grid objects and see if any gotchis or rofls are congotching
     this.gridCells.map( row => row.map( cell => {
+      // const goType = cell.gridObject.getType();
+      // const goStatus = (cell.gridObject as GO_Gotchi).getStatus();
       if (  (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'CONGOTCHING') ||
             (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'READY_TO_CONGA') ||
-            (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'JUMPING')
-        ) {
+            (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'JUMPING') ) {
+        congaRunning = true;
+      } 
+      if (  (cell.gridObject.getType() === 'ROFL' && (cell.gridObject as GO_Gotchi).getStatus() === 'CONGOTCHING') ||
+            (cell.gridObject.getType() === 'ROFL' && (cell.gridObject as GO_Gotchi).getStatus() === 'READY_TO_CONGA') ||
+            (cell.gridObject.getType() === 'ROFL' && (cell.gridObject as GO_Gotchi).getStatus() === 'JUMPING') ) {
         congaRunning = true;
       }
+
     }));
+
     return congaRunning;
   }
 
@@ -543,7 +562,7 @@ export class GridLevel {
   public setupLeadersAndFollowers() {
     // for every gotchi in level check what's around it
     this.gridCells.map(row => row.map( cell => {
-      if (cell.gridObject.getType() === 'GOTCHI') {
+      if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
         (cell.gridObject as GO_Gotchi).findLeader();
         (cell.gridObject as GO_Gotchi).findFollowers();
       }
@@ -584,7 +603,16 @@ export class GridLevel {
       }
     }
 
-    // if level is over call our scenes end level function
+    // if gotchis are ready (nobody congotching) we can do stuff
+    if (!this.isCongaStepRunning()) {
+        // setup all leader and follower relationships for gotchis
+        this.setupLeadersAndFollowers(); 
+
+        // conga gotchi lines next to any open portals
+        this.runCongaPortals();
+    } 
+
+    // first check if a victory has happened
     if (this.isVictory()) {
       // change our victory status
       this.victoryStatus = 'VICTORY';
@@ -593,17 +621,8 @@ export class GridLevel {
       setTimeout( () => {
         (this.scene as GameScene).showLevelOverScreen();
       }, 1000);
-    } 
 
-    // if gotchis are ready (nobody congotching) we can do stuff
-    if (!this.isCongaRunning()) {
-
-      // setup all leader and follower relationships for gotchis
-      this.setupLeadersAndFollowers(); 
-
-      // conga gotchi lines next to any open portals
-      this.runCongaPortals();
-    } 
+    }
 
     // call update for all our grid objects
     this.gridCells.map(row => row.map(cell => {

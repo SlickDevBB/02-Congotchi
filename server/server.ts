@@ -43,6 +43,8 @@ io.on('connection', function (socket: Socket) {
     console.log('A user connected: ' + userId);
     connectedGotchis[userId] = {id: userId};
 
+    console.log('And server running in ' + process.env.NODE_ENV);
+
     socket.on('handleDisconnect', () => {
       socket.disconnect();
     })
@@ -79,10 +81,10 @@ io.on('connection', function (socket: Socket) {
         console.log('Fetching previous progress data...');
 
         // get address ref and doc
-        const addressRef = db.collection('users').doc(connectedGotchis[userId].gotchi.owner.id.toString());
+        const addressRef = db.collection(process.env.DB_USER_COLLECTION).doc(connectedGotchis[userId].gotchi.owner.id.toString());
         const addressDoc = await addressRef.get();
 
-        const levelDataRef = db.collection('gotchis').doc(connectedGotchis[userId].gotchi.tokenId.toString()).collection('levelData');
+        const levelDataRef = db.collection(process.env.DB_GOTCHI_COLLECTION).doc(connectedGotchis[userId].gotchi.tokenId.toString()).collection('levelData');
         const levelDataColl = await levelDataRef.get();
     
         // fill out the levelData object
@@ -123,7 +125,7 @@ io.on('connection', function (socket: Socket) {
       const saveOwner = connectedGotchis[userId].gotchi.owner.id;
       try {
         // get address ref and doc
-        const addressRef = db.collection('users').doc(saveOwner.toString());
+        const addressRef = db.collection(process.env.DB_USER_COLLECTION).doc(saveOwner.toString());
         const addressDoc = await addressRef.get();
 
         // if we've got an existing address use the existing unlocked levels data
@@ -155,7 +157,7 @@ io.on('connection', function (socket: Socket) {
       console.log('Setting unlocked level number...');
       try {
         // try get a new address ref and doc
-        const addressRef = db.collection('users').doc(connectedGotchis[userId].gotchi.owner.id.toString());
+        const addressRef = db.collection(process.env.DB_USER_COLLECTION).doc(connectedGotchis[userId].gotchi.owner.id.toString());
         const addressDoc = await addressRef.get();
         
         // create a new address data boject
@@ -187,7 +189,7 @@ io.on('connection', function (socket: Socket) {
       // try set the new highscore
       try {
         // get the existing doc ref and actual doc for current gotchis level data
-        const levelRef = db.collection('gotchis/').doc(highScoreData.tokenId.toString()).collection('/levelData/').doc(level.toString());
+        const levelRef = db.collection(process.env.DB_GOTCHI_COLLECTION+'/').doc(highScoreData.tokenId.toString()).collection('/levelData/').doc(level.toString());
         const levelDoc = await levelRef.get();
         
         // if no existing data or highscore is less than score achieved we need to write a new score
@@ -205,7 +207,7 @@ io.on('connection', function (socket: Socket) {
             console.log('Successfully wrote new level data and high score. Updating total score...');
 
             // we now also have to update our total score by the delta of new high score - old score
-            const gotchiRef = db.collection('gotchis').doc(connectedGotchis[userId].gotchi.tokenId.toString());
+            const gotchiRef = db.collection(process.env.DB_GOTCHI_COLLECTION).doc(connectedGotchis[userId].gotchi.tokenId.toString());
             const gotchiDoc = await gotchiRef.get();
 
             if (gotchiDoc.exists) {

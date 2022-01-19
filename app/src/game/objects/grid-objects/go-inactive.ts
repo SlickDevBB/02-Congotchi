@@ -4,7 +4,7 @@ import { GO_Props, GridObject } from 'game/objects';
 
 export class GO_Inactive extends GridObject {
 
-    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
+    constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize }: GO_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType: 'INACTIVE'});
 
         // just make inactive objects completely invisible

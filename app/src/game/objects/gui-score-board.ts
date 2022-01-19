@@ -4,10 +4,8 @@
 import { GUI_0_STARS, GUI_1_STARS, GUI_2_STARS, GUI_3_STARS, GUI_SCORE_PANEL } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_GUI_SCORE } from "game/helpers/constants";
-import { GameObjects } from "phaser";
 import { GameScene } from 'game/scenes/game-scene';
 import { Socket } from "socket.io-client";
-import { timeStamp } from "console";
 
 interface Props {
     scene: Phaser.Scene;
@@ -119,6 +117,11 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
 
         // call the main game scene and tell it the results of the finished level
         (this.scene as GameScene).handleLevelResults(this.level, this.score, this.stars);
+    }
+
+    public resetScore() {
+        this.setScore(0);
+        this.setStarScore(0);
     }
 
     public returnHome() {

@@ -2,10 +2,9 @@
 // this should be stand alone from the actual levels
 // an object placed in the world that our gotchi can traverse between
 
-import { GREEN_BUTTON, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, PINK_CIRCLE_SHADED, PURPLE_BUTTON, RED_BUTTON, RED_CIRCLE_SHADED } from "game/assets";
+import { GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, PINK_CIRCLE_SHADED, RED_CIRCLE_SHADED } from "game/assets";
 import { getGameWidth } from "game/helpers";
 import { DEPTH_LEVEL_BUTTON } from "game/helpers/constants";
-import { Player } from ".";
 
 
 interface Props {

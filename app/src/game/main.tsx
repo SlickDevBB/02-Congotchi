@@ -48,6 +48,7 @@ const Main = () => {
         mode: Phaser.Scale.NONE,
         width,
         height,
+        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
       },
       scene: Scenes,
       fps: {
@@ -69,6 +70,10 @@ const Main = () => {
 
   useEffect(() => {
     if (usersAavegotchis && selectedAavegotchiId && randomAavegotchis) {
+
+      console.log('Running in ' + process.env.NODE_ENV + ' mode.');
+      console.log('Attempting connection to ' + process.env.REACT_APP_SERVER_PORT || 'http://localhost:8080');
+
       // Socket is called here so we can take advantage of the useEffect hook to disconnect upon leaving the game screen
       const socket = io(process.env.REACT_APP_SERVER_PORT || 'http://localhost:8080');
       const selectedGotchi = usersAavegotchis.find(gotchi => gotchi.id === selectedAavegotchiId);

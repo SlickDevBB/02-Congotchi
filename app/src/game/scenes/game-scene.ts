@@ -1,6 +1,6 @@
-import {
-  LEFT_CHEVRON, BG, SOUND_CLICK, ARROW_DOWN, GUI_BUTTON_CROSS, MUSIC_WORLD_MAP, MUSIC_GRID_LEVEL_A, SOUND_VICTORY, SOUND_CONGA,
-} from 'game/assets';
+// game-scene.ts - the main game engine
+
+import { BG, SOUND_CLICK, } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
 import { GridLevel, Gui, Player, WorldMap, levels, GridObject } from 'game/objects';
@@ -37,6 +37,7 @@ export class GameScene extends Phaser.Scene {
 
   private soundClick?: Phaser.Sound.HTML5AudioSound;
   
+  private autoMoveToNextLevel = false;
 
   constructor() {
     super(sceneConfig);
@@ -134,7 +135,9 @@ export class GameScene extends Phaser.Scene {
     this.gui?.onStartLevel();
   }
 
-  public endLevel() {
+  public endLevel(moveToNextLevel: boolean) {
+    this.autoMoveToNextLevel = moveToNextLevel;
+
     // destroy the grid level object
     this.gridLevel?.onEndLevel();
     delete this.gridLevel;
@@ -151,6 +154,13 @@ export class GameScene extends Phaser.Scene {
     this.gridLevel?.onLevelOverScreen();
     this.player?.onLevelOverScreen();
     this.worldMap?.onLevelOverScreen();
+  }
+
+  public softResetLevel() {
+    // call each objects onsoftreset function (world map is not effected)
+    this.gui?.onSoftResetLevel();
+    this.gridLevel?.onSoftResetLevel();
+    this.player?.onSoftResetLevel();
   }
 
   public setLevelScores(levelScores: Array<LevelScores>, unlockedLevels: number) {
@@ -182,6 +192,9 @@ export class GameScene extends Phaser.Scene {
         this.worldMap?.setUnlockedLevels(level+1);
         this.unlockedLevels = level + 1;
 
+        // select and go to the next level
+        // this.autoMoveToNextLevel = true;
+
         // tell database to increase number of unlocked levels for the user
         this.socket?.emit('setUnlockedLevels', level+1);
       }
@@ -204,6 +217,13 @@ export class GameScene extends Phaser.Scene {
     this.socket?.emit("setHighScore", level, score, stars);
     
   }
+
+  public autoMoveToNextLevelIfPossible() {
+      if (this.autoMoveToNextLevel) {
+        this.selectLevel(this.currentLevel + 1);
+        this.autoMoveToNextLevel = false;
+      }
+    }
 
   public getUnlockedLevels() {
     return this.unlockedLevels;

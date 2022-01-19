@@ -46,7 +46,7 @@ export const ServerProvider = ({
     const getHighscores = async (_firebase: fb.app.App) => {
       const db = _firebase.firestore();
       const highscoreRef = db
-        .collection("gotchis")
+        .collection(process.env.REACT_APP_GOTCHI_COLLECTION_NAME || "test")
         .withConverter(converter);
       const snapshot = await highscoreRef.get();
 
