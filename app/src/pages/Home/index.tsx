@@ -273,7 +273,7 @@ const Home = () => {
               <img src={gotchiLoading} alt="Loading Aavegotchi" />
             )}
             <h1 className={styles.highscore}>
-              Highscore:{" "}
+              Total Score:{" "}
               {(usersAavegotchis &&
                 highscores?.find(
                   (score) => score.tokenId === selectedAavegotchiId

@@ -2,10 +2,10 @@
 // this object should focus solely on creating and handling input on a grid game board
 
 import { getGameHeight, getGameWidth, } from '../helpers';
-import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GO_Rofl, GridObject, LevelConfig, Player } from 'game/objects';
-import { COMMON_DOWN_ROFL, COMMON_LEFT_ROFL, COMMON_RIGHT_ROFL, COMMON_UP_ROFL, M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PARTICLE_CONFETTI, PORTAL_CLOSED, SOUND_DEFEAT, SOUND_SOFT_RESET, SOUND_VICTORY,} from 'game/assets';
+import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GO_Rofl, GO_Cactii, GridObject, LevelConfig, Player } from 'game/objects';
+import { BLACK_SQUARE, BLUE_BLOCK, COMMON_DOWN_ROFL, COMMON_LEFT_ROFL, COMMON_RIGHT_ROFL, COMMON_UP_ROFL, GREEN_BLOCK, M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PARTICLE_CONFETTI, PINK_BLOCK, PORTAL_CLOSED, RED_BLOCK, SOUND_DEFEAT, SOUND_SOFT_RESET, SOUND_VICTORY, UNCOMMON_CACTII,} from 'game/assets';
 import '../helpers/constants';
-import { DEPTH_GRID_LEVEL } from '../helpers/constants';
+import { DEPTH_GRID_LEVEL, DEPTH_GRID_SQUARES } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
 import { AavegotchiGameObject } from 'types';
 
@@ -45,7 +45,11 @@ export class GridLevel {
   private levelOverOccurred = false;
   private initialGotchiCount = 0;
   private status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN';
-  private victoryStatus: 'VICTORY' | 'DEFEAT' = 'DEFEAT';
+  private victoryStatus: 'VICTORY' | 'DEFEAT' | 'STILL_PLAYING' = 'STILL_PLAYING';
+
+  private gridSquares: Array<Phaser.GameObjects.Image> = [];
+
+  private actionsRemaining = 0;
 
   private congaRunning = false;
 
@@ -74,6 +78,9 @@ export class GridLevel {
     this.gridSize = getGameWidth(this.scene)/(this.numberCols + padGrid*2);
     this.x = this.gridSize*padGrid;
     this.y = 3*this.gridSize;
+
+    // assign initial actions remaining
+    this.actionsRemaining = this.levelConfig.actionsRemaining;
 
     // create a grid level music object and start playing
     this.musicGridLevel = this.scene.sound.add(MUSIC_GRID_LEVEL_A, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
@@ -105,9 +112,27 @@ export class GridLevel {
 
     // populate the grid contents
     this.populateGridCells();
-  }
 
-  
+    // now go through eachgridcell that is active and assign a grid square image
+    for (let i = 0; i < this.numberRows; i++) {
+      for (let j = 0; j < this.numberCols; j++) {
+        if (this.gridCells[i][j].gridRectangle !== 'INACTIVE') {
+          this.gridSquares.push(this.scene.add.image(this.gridCells[i][j].gridObject.x, this.gridCells[i][j].gridObject.y,
+            BLACK_SQUARE)
+            .setTintFill(0x000000, 0x252525, 0x252525, 0x4d4d4d)
+            .setDepth(DEPTH_GRID_SQUARES)
+            .setOrigin(0.5,0.5)
+            .setDisplaySize(this.gridSize*.95, this.gridSize*.95)
+            .setScrollFactor(0)
+            )
+          
+        }
+      }
+    }
+
+    // set the players stat mask so our level only sees stat points as per its levelconfig
+    this.player.setStatMask(levelConfig.statMask);
+  }
 
   public populateGridCells() {
       // fill out the gridCells members based on the level config file
@@ -162,7 +187,7 @@ export class GridLevel {
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
-                gridObject: new GO_Portal({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: PORTAL_CLOSED, gridSize: this.gridSize, objectType: 'PORTAL',}),
+                gridObject: new GO_Portal({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: PINK_BLOCK, gridSize: this.gridSize, objectType: 'PORTAL',}),
                 gridRectangle: this.makeRectangle(i,j),
               }
               break;
@@ -172,7 +197,7 @@ export class GridLevel {
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
-                gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: M67_GRENADE, gridSize: this.gridSize, objectType: 'GRENADE',}),
+                gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: RED_BLOCK, gridSize: this.gridSize, objectType: 'GRENADE',}),
                 gridRectangle: this.makeRectangle(i,j),
               }
               break;
@@ -182,7 +207,17 @@ export class GridLevel {
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
-                gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: MILKSHAKE, gridSize: this.gridSize, objectType: 'MILKSHAKE',}),
+                gridObject: new GO_Milkshake({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: GREEN_BLOCK, gridSize: this.gridSize, objectType: 'MILKSHAKE',}),
+                gridRectangle: this.makeRectangle(i,j),
+              }
+              break;
+            }
+            // CACTII
+            case 9: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j,
+                gridObject: new GO_Cactii({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: RED_BLOCK, gridSize: this.gridSize, objectType: 'CACTII',}),
                 gridRectangle: this.makeRectangle(i,j),
               }
               break;
@@ -224,7 +259,6 @@ export class GridLevel {
       this.gridCells.map(row => row.map( cell => {
         if (cell.gridObject.getType() === 'GOTCHI') this.initialGotchiCount++;
       }));
-      console.log('gotchis in level: ' + this.initialGotchiCount);
   }
 
   // helper function to make a new random gotchi
@@ -247,12 +281,18 @@ export class GridLevel {
         // increment loop counter
         loopCount++;
       }
+
+      // assign to the grid cell
       this.gridCells[row][col] = { 
         row: row, 
         col: col,
-        gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: this.randomGotchis[this.randomGotchiCount].spritesheetKey, gridSize: this.gridSize, objectType: 'GOTCHI', direction: direction}),
-        gridRectangle:  this.makeRectangle(row,col)
-      }
+        gridObject: new GO_Gotchi({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: BLUE_BLOCK, gridSize: this.gridSize, objectType: 'GOTCHI', direction: direction}),
+        gridRectangle:  this.makeRectangle(row,col),
+      };
+
+      // now set the gotchi object block texture to the random assigned gotchi
+      (this.gridCells[row][col].gridObject as GO_Gotchi).setGotchiSprite(this.randomGotchis[this.randomGotchiCount].spritesheetKey);
+
       // increment rand count if we haven't exceeded length
       this.randomGotchiCount = this.randomGotchiCount === this.randomGotchis.length ? 0 : this.randomGotchiCount + 1;
     }
@@ -263,7 +303,7 @@ export class GridLevel {
     this.gridCells[row][col] = { 
       row: row, 
       col: col,
-      gridObject: new GO_Rofl({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: COMMON_DOWN_ROFL, gridSize: this.gridSize, objectType: 'ROFL', direction: 'DOWN', rarity: 'COMMON'}),
+      gridObject: new GO_Rofl({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: BLUE_BLOCK, gridSize: this.gridSize, objectType: 'ROFL', direction: 'DOWN', rarity: 'COMMON'}),
       gridRectangle:  this.makeRectangle(row,col)
     }
   }
@@ -281,34 +321,32 @@ export class GridLevel {
       .setScrollFactor(0)
   }
 
-  // function to check for a victory
-  public isVictory() {
-    // first check if levelOverOccurred is true
-    if (this.levelOverOccurred) {
-      return false;
-    } 
-    else if (!this.congaRunning) {
-      // create booleans to see if any gotchis left and any portal points left
-      let noGotchisLeft = true;
-      let noPortalPointsLeft = true;
+  // set, adjust and get functions for action remaining number
+  public setActionsRemaining(value: number) {
+    this.actionsRemaining = value;
+  }
+
+  public adjustActionsRemaining(delta: number) {
+    this.actionsRemaining += delta;
+    this.actionsRemaining < 0 ? 0 : this.actionsRemaining;
+  }
+
+  public getActionsRemaining() {
+    return this.actionsRemaining;
+  }
+
+  public getNumberGotchis() {
+    // variable to track gotchi number
+    let count = 0;
 
       // check if all gotchis are gone
       this.gridCells.map( row => row.map( cell => {
         if (cell.gridObject.getType() === 'GOTCHI') {
-          noGotchisLeft = false;
+          count++;
         }
       }));
 
-      // check if we've still got portal moves/opens
-      if (this.player) {
-        if (this.player.getStat("INTERACT_BLUE") > 0 || this.player.getStat('MOVE_BLUE') > 0) {
-          noPortalPointsLeft = false;
-        }
-      }
-
-      this.levelOverOccurred = (noGotchisLeft || noPortalPointsLeft);
-      return this.levelOverOccurred;
-    }
+    return count;
   }
 
   public getLevelNumber() {
@@ -425,6 +463,10 @@ export class GridLevel {
       })
     })
 
+    // destroy all the grid squares
+    this.gridSquares.map( gs => gs.destroy() );
+    this.gridSquares = [];
+
     this.status = 'INACTIVE';
 
     // fade out music
@@ -479,8 +521,14 @@ export class GridLevel {
     // play the 'reset' sound
     this.soundSoftReset?.play();
 
-    // set level over occurred to false again
-    this.levelOverOccurred = false;
+    // reset victory status
+    this.victoryStatus = 'STILL_PLAYING';
+
+    // reset actions remaining
+    this.actionsRemaining = this.levelConfig.actionsRemaining;
+
+    // reset level status to ACTIVE
+    this.status = 'ACTIVE';
   }
 
   public setStatus(status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN') {
@@ -540,8 +588,6 @@ export class GridLevel {
 
     // go through all grid objects and see if any gotchis or rofls are congotching
     this.gridCells.map( row => row.map( cell => {
-      // const goType = cell.gridObject.getType();
-      // const goStatus = (cell.gridObject as GO_Gotchi).getStatus();
       if (  (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'CONGOTCHING') ||
             (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'READY_TO_CONGA') ||
             (cell.gridObject.getType() === 'GOTCHI' && (cell.gridObject as GO_Gotchi).getStatus() === 'JUMPING') ) {
@@ -603,7 +649,7 @@ export class GridLevel {
       }
     }
 
-    // if gotchis are ready (nobody congotching) we can do stuff
+    // if gotchis are ready (nobody congotching) we can check for available conga lines
     if (!this.isCongaStepRunning()) {
         // setup all leader and follower relationships for gotchis
         this.setupLeadersAndFollowers(); 
@@ -612,15 +658,28 @@ export class GridLevel {
         this.runCongaPortals();
     } 
 
-    // first check if a victory has happened
-    if (this.isVictory()) {
-      // change our victory status
-      this.victoryStatus = 'VICTORY';
-      
-      // set a timeout to end the level
-      setTimeout( () => {
-        (this.scene as GameScene).showLevelOverScreen();
-      }, 1000);
+    // CHECK for level complete conditions, first don't bother checking until congas aren't running and we haven't already achieved a victory condition
+    if (!this.congaRunning && this.victoryStatus === 'STILL_PLAYING') {
+        // First check if all gotchis are gone
+        if (this.getNumberGotchis() === 0) {
+            // we got all gotchis so victory status should be VICTORY
+            this.victoryStatus = 'VICTORY';
+        }
+
+        // Second check if we got through all our action points
+        if (this.actionsRemaining === 0) {
+          // if we got at least one star we can declare VICTORY
+          if (gui && gui.getStarScore() > 0) {
+            this.victoryStatus = 'VICTORY';
+          } else {
+            this.victoryStatus = 'DEFEAT';
+          }
+        }
+
+        // if we got a victory condition we can show level over screen
+        if (this.victoryStatus !== 'STILL_PLAYING') {
+          setTimeout( () => { (this.scene as GameScene).showLevelOverScreen(); }, 750);
+        }
 
     }
 

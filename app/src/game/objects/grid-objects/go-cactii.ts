@@ -1,13 +1,9 @@
-// grid-object-base-class.ts - base class for all grid objects
+// go-cactii.ts - the aggro cactii class
 
-import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
-import { M67_GRENADE, PIXEL_EXPLOSION, SOUND_EXPLOSION, SOUND_POP } from 'game/assets';
-import { GameScene } from 'game/scenes/game-scene';
-import { GO_Milkshake } from './go-milkshake';
-import { GO_Cactii } from './go-cactii';
+import { GO_Props, GridObject, } from 'game/objects';
+import { PIXEL_EXPLOSION, SOUND_POP, UNCOMMON_CACTII } from 'game/assets';
   
-export class GO_Grenade extends GridObject {
-    // our bomb status
+export class GO_Cactii extends GridObject {
     private status: 'LIVE' | 'EXPLODED' = 'LIVE';
 
     // timer is for click events
@@ -24,15 +20,15 @@ export class GO_Grenade extends GridObject {
 
     // our constructor
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize }: GO_Props) {
-        super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'GRENADE'});
+        super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType: 'CACTII'});
 
-        // set our block sprite
-        this.blockSprite?.setTexture(M67_GRENADE);
-        this.blockSprite?.setDisplaySize(this.gridSize, this.gridSize);
+        // set the block texture
+        this.blockSprite?.setTexture(UNCOMMON_CACTII);
+        this.blockSprite?.setDisplaySize(this.gridSize*0.95, this.gridSize*0.95);
 
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
-        this.soundInteract = this.scene.sound.add(SOUND_EXPLOSION, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundInteract = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
         // set behaviour for pointer click down
         this.on('pointerdown', () => {
@@ -45,18 +41,24 @@ export class GO_Grenade extends GridObject {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // check we've got enough interact points
+                // check we've got action points
                 if (this.gridLevel.getActionsRemaining() > 0) {
-                    // store the grid position pointer was lefted in finished in
+                    // store the grid position pointer finished in
                     const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
-                    // show arrows only if we're still in the same grid as when the pointer went down
+                    // only explode if we're still in the same grid
                     if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
+                        // we have enough so make bomb explode
+                        this.explode();
+
                         // reduce actions remaining
                         this.gridLevel.adjustActionsRemaining(-1);
 
-                        // we have enough so make bomb explode
-                        this.explode();
+                        // update the score for destroying the cactii and play the stat point anim
+                        if (this.player) {
+                            this.gui?.adjustScoreWithAnim(this.player?.getStat('RED_ACTIVATE'), this.x, this.y)
+                            this.player.animStat('RED_ACTIVATE');
+                        }
 
                         // play the interact sound
                         this.soundInteract?.play();
@@ -75,7 +77,7 @@ export class GO_Grenade extends GridObject {
 
         // set behaviour for dragging
         this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-            // if we've got movement points left we can drag
+            // if we've got actions remaining we can drag
             if (this.gridLevel.getActionsRemaining() > 0) {
                 // only drag objects into grids they have space for
                 const gp = this.getGridPosition();
@@ -103,6 +105,7 @@ export class GO_Grenade extends GridObject {
                     this.x = this.ogX;
                 }
             }
+            
         });
 
         this.on('dragend', () => {
@@ -127,19 +130,13 @@ export class GO_Grenade extends GridObject {
             // change status
             this.status = 'EXPLODED';
 
-            // score some points for exploding grenade
-            if (this.player) {
-                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_ACTIVATE'), this.x, this.y);
-                this.player.animStat('RED_ACTIVATE');
-            }
-
             // create an explosion tween
             const explosionImage = this.scene.add.image(
                 this.x,
                 this.y,
                 PIXEL_EXPLOSION
             )
-            .setDisplaySize(this.displayWidth*3, this.displayHeight*3)
+            .setDisplaySize(this.displayWidth, this.displayHeight)
             .setDepth(this.depth+1)
             .setOrigin(0.5, 0.5)
             .setAlpha(1)
@@ -159,35 +156,6 @@ export class GO_Grenade extends GridObject {
                     this.destroy()
                 },
             })
-
-            // go through a 3x3 grid of all objects and set any gotchis to burnt status and explode any other bombs and destroy milkshakes
-            for (let i = this.gridPosition.row-1; i < this.gridPosition.row + 2; i++) {
-                for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
-                    const go = this.gridLevel.getGridObject(i, j);
-                    if (go !== 'OUT OF BOUNDS') {
-                        if (go.getType() === 'GOTCHI' || go.getType() === 'ROFL') {
-                            (go as GO_Gotchi).status = 'BURNT';
-                        }
-                        else if (go.getType() === 'GRENADE') {
-                            setTimeout(() => (go as GO_Grenade).explode(), 300);
-                        }
-                        else if (go.getType() === 'MILKSHAKE') {
-                            // empty out the grid position with the milkshake ini it
-                            this.gridLevel.setEmptyGridObject(go.getGridPosition().row, go.getGridPosition().col);
-
-                            // destroy the milkshake
-                            (go as GO_Milkshake).destroy();
-                        }
-                        else if (go.getType() === 'CACTII') {
-                            // empty out the grid position with the cactii ini it
-                            this.gridLevel.setEmptyGridObject(go.getGridPosition().row, go.getGridPosition().col);
-
-                            // destroy the cactii
-                            (go as GO_Cactii).destroy();
-                        }
-                    } 
-                }
-            }
         }
     }
 

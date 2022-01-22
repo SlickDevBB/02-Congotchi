@@ -3,8 +3,9 @@
 import { GO_Props, GridObject, GridLevel } from 'game/objects';
 import { ARROW_ICON, PARTICLE_CONFETTI, SOUND_BELL, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
-import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI } from 'game/helpers/constants';
+import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI, DEPTH_GO_GOTCHI_BLOCK } from 'game/helpers/constants';
 import { getGameHeight } from 'game/helpers';
+import { GO_Cactii } from './go-cactii';
 
 export interface GO_Gotchi_Props extends GO_Props {
     direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
@@ -19,9 +20,7 @@ export class GO_Gotchi extends GridObject {
     // create arrows which are used to depict direction changes
     private arrows: Array<Phaser.GameObjects.Image> = [];
 
-    // score bonus is how many points you get for getting this gotchi into a portal
-    public scoreBonus = 10;
-    private scoreBonusText;
+    private spiked = false;
 
     // declare variable for setting visibility of rotate arrows
     private rotateArrowsVisible = false;
@@ -36,7 +35,6 @@ export class GO_Gotchi extends GridObject {
     private directionLine: Phaser.GameObjects.Line;
 
     // conga side is a variable for tracking which side we conga on
-    // private congaSide: 'LEFT' | 'RIGHT' = Math.round(Math.random()) === 1 ? 'LEFT' : 'RIGHT';
     private congaSide: 'LEFT' | 'RIGHT' = 'LEFT';
 
     // duration variable for conga steps
@@ -56,6 +54,9 @@ export class GO_Gotchi extends GridObject {
     public newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
     public status: 'READY_TO_CONGA' | 'READY_TO_JUMP' | 'CONGOTCHING' | 'JUMPING' | 'FINISHED_CONGA' | 'WAITING' | 'BURNT' | 'TELEPORTING' = 'WAITING';
 
+    // this multiplier should be changed by rofl's
+    protected teleportScoreMultiplier = 1;
+
     // add sound effects
     private soundMove?: Phaser.Sound.HTML5AudioSound;
     private soundInteract?: Phaser.Sound.HTML5AudioSound;
@@ -68,30 +69,11 @@ export class GO_Gotchi extends GridObject {
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType = 'GOTCHI', direction = 'DOWN' }: GO_Gotchi_Props) {//gotchi, gridSize, objectType }: GO_Gotchi_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType});
 
-        // set our background colour
-        this.setBgSquareColour('PINK');
-        
-        // set our grid position
-        this.gridPosition = {row: gridRow, col: gridCol };
+        // set our block sprite size
+        this.blockSprite?.setDisplaySize(this.gridSize*0.7, this.gridSize*0.7);
 
-        // lets set our origin about our base point
-        this.setOrigin(0.5, 0.5);
-
-        // physics
-        this.scene.physics.world.enable(this);
-  
-        // set to size of grids from game
-        this.setDisplaySize(gridSize*.95, gridSize*.95);
-
-        // set a specific depth
-        this.setDepth(DEPTH_GO_GOTCHI);
-
-        // add to the scene
-        this.scene.add.existing(this);
-
-        // enable draggable input
-        this.setInteractive();
-        this.scene.input.setDraggable(this);
+        // Set our direcction
+        this.direction = direction;
 
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
@@ -99,6 +81,7 @@ export class GO_Gotchi extends GridObject {
         this.soundBell = this.scene.sound.add(SOUND_BELL, { loop: false }) as Phaser.Sound.HTML5AudioSound;
         this.soundBell.setVolume(0.5);
 
+        // add particle manager
         this.particleConfetti = this.scene.add.particles(PARTICLE_CONFETTI);
         this.particleConfetti.setDepth(this.depth + 10);
 
@@ -108,6 +91,7 @@ export class GO_Gotchi extends GridObject {
         const lifespanRand = (Math.random()-0.5)*100;
         const quantityRand = Math.floor((Math.random()-0.5)*5);
 
+        // add particle emitter
         this.emitterConfetti = this.particleConfetti.createEmitter({
             frame: [ 'red', 'blue', 'green', 'yellow' ],
             x: this.x,
@@ -129,32 +113,20 @@ export class GO_Gotchi extends GridObject {
         this.on('pointerover', () => {
             console.log('My status: ' + this.status);
         })
-        
-        // create scorebonus text
-        this.scoreBonusText = this.scene.add.text(
-            this.x-this.gridSize*.475,
-            this.y-this.gridSize*.5,
-            this.scoreBonus.toString(),)
-            .setVisible(true)
-            .setStyle({
-                fontFamily: 'Arial', 
-                fontSize: Math.trunc(getGameHeight(this.scene)*0.02).toString() + 'px', 
-                })
-            .setOrigin(0,0)
-            .setScrollFactor(0)
-            .setDepth(this.depth+10)
-            .setStroke('#000000', 3);
 
         // create down arrow
         this.arrows.push(
             this.scene.add.image(this.x, this.y+this.gridSize, ARROW_ICON)
             .setAngle(0)
             .on('pointerup', () => {
-                // check we've got enough interaction points
-                const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'DOWN') {
+                // check we've got actions remaining and not already facing down, if so face down
+                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'DOWN') {
+                    // aim down
                     this.setDirection('DOWN');
-                    this.adjustPlayerStat('INTERACT_PINK', -1)
+                    
+                    // reduce actions remaining
+                    this.gridLevel.adjustActionsRemaining(-1);
+
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
 
@@ -173,10 +145,13 @@ export class GO_Gotchi extends GridObject {
             .setAngle(90)
             .on('pointerup', () => {
                 // check we've got enough interaction points
-                const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'LEFT') {
+                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'LEFT') {
+                    // aim left
                     this.setDirection('LEFT');
-                    this.adjustPlayerStat('INTERACT_PINK', -1)
+                    
+                    // reduce actions remaining
+                    this.gridLevel.adjustActionsRemaining(-1);
+
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
 
@@ -195,10 +170,13 @@ export class GO_Gotchi extends GridObject {
             .setAngle(180)
             .on('pointerup', () => {
                 // check we've got enough interaction points
-                const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'UP') {
+                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'UP') {
+                    // aim up
                     this.setDirection('UP');
-                    this.adjustPlayerStat('INTERACT_PINK', -1)
+                    
+                    // reduce actions remaining
+                    this.gridLevel.adjustActionsRemaining(-1);
+
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
 
@@ -217,10 +195,13 @@ export class GO_Gotchi extends GridObject {
             .setAngle(-90)
             .on('pointerup', () => {
                 // check we've got enough interaction points
-                const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_PINK') > 0 && this.getDirection() !== 'RIGHT') {
+                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'RIGHT') {
+                    // aim right
                     this.setDirection('RIGHT');
-                    this.adjustPlayerStat('INTERACT_PINK', -1)
+                    
+                    // reduce actions remaining
+                    this.gridLevel.adjustActionsRemaining(-1);
+
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
 
@@ -265,8 +246,6 @@ export class GO_Gotchi extends GridObject {
             .setAlpha(0.9)
             .setScrollFactor(0);
 
-        
-
         // set behaviour for pointer click down
         this.on('pointerdown', () => {
             // get the time at which we clicked
@@ -279,8 +258,7 @@ export class GO_Gotchi extends GridObject {
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
                 // check we've got enough interact points
-                const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_PINK') > 0) {
+                if (this.gridLevel.getActionsRemaining() > 0) {
                     // store the grid position pointer was lefted in finished in
                     const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
@@ -307,47 +285,43 @@ export class GO_Gotchi extends GridObject {
 
         // set behaviour for dragging
         this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-            const gameScene = this.scene as GameScene;
-            const player = gameScene.getPlayer();
+            // if we've got movement points left we can drag
+            if (this.gridLevel.getActionsRemaining() > 0) {
+                // only drag objects into grids they have space for
+                const gp = this.getGridPosition();
+                const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
+                const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
+                const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
+                const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
+                
+                const upLimit = aboveEmpty ? this.ogY - this.gridLevel.getGridSize() : this.ogY;
+                const downLimit = belowEmpty ? this.ogY + this.gridLevel.getGridSize() : this.ogY;
+                const leftLimit = leftEmpty ? this.ogX - this.gridLevel.getGridSize() : this.ogX;
+                const rightLimit = rightEmpty ? this.ogX + this.gridLevel.getGridSize() : this.ogX;
 
-            if (gameScene && player) {    
-                // if we've got movement points left we can drag
-                if (player.getStat('MOVE_PINK') > 0) {
-                    // only drag objects into grids they have space for
-                    const gp = this.getGridPosition();
-                    const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
-                    const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
-                    const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
-                    const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
-                    
-                    const upLimit = aboveEmpty ? this.ogY - this.gridLevel.getGridSize() : this.ogY;
-                    const downLimit = belowEmpty ? this.ogY + this.gridLevel.getGridSize() : this.ogY;
-                    const leftLimit = leftEmpty ? this.ogX - this.gridLevel.getGridSize() : this.ogX;
-                    const rightLimit = rightEmpty ? this.ogX + this.gridLevel.getGridSize() : this.ogX;
+                // find out if we're further from original X or Y
+                const deltaX = this.ogX - dragX;
+                const deltaY = this.ogY - dragY;
 
-                    // find out if we're further from original X or Y
-                    const deltaX = this.ogX - dragX;
-                    const deltaY = this.ogY - dragY;
-
-                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                        if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
-                        this.y = this.ogY;
-                    } else {
-                        if (dragY > upLimit && dragY < downLimit) this.y = dragY;
-                        this.x = this.ogX;
-                    }
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
+                    this.y = this.ogY;
+                } else {
+                    if (dragY > upLimit && dragY < downLimit) this.y = dragY;
+                    this.x = this.ogX;
                 }
-            }
+            }    
         });
 
         this.on('dragend', () => {
             // store the grid position dragging finished in
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
             this.setGridPosition(finalGridPos.row, finalGridPos.col, () => {
-
                 // adjust the player stat if we're in different grid position from start of drag
                 if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    this.adjustPlayerStat('MOVE_PINK', -1);
+                    // reduce actions remaining
+                    this.gridLevel.adjustActionsRemaining(-1);
+
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
 
@@ -357,73 +331,75 @@ export class GO_Gotchi extends GridObject {
             });
         })
 
-        // // Add animations if we're a gotchi (and not a rofl)
-        if (this.objectType === 'GOTCHI') {
-            this.anims.create({
-                key: 'down',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 0, end: 0 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'left',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 2, end: 2 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'right',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 4, end: 4 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'up',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 6, end: 6 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'down_happy',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 8, end: 8 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'left_happy',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 10, end: 10 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'right_happy',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 12, end: 12 }),
-                frameRate: 2,
-                repeat: -1,
-            });
-            this.anims.create({
-                key: 'up_happy',
-                frames: this.anims.generateFrameNumbers(key || '', { start: 14, end: 14 }),
-                frameRate: 2,
-                repeat: -1,
-            });
         
-            this.anims.play('down');
-        }
-
-         // set our direction
-         this.setDirection(direction);
 
     }
 
-    // create stat adjustment
-    public adjustPlayerStat(stat: 'INTERACT_PINK' | 'MOVE_PINK' | 'MOVE_RED' | 'INTERACT_RED' | 
-    'INTERACT_BLUE' | 'MOVE_BLUE' | 'MOVE_GREEN' | 'INTERACT_GREEN', value = -1) {
-        // get the player
-        const player = (this.scene as GameScene).getPlayer();
-    
-        // decrease the players move count
-        if (player) player.adjustStat(stat, value);
+    public setGotchiSprite(key: string) {
+        // set our block texture
+        this.blockSprite?.setTexture(key);
+
+        // set depths a bit different
+        const currentDepth = this.depth;
+        this.setDepth(currentDepth - 1);
+        this.blockSprite?.setDepth(currentDepth + 2);
+
+        // // Add animations if we're a gotchi (and not a rofl)
+        if (this.objectType === 'GOTCHI') {
+            this.blockSprite?.anims.create({
+                key: 'down',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 0, end: 0 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'left',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 2, end: 2 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'right',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 4, end: 4 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'up',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 6, end: 6 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'down_happy',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 8, end: 8 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'left_happy',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 10, end: 10 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'right_happy',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 12, end: 12 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+            this.blockSprite?.anims.create({
+                key: 'up_happy',
+                frames: this.blockSprite?.anims.generateFrameNumbers(key || '', { start: 14, end: 14 }),
+                frameRate: 2,
+                repeat: -1,
+            });
+
+            this.blockSprite?.anims.play('down');
+        }
+
+        // set our direction
+        this.setDirection(this.direction);
     }
 
     // a function to see if there is a certain status up the chain
@@ -537,19 +513,19 @@ export class GO_Gotchi extends GridObject {
         if (this.objectType === 'GOTCHI') {
             switch (direction) {
                 case 'DOWN': {
-                    this.anims.play('down');
+                    this.blockSprite?.anims.play('down');
                     break;
                 }
                 case 'LEFT': {
-                    this.anims.play('left');
+                    this.blockSprite?.anims.play('left');
                     break;
                 }
                 case 'RIGHT': {
-                    this.anims.play('right');
+                    this.blockSprite?.anims.play('right');
                     break;
                 }
                 case 'UP': {
-                    this.anims.play('up');
+                    this.blockSprite?.anims.play('up');
                     break;
                 }
                 default: {
@@ -600,7 +576,7 @@ export class GO_Gotchi extends GridObject {
 
         // add another tween for our gotchi which rotates him a bit to look conga'ish
         this.scene.add.tween({
-            targets: this,
+            targets: this.blockSprite,
             angle: this.congaSide === 'LEFT' ? -20 : 20,
             duration: this.congaStepDuration*0.5,
             ease: 'Bounce.easeOut',
@@ -617,7 +593,7 @@ export class GO_Gotchi extends GridObject {
     public congaStationary(jumpAtEnd: boolean) {
         // add a tween for our gotchi which rotates him a bit to look conga'ish
         this.scene.add.tween({
-            targets: this,
+            targets: this.blockSprite,
             angle: this.congaSide === 'LEFT' ? -20 : 20,
             duration: this.congaStepDuration*0.5,
             ease: 'Bounce.easeOut',
@@ -635,7 +611,7 @@ export class GO_Gotchi extends GridObject {
 
     public congaJump() {
         // change anim to happy
-        if (this.objectType === 'GOTCHI') this.anims.play(this.getDirection().toLowerCase() + '_happy');
+        if (this.objectType === 'GOTCHI') this.blockSprite?.anims.play(this.getDirection().toLowerCase() + '_happy');
 
         this.emitterConfetti?.start();
         setTimeout( () => {
@@ -644,8 +620,11 @@ export class GO_Gotchi extends GridObject {
 
         this.status = 'JUMPING';
 
-        // pump up the score bonus
-        this.scoreBonus += 5;
+        // score some points and animated the stat point
+        if (this.player) {
+            this.gui?.adjustScoreWithAnim(this.player.getStat('CONGA_JUMP'), this.x, this.y);
+            this.player.animStat('CONGA_JUMP');
+        }
 
         // tween a jump
         this.scene.add.tween({
@@ -661,8 +640,7 @@ export class GO_Gotchi extends GridObject {
                     ease: 'Quad.easeIn',
                     onComplete: () => { 
                         setTimeout( () => {
-                        this.status = 'WAITING';
-                        // this.gridLevel.stopCongaMusic();
+                            this.status = 'WAITING';
                         }, this.congaStepDuration );
                     }
                 })
@@ -679,18 +657,28 @@ export class GO_Gotchi extends GridObject {
     }
 
     public congaIntoPortal(row: number, col: number) {
+        // first lets score some points
+        if (this.player) {
+            // check
+            this.gui?.adjustScoreWithAnim(this.player.getStat('GOTCHI_SAVE')*this.teleportScoreMultiplier, this.x, this.y);
+            this.player.animStat('GOTCHI_SAVE');
+        }
+
+        // Let's get in that portal
         this.setGridPosition(
             row,
             col,
             () => {
+                // change status to teleporting
                 this.status = 'TELEPORTING';
 
-                // adjust the score
-                (this.scene as GameScene).getGui()?.adjustScore(this.scoreBonus);
+                // hide our bgBlock
+                this.setVisible(false);
+                this.blockSprite?.setVisible(true);
 
                 // spiral the gotchi into the portal
                 this.scene.add.tween({
-                    targets: this,
+                    targets: this.blockSprite,
                     scale: 0,
                     angle: 720,
                     duration: 500,
@@ -698,29 +686,6 @@ export class GO_Gotchi extends GridObject {
                         this.destroy();
                     }
                 });
-
-                // create a temporary score text
-                const score = this.scene.add.text(this.x, this.y,
-                    this.scoreBonus.toString(),
-                    {fontFamily: 'Arial', fontSize: (getGameHeight(this.scene)*0.05).toString()+'px'})
-                    .setDepth(this.depth+100)
-                    .setStroke('0x000000',2)
-                    .setScrollFactor(0)
-                    .setOrigin(0.5,0.5);
-
-                // grab the gui scoreboard and tween our temp text over to it
-                const guiScoreboard = (this.scene as GameScene).getGui()?.getScoreboard();
-                this.scene.tweens.add({
-                    targets: score,
-                    // alpha: 0,
-                    x: guiScoreboard?.x,
-                    y: guiScoreboard?.y,
-                    duration: 250,
-                    onComplete: () => { score.destroy() }
-                })
-                
-                // play a bell sound
-                // this.soundBell?.play();
             },
             true,
             this.congaStepDuration*0.5,
@@ -729,12 +694,113 @@ export class GO_Gotchi extends GridObject {
         return this;
     }
 
+    // this function checks if we're adjacent a cactii and if TRUE then we lose pointDelta
+    public cactiiSpike(pointDelta: number) {
+        // get our gotchis grid position
+        const pos = this.gridPosition;
+
+        // check down
+        const downCactii = this.gridLevel.getGridObject(pos.row, pos.col+1);
+        if (downCactii !== 'OUT OF BOUNDS' && downCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check left
+        const leftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col);
+        if (leftCactii !== 'OUT OF BOUNDS' && leftCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check up
+        const upCactii = this.gridLevel.getGridObject(pos.row, pos.col-1);
+        if (upCactii !== 'OUT OF BOUNDS' && upCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check right
+        const rightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col);
+        if (rightCactii !== 'OUT OF BOUNDS' && rightCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check bottom left
+        const downLeftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col+1);
+        if (downLeftCactii !== 'OUT OF BOUNDS' && downLeftCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check top left
+        const upLeftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col-1);
+        if (upLeftCactii !== 'OUT OF BOUNDS' && upLeftCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check top right
+        const upRightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col-1);
+        if (upRightCactii !== 'OUT OF BOUNDS' && upRightCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // check bottom right
+        const downRightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col+1);
+        if (downRightCactii !== 'OUT OF BOUNDS' && downRightCactii.getType() === 'CACTII') {
+            this.spiked = true;
+        }
+
+        // do stuff if we got spiked
+        const dt = {t: 0};
+        if (this.spiked) {
+            // reduce our total score if spiked
+            if (this.player) {
+                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DAMAGE'), this.x, this.y);
+                this.player.animStat('RED_DAMAGE');
+            }
+
+            // show a quick red tween for "damage"
+            this.scene.add.tween({
+                targets: dt,
+                t: 1,
+                duration: 250,
+                onUpdate: () => {
+                    const colour = Phaser.Display.Color.HexStringToColor(this.lerpColor('#ff0000', '#ffffff', dt.t));
+                    this.setTint(colour.color);
+                },
+                onComplete: () => { 
+                    this.spiked = false; 
+                }
+            })
+        }
+    }
+
+    /**
+     * A linear interpolator for hexadecimal colors
+     * @param {String} a
+     * @param {String} b
+     * @param {Number} amount
+     * @example
+     * // returns #7F7F7F
+     * lerpColor('#000000', '#ffffff', 0.5)
+     * @returns {String}
+     */
+    private lerpColor(a: string, b: string, amount: number) { 
+
+        const ah = parseInt(a.replace(/#/g, ''), 16),
+            ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+            bh = parseInt(b.replace(/#/g, ''), 16),
+            br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+            rr = ar + amount * (br - ar),
+            rg = ag + amount * (bg - ag),
+            rb = ab + amount * (bb - ab);
+
+        return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+    }
+
     destroy() {
         super.destroy();
         this.directionGuide.destroy();
         this.directionLine.destroy();
         this.arrows.map(arrow => arrow.destroy());
-        this.scoreBonusText.destroy();
+        this.blockSprite?.destroy();
     }
 
     public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
@@ -774,12 +840,6 @@ export class GO_Gotchi extends GridObject {
   
     update(): void {
         super.update(); 
-
-        // update score bonus text position and make sure it stays the same as the scorebonus
-        this.scoreBonusText.setPosition(
-            this.x-this.gridSize*.475,
-            this.y-this.gridSize*.5,);
-        this.scoreBonusText.text = this.scoreBonus.toString();
 
         // update direction guide and line position
         switch (this.getDirection()) {
@@ -828,9 +888,9 @@ export class GO_Gotchi extends GridObject {
 
         // if the gotchi has burnt status set tint to grey/black
         if (this.status === 'BURNT') {
-            this.setTint(0x444444);
-        } else {
-            this.setTint(0xffffff);
+            this.blockSprite?.setTint(0x444444);
+        } else if (!this.spiked) {
+            this.blockSprite?.setTint(0xffffff);
         }
     }
 }

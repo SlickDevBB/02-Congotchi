@@ -192,9 +192,6 @@ export class GameScene extends Phaser.Scene {
         this.worldMap?.setUnlockedLevels(level+1);
         this.unlockedLevels = level + 1;
 
-        // select and go to the next level
-        // this.autoMoveToNextLevel = true;
-
         // tell database to increase number of unlocked levels for the user
         this.socket?.emit('setUnlockedLevels', level+1);
       }

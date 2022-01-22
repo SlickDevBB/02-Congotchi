@@ -1,21 +1,10 @@
 // grid-object-base-class.ts - base class for all grid objects
 
 import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
-import { PIXEL_PINK_SPLASH, SOUND_POP, SOUND_SLURP } from 'game/assets';
+import { MILKSHAKE, PIXEL_PINK_SPLASH, SOUND_POP, SOUND_SLURP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
-import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
-
-// interface Congotchi {
-//     gotchi: GO_Gotchi;
-//     newRow: number;
-//     newCol: number;
-//     newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
-//     status: 'READY' | 'CONGOTCHING';
-// }
   
 export class GO_Milkshake extends GridObject {
-    private status: 'OPEN' | 'CLOSED' = 'CLOSED';
-
     // timer is for click events
     private timer = 0;
 
@@ -32,17 +21,9 @@ export class GO_Milkshake extends GridObject {
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize }: GO_Props) {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'MILKSHAKE'});
 
-        console.log('MILKHAKE CREATED');
-
-        // enable draggable input
-        this.setInteractive();
-        this.scene.input.setDraggable(this);
-
-        // set our bg colour
-        this.setBgSquareColour('GREEN');
-
-        // set a specific depth
-        this.setDepth(DEPTH_GO_PORTAL);
+        // Set the block sprite
+        this.blockSprite?.setTexture(MILKSHAKE);
+        this.blockSprite?.setDisplaySize(this.gridSize, this.gridSize);
 
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
@@ -60,18 +41,23 @@ export class GO_Milkshake extends GridObject {
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
                 // check we've got enough interact points
-                const player = (this.scene as GameScene).getPlayer();
-                if (player && player.getStat('INTERACT_GREEN') > 0) {
+                if (this.gridLevel.getActionsRemaining() > 0) {
                     // store the grid position pointer was lefted in finished in
                     const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
                     // show arrows only if we're still in the same grid as when the pointer went down
                     if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
+                        // reduce actions remaining
+                        this.gridLevel.adjustActionsRemaining(-1);
+
+                        // score some points for activating the milkshake
+                        if (this.player) {
+                            this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_ACTIVATE'), this.x, this.y);
+                            this.player.animStat('GREEN_ACTIVATE');
+                        }
+
                         // we have enough interact points so drink up
                         this.quenchThirst();
-
-                        // decrease interact points
-                        player.adjustStat('INTERACT_GREEN', -1);
 
                         // play the interact sound
                         this.soundInteract?.play();
@@ -91,39 +77,35 @@ export class GO_Milkshake extends GridObject {
 
         // set behaviour for dragging
         this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-            const gameScene = this.scene as GameScene;
-            const player = gameScene.getPlayer();
+            // if we've got movement points left we can drag
+            if (this.gridLevel.getActionsRemaining() > 0) {
+                // only drag objects into grids they have space for
+                const gp = this.getGridPosition();
+                const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
+                const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
+                const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
+                const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
+                
+                const adoX = this.ogX;
+                const adoY = this.ogY;
+                const upLimit = aboveEmpty ? adoY - this.gridLevel.getGridSize() : adoY;
+                const downLimit = belowEmpty ? adoY + this.gridLevel.getGridSize() : adoY;
+                const leftLimit = leftEmpty ? adoX - this.gridLevel.getGridSize() : adoX;
+                const rightLimit = rightEmpty ? adoX + this.gridLevel.getGridSize() : adoX;
 
-            if (gameScene && player) {    
-                // if we've got movement points left we can drag
-                if (player.getStat('MOVE_GREEN') > 0) {
-                    // only drag objects into grids they have space for
-                    const gp = this.getGridPosition();
-                    const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
-                    const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
-                    const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
-                    const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
-                    
-                    const adoX = this.ogX;
-                    const adoY = this.ogY;
-                    const upLimit = aboveEmpty ? adoY - this.gridLevel.getGridSize() : adoY;
-                    const downLimit = belowEmpty ? adoY + this.gridLevel.getGridSize() : adoY;
-                    const leftLimit = leftEmpty ? adoX - this.gridLevel.getGridSize() : adoX;
-                    const rightLimit = rightEmpty ? adoX + this.gridLevel.getGridSize() : adoX;
+                // find out if we're further from original X or Y
+                const deltaX = this.ogX - dragX;
+                const deltaY = this.ogY - dragY;
 
-                    // find out if we're further from original X or Y
-                    const deltaX = this.ogX - dragX;
-                    const deltaY = this.ogY - dragY;
-
-                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                        if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
-                        this.y = this.ogY;
-                    } else {
-                        if (dragY > upLimit && dragY < downLimit) this.y = dragY;
-                        this.x = this.ogX;
-                    }
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
+                    this.y = this.ogY;
+                } else {
+                    if (dragY > upLimit && dragY < downLimit) this.y = dragY;
+                    this.x = this.ogX;
                 }
             }
+            
         });
 
         this.on('dragend', () => {
@@ -131,18 +113,13 @@ export class GO_Milkshake extends GridObject {
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
             this.setGridPosition(finalGridPos.row, finalGridPos.col);
 
-            // get the player
-            const player = (this.scene as GameScene).getPlayer();
-    
-            // decrease the players move count
-            if (player) {
-                // check we didn't just end up back in original position
-                if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    player.adjustStat('MOVE_GREEN', -1);
+            // check we didn't just end up back in original position
+            if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                // reduce actions remaining
+                this.gridLevel.adjustActionsRemaining(-1);
 
-                    // play the move sound
-                    this.soundMove?.play();
-                }
+                // play the move sound
+                this.soundMove?.play();
             }
         })
     }
@@ -153,10 +130,12 @@ export class GO_Milkshake extends GridObject {
             for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
                 const go = this.gridLevel.getGridObject(i, j);
                 if (go !== 'OUT OF BOUNDS' && (go.getType() === 'GOTCHI' || go.getType() === 'ROFL')) {
-
+                    // score some points for feeding a gotchi or rofl
                     const gotchi = (go as GO_Gotchi);
-                    // increase the gotchis score bonus
-                    gotchi.scoreBonus += 10;
+                    if (this.player) {
+                        this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_BUFF'), go.x, go.y);
+                        this.player.animStat('GREEN_BUFF');
+                    }
 
                     // generate a pink splash image
                     const explosionImage = this.scene.add.image(
@@ -171,17 +150,20 @@ export class GO_Milkshake extends GridObject {
                     .setScrollFactor(0);
             
                     this.scene.add.tween({
-                        targets: [explosionImage, this],
+                        targets: [explosionImage],
                         alpha: 0,
                         duration: 500,
                         onComplete: () => { 
                             explosionImage.destroy() 
-                            this.destroy()
                         },
                     })
                 }
             }
         }
+
+        // hide milkshake 
+        this.setVisible(false);
+        this.blockSprite?.setVisible(false);
 
         // I have no idea but i have to do a weird timeout for this to work properly????
         // instantly setting to empty grid object doesn't seem to be recognized

@@ -9,6 +9,7 @@ export class GO_Inactive extends GridObject {
 
         // just make inactive objects completely invisible
         this.setVisible(false);
+        this.blockSprite?.setVisible(false);
     }
 
     update(): void {

@@ -2,23 +2,18 @@
 // this object controls display of all gui elements
 
 import { getGameHeight, getGameWidth, } from "game/helpers";
-import { SOUND_CLICK, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, GUI_BUTTON_PLAY, GUI_BUTTON_CROSS, GUI_BUTTON_RESET, GUI_BUTTON_FAST_FORWARD } from "game/assets";
-import { Player, levels, WorldMap, GuiScoreBoard } from ".";
+import { SOUND_CLICK, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, GUI_BUTTON_PLAY, GUI_BUTTON_CROSS, GUI_BUTTON_RESET, GUI_BUTTON_FAST_FORWARD, SOUND_SEND } from "game/assets";
+import { Player, levels, WorldMap, GuiScoreBoard, GridLevel } from ".";
 // import { Math } from "phaser";
 import { GameScene } from "game/scenes/game-scene";
-import { DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT } from "game/helpers/constants";
+import { DEPTH_ACTIONS_REMAINING_TEXT, DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT, DEPTH_LEVEL_PATH } from "game/helpers/constants";
+import { defaultPath } from "ethers/lib/utils";
 
 interface Props {
     scene: GameScene,
     player: Player,
     world: WorldMap,
 }
-
-// interface LevelScores {
-//     levelNumber: number,
-//     highScore: number,
-//     stars: number,
-// }
 
 export class Gui {
     private scene;
@@ -32,17 +27,30 @@ export class Gui {
 
     private resetButton: Phaser.GameObjects.Image;
     private nextLevelButton: Phaser.GameObjects.Image;
+
+    private actionsRemainingText?: Phaser.GameObjects.Text;
     
     private clickSound?: Phaser.Sound.BaseSound;
+    private soundSend?: Phaser.Sound.HTML5AudioSound;
     
     private player: Player;
     private world: WorldMap;
     private levelNumber = 0;
 
+    private graphics?: Phaser.GameObjects.Graphics;
+    private actionsRemainingBG?: Phaser.GameObjects.Graphics;
+    private actionsRemainingBorder?: Phaser.GameObjects.Graphics;
+
+    private tallyingSpareMoves = false;
+
     constructor({ scene, player, world}: Props) {
         this.scene = scene;
         this.player = player;
         this.world = world;
+
+        this.soundSend = this.scene.sound.add(SOUND_SEND, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundSend.stop(); 
+        this.soundSend?.setVolume(0.02);
 
         // add the panel for text
         this.levelDescription = this.scene.add.image(
@@ -64,7 +72,7 @@ export class Gui {
             .setScrollFactor(0);
         
         // add text for level description
-        const fontHeight = getGameHeight(this.scene)*0.026;
+        let fontHeight = getGameHeight(this.scene)*0.026;
         this.text = this.scene.add.text(
             getGameWidth(this.scene)*0.5, 
             getGameHeight(this.scene)*(1-0.28),
@@ -75,6 +83,43 @@ export class Gui {
             .setDepth(25)
             .setOrigin(0.5,0)
             .setScrollFactor(0);
+
+        // add text for actions remaining
+        fontHeight = getGameHeight(this.scene)*0.0285;
+        this.actionsRemainingText = this.scene.add.text(
+            getGameWidth(this.scene)*0.5, 
+            getGameHeight(this.scene)*(1-0.23),
+            'Actions Remaining: ',
+            { font: fontHeight+'px Courier', color: '#ffffff' })
+            .setWordWrapWidth(getGameWidth(this.scene)*0.85)
+            .setAlign('center')
+            .setDepth(DEPTH_ACTIONS_REMAINING_TEXT)
+            .setOrigin(0.5,0.5)
+            .setScrollFactor(0)
+            .setStroke('#000000', fontHeight*0.25)
+            .setVisible(false);
+
+        this.actionsRemainingBG = this.scene.add.graphics();
+        this.actionsRemainingBorder = this.scene.add.graphics();
+
+        
+        const width = getGameWidth(this.scene)*.675;
+        const height = getGameHeight(this.scene)*.035;
+        const x = this.actionsRemainingText.x - width/2;
+        const y = this.actionsRemainingText.y - height/2;
+        const border_thickness = getGameWidth(this.scene)*0.004;
+
+        this.actionsRemainingBG.fillStyle(0x292929);
+        this.actionsRemainingBG.setDepth(DEPTH_ACTIONS_REMAINING_TEXT-1);
+        this.actionsRemainingBG.fillRoundedRect(x, y, width, height, { tl: 10, tr: 10, bl: 10, br: 10 });
+        this.actionsRemainingBG.setScrollFactor(0);
+        this.actionsRemainingBG.setVisible(false);
+
+        this.actionsRemainingBorder.fillStyle(0xffffff);
+        this.actionsRemainingBorder.setDepth(DEPTH_ACTIONS_REMAINING_TEXT-2);
+        this.actionsRemainingBorder.fillRoundedRect(x-border_thickness, y-border_thickness, width+2*border_thickness, height+2*border_thickness, { tl: 12, tr: 12, bl: 12, br: 12 });
+        this.actionsRemainingBorder.setScrollFactor(0);
+        this.actionsRemainingBorder.setVisible(false);
 
         // add a play button
         this.playButton = this.scene.add.image(
@@ -109,7 +154,7 @@ export class Gui {
                     (this.scene as GameScene).showLevelOverScreen();
                 }  
             } else if (this.scene.getGridLevel()?.getStatus() === 'LEVEL_OVER_SCREEN') {
-                (this.scene as GameScene).endLevel(false);
+                if (!this.tallyingSpareMoves) (this.scene as GameScene).endLevel(false);
             }
             else {
                 // we've hit exit when on world map, save the current level and get out of here
@@ -138,7 +183,7 @@ export class Gui {
                     (this.scene as GameScene).softResetLevel();
                 }  
             } else if (this.scene.getGridLevel()?.getStatus() === 'LEVEL_OVER_SCREEN') {
-                (this.scene as GameScene).softResetLevel();
+                if (!this.tallyingSpareMoves) (this.scene as GameScene).softResetLevel();
             }
             else {
                 // we've hit exit when on world map, save the current level and get out of here
@@ -162,7 +207,7 @@ export class Gui {
         .on('pointerdown', () => {
             // if we're at level over screen just exit normally
             if (this.scene.getGridLevel()?.getStatus() === 'LEVEL_OVER_SCREEN') {
-                (this.scene as GameScene).endLevel(true);
+                if (!this.tallyingSpareMoves) (this.scene as GameScene).endLevel(true);
             }
         });
         
@@ -185,8 +230,45 @@ export class Gui {
         this.scoreBoard.adjustScore(delta);
     }
 
+    public adjustScoreWithAnim(delta: number, x: number, y: number) {
+        this.adjustScore(delta);
+
+        // create a temporary score text
+        const fontHeight = getGameHeight(this.scene)*0.025;
+        const preText = delta > 0 ? '+' : '-';
+        const finalText = preText + delta.toString();
+        const score = this.scene.add.text(x, y,
+            finalText,
+            {fontFamily: 'Arial', fontSize: fontHeight.toString()+'px'})
+            .setDepth(10000)
+            .setStroke('0x000000',fontHeight*0.1)
+            .setScrollFactor(0)
+            .setOrigin(0.5,0.5);
+
+        // tween the text
+        this.scene.tweens.add({
+            targets: score,
+            y: y - getGameHeight(this.scene)* 0.075,
+            duration: 1500,
+            ease: 'Quad.easeOut',
+            onComplete: () => { score.destroy() }
+        })
+
+        this.scene.tweens.add({
+            targets: score,
+            alpha: 0,
+            duration: 1500,
+            ease: 'Quad.easeIn',
+            onComplete: () => { score.destroy() }
+        })
+    }
+
     public setStarScore(stars: 0 | 1 | 2 | 3) {
         this.scoreBoard.setStarScore(stars);
+    }
+
+    public getStarScore() {
+        return this.scoreBoard.getStarScore();
     }
 
     public onSelectLevel(levelNumber: number) {
@@ -220,6 +302,10 @@ export class Gui {
         // make the reset button visible
         this.resetButton.setVisible(true);
 
+        // show action remaining border box
+        this.actionsRemainingBG?.setVisible(true);
+        this.actionsRemainingBorder?.setVisible(true);
+        this.actionsRemainingText?.setVisible(true);
     }
 
     public onEndLevel() {
@@ -263,6 +349,11 @@ export class Gui {
 
         // redisplay high scores
         this.displayLevelHighScore(this.levelNumber);
+
+        // hide action remaining border box
+        this.actionsRemainingBG?.setVisible(false);
+        this.actionsRemainingBorder?.setVisible(false);
+        this.actionsRemainingText?.setVisible(false);
     }
 
     public onSoftResetLevel() {
@@ -347,9 +438,16 @@ export class Gui {
     }
 
     public onLevelOverScreen() {
-        // move the scoreboard into the end of level results position
-        this.scoreBoard.showLevelOverResults();
-        
+        // tween the scoreboard into middle of screen
+        this.scene.add.tween({
+            targets: this.scoreBoard,
+            x: getGameWidth(this.scene)*0.5,
+            y: getGameHeight(this.scene)*0.5,
+            displayWidth: getGameWidth(this.scene)*0.75,
+            displayHeight: getGameWidth(this.scene)*0.25,
+            duration: 250,
+        });
+
         // tween the exit button down next to the scoreboard
         this.scene.add.tween({
             targets: this.exitButton,
@@ -376,6 +474,43 @@ export class Gui {
             alpha: 1,
             duration: 250,
         })
+
+        // as everything is tweening we want to start adding up move points
+        const gl = (this.scene as GameScene).getGridLevel();
+
+        if (gl) {
+            // grab the actions remaining
+            const ar = gl.getActionsRemaining();
+            let timeStep = 150;
+
+            // we should only add remaining moves if we got 3 stars
+            if (this.scoreBoard.getStarScore() > 2) {
+                // let everyone know we're tallying
+                this.tallyingSpareMoves = true;
+
+                // go through and collect all our points
+                for (let i = ar; i > 0; i--) {
+                    setTimeout( () => {
+                        if (this.actionsRemainingText) {
+                            this.adjustScoreWithAnim(this.player.getStat('SPARE_MOVE'), this.actionsRemainingText.x + getGameWidth(this.scene)*.25, this.actionsRemainingText.y - getGameHeight(this.scene)*0.04);
+                            gl.adjustActionsRemaining(-1);
+                            this.soundSend?.stop();
+                            this.soundSend?.play();
+                        }
+                    }, timeStep * (ar - i));
+                }
+            } else {
+                timeStep = 0;
+            }
+
+            setTimeout( () => {
+                // no longer tallying spare moves
+                this.tallyingSpareMoves = false;
+
+                // call the main game scene and tell it the results of the finished level
+                (this.scene as GameScene).handleLevelResults(this.scoreBoard.getLevel(), this.scoreBoard.getScore(), this.scoreBoard.getStarScore());
+            }, timeStep * ar + 200)
+        }
     }
 
     public destroy() {
@@ -394,6 +529,14 @@ export class Gui {
             this.exitButton.setAlpha(1);
             this.resetButton.setAlpha(1);
         }
+
+        // if level is not inactive, display and update actions remaining text
+        const gl = this.scene.getGridLevel();
+        const glStatus = gl?.getStatus();
+        if (gl && glStatus !== 'INACTIVE' && this.actionsRemainingText) {
+            this.actionsRemainingText?.setVisible(true);
+            this.actionsRemainingText.text = 'Moves Remaining: ' + gl.getActionsRemaining().toString();
+        } 
     }
 
 }

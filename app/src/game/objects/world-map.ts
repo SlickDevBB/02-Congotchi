@@ -18,7 +18,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
 
     // declare private variables
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
-    private debugText: Phaser.GameObjects.Text;
+    // private debugText: Phaser.GameObjects.Text;
     private worldCam: Phaser.Cameras.Scene2D.Camera;
     private levelButtons: LevelButton[] = [];
     private worldHeight;
@@ -54,12 +54,12 @@ export class WorldMap extends Phaser.GameObjects.Image {
 
         // create the debug text
         const fontHeight = getGameHeight(this.scene)/50*1.25;
-        this.debugText = this.scene.add.text(10, 100, 'Debug Info', { font: fontHeight+'px Courier', color: '#ff0000' });
-        this.debugText.setScrollFactor(0);
-        this.debugText.setStroke("#ffffff", 4);
-        // this.debugText.setShadow(3, 3, '#ffffff');
-        this.debugText.setVisible(process.env.NODE_ENV === 'development');
-        this.debugText.setDepth(10000);
+        // this.debugText = this.scene.add.text(10, 100, 'Debug Info', { font: fontHeight+'px Courier', color: '#ff0000' });
+        // this.debugText.setScrollFactor(0);
+        // this.debugText.setStroke("#ffffff", 4);
+        // // this.debugText.setShadow(3, 3, '#ffffff');
+        // this.debugText.setVisible(process.env.NODE_ENV === 'development');
+        // this.debugText.setDepth(10000);
 
         // get the main scene camera and set its initial scroll position
         this.worldCam = this.scene.cameras.main;
@@ -195,15 +195,15 @@ export class WorldMap extends Phaser.GameObjects.Image {
     update() {
 
         // render some debug info
-        const pointer = this.scene.input.activePointer;
+        // const pointer = this.scene.input.activePointer;
 
-        this.debugText.setText([
-            'World Parameters:',
-            '  Ptr % Width:  ' + (this.scene.cameras.main.scrollX/this.worldWidth + pointer.x/this.worldWidth).toFixed(3),
-            '  Ptr % Height: ' + (this.scene.cameras.main.scrollY/this.worldHeight + pointer.y/this.worldHeight).toFixed(3),
-            '  Camera X: ' + (this.scene.cameras.main.scrollX/this.worldWidth).toFixed(3),
-            '  Camera Y: ' + (this.scene.cameras.main.scrollY/this.worldHeight).toFixed(3),
-        ]);
+        // this.debugText.setText([
+        //     'World Parameters:',
+        //     '  Ptr % Width:  ' + (this.scene.cameras.main.scrollX/this.worldWidth + pointer.x/this.worldWidth).toFixed(3),
+        //     '  Ptr % Height: ' + (this.scene.cameras.main.scrollY/this.worldHeight + pointer.y/this.worldHeight).toFixed(3),
+        //     '  Camera X: ' + (this.scene.cameras.main.scrollX/this.worldWidth).toFixed(3),
+        //     '  Camera Y: ' + (this.scene.cameras.main.scrollY/this.worldHeight).toFixed(3),
+        // ]);
         // this.debugText.setPosition(0.2*this.displayWidth, 0.5*this.displayHeight);
 
     }

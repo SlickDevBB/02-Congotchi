@@ -41,6 +41,7 @@ export const SOUND_VICTORY = 'sound_victory';
 export const SOUND_DEFEAT = 'sound_defeat';
 export const SOUND_CONGA = 'sound_conga';
 export const SOUND_SOFT_RESET = 'sound_soft_reset';
+export const SOUND_SEND = 'sound_send';
 
 export const MUSIC_WORLD_MAP = 'music_world_map';
 export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
@@ -48,7 +49,7 @@ export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
 export const ARROW_DOWN = 'arrow_down';
 export const M67_GRENADE = 'm67_grenade';
 export const MILKSHAKE = 'milkshake';
-export const UNCOMMON_CACTI = 'uncommon_cacti';
+export const UNCOMMON_CACTII = 'uncommon_cacti';
 export const PORTAL_OPEN = 'portal_open';
 export const PORTAL_CLOSED = 'portal_closed';
 
@@ -65,6 +66,15 @@ export const RED_CIRCLE_SHADED = 'red-circle-shaded';
 export const GREEN_CIRCLE_SHADED = 'green-circle-shaded';
 export const BLUE_CIRCLE_SHADED = 'blue-circle-shaded';
 export const GREY_CIRCLE_SHADED = 'grey-circle-shaded';
+
+export const BLACK_SQUARE = 'black_square';
+export const WHITE_SQUARE = 'white_square';
+
+export const BLUE_BLOCK = 'blue_block';
+export const RED_BLOCK = 'red_block';
+export const GREEN_BLOCK = 'green_block';
+export const PINK_BLOCK = 'pink_block';
+
 export const MOVE_ICON = 'move_icon';
 export const QUESTION_MARK_ICON = 'question_mark_icon';
 // export const ROTATE_ICON = 'rotate_icon';
@@ -158,6 +168,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'AUDIO',
   },
   {
+    key: SOUND_SEND,
+    src: 'assets/sounds/send.mp3',
+    type: 'AUDIO',
+  },
+
+  {
     key: MUSIC_WORLD_MAP,
     src: 'assets/music/Music_World_Map_Bassa Island Game Loop.ogg',
     type: 'AUDIO',
@@ -184,7 +200,7 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     type: 'IMAGE',
   },
   {
-    key: UNCOMMON_CACTI,
+    key: UNCOMMON_CACTII,
     src: 'assets/images/cacti.png',
     type: 'IMAGE',
   },
@@ -255,14 +271,48 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/icons/sphere-grey.png',
     type: 'IMAGE',
   },
+
+  {
+    key: BLACK_SQUARE,
+    src: 'assets/icons/black_square.png',
+    type: 'IMAGE',
+  },
+
+  {
+    key: WHITE_SQUARE,
+    src: 'assets/icons/white_square.png',
+    type: 'IMAGE',
+  },
+
+  {
+    key: BLUE_BLOCK,
+    src: 'assets/icons/blue_block.png',
+    type: 'IMAGE',
+  },
+  {
+    key: RED_BLOCK,
+    src: 'assets/icons/red_block.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GREEN_BLOCK,
+    src: 'assets/icons/green_block.png',
+    type: 'IMAGE',
+  },
+  {
+    key: PINK_BLOCK,
+    src: 'assets/icons/pink_block.png',
+    type: 'IMAGE',
+  },
+
   {
     key: MOVE_ICON,
-    src: 'assets/icons/white_hand_drag_icon.png',
+    src: 'assets/icons/white_hand_drag_icon_v2.png',
     type: 'IMAGE',
   },
   {
     key: QUESTION_MARK_ICON,
-    src: 'assets/icons/white_hand_click_icon.png',
+    src: 'assets/icons/question-mark-icon.png',
     type: 'IMAGE',
   },
   // {

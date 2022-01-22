@@ -16,6 +16,7 @@
 
 // 7 = grenade
 // 8 = milkshake
+// 9 = cactii
 
 // 12, 22, 32, 42, 52, 62 = common, uncommon, rare, legendary, mythical, godlike DOWN rofls respectively
 // 13, 23, 33, 43, 53, 63 = common, uncommon, rare, legendary, mythical, godlike LEFT rofls respectively
@@ -29,6 +30,9 @@ export interface LevelConfig {
     pos: number[],
     curveThisPos: number[],
     curvePrevPos: number[],
+    actionsRemaining: number,
+    statMask: {spareMove: number, congaJump: number, greenActivate: number, redActivate: number, 
+        redDamage: number, greenBuff: number, gotchiSave: number, portalOpen: number}
 }
 
 export const levels: Array<LevelConfig> = [
@@ -60,18 +64,21 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 1, 1, 2, 1, 1, 0, 0],
         [0, 0, 1, 1, 2, 1, 1, 0, 0],
         [0, 0, 1, 2, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 2, 1, 0, 0],
         [0, 0, 1, 1, 6, 1, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
-        'Welcome aadventurer! Our frens are lost throughout the REAALM & we need yawr help to save them!' +
+        'Welcome aadventurer! Our frens have been blockified throughout the REAALM & need saving!' +
         "\n\n" +
-        'CLICK & DRAG gotchis into conga lines then OPEN PORTALS to bring them home :)',
+        'CLICK & DRAG gotchis into conga lines then SINGLE CLICK portals to bring them home :)',
         pos: [0.23, 0.65 ],
         curveThisPos: [],
         curvePrevPos: [],
+        actionsRemaining: 10,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // 2: Introduce players to rotating gotchis (and multi portal entry)
@@ -88,12 +95,15 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
-        "Phew! So far so good. The GRID is a bit more dangerous though & you'll need to learn how to ROTATE." +
+        "Phew! So far so good. The GRID is a bit more dangerous though & you'll need to learn how to rotate." +
         "\n\n" +
         "SINGLE CLICK on gotchis to help point them in the right direction.",
         pos: [0.258, 0.480 ],
         curveThisPos: [0.25, 0.49],
         curvePrevPos: [0.285, 0.62],
+        actionsRemaining: 10,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // 3: Introduction to stat changes
@@ -110,12 +120,15 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
-        "Keep an eye on your 8 coloured stat circles at the bottom of each level." +
+        "Wow! You unlocked two POINT SPHERES! These will hover near your gotchi while you solve levels :)" +
         "\n\n" +
-        "Each MOVE (click & drag) or INTERACT (single click) of an object reduces the corresponding coloured stat.",
+        "These two spheres show the points you get for saving gotchis and opening portals.",
         pos: [0.181, 0.375 ],
         curveThisPos: [0.204, 0.418],
         curvePrevPos: [0.262, 0.395],
+        actionsRemaining: 20,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 1, portalOpen: 1}
     },
     {
         // 4: Introduction to milkshakes and gotchi point system
@@ -132,12 +145,15 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 1, 3, 8, 3, 2, 0, 0],
         ],
         levelDescription: 
-        "MILKSHAKES! Single click shakes that are next to gotchis for a point boost." +
+        "Milkshakes! And two moar POINT SPHERES for green blocks this time!" +
         "\n\n" +
-        "Each gotchis' points get added to your total when portalling. Make long conga lines for even moar!",
+        "SINGLE CLICK green block items for points. For milkshakes, click them next to gotchis for moar points!",
         pos: [0.06, 0.4],
         curveThisPos: [0.12, 0.44],
         curvePrevPos: [0.1, 0.4],
+        actionsRemaining: 20,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 1, redActivate: 0, 
+            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
     {
         // Introduction to getting at least one star to progress
@@ -153,34 +169,40 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 1, 1, 2, 3, 2, 1, 0],
         [0, 1, 0, 4, 0, 8, 0, 1, 0],  
         ],
-        levelDescription: "The TREE OF FUD! Don't panic.. it's just a giant, smiling, terrifying  tree.." +
+        levelDescription: "The TREE OF FUD! It sure looks... friendly?" +
         "\n\n" +
-        "This is a toughie but saving at least 33% of your frens in levels still allows you to progress.",
+        "Saving 33% of your frens still allows you to progress. Leftover moves are worth points though as shown on this new POINT SPHERE!",
         pos: [0.115, 0.273],
         curveThisPos: [0.075, 0.289],
         curvePrevPos: [0.037, 0.336],
+        actionsRemaining: 25,
+        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 0, 
+            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
     {
         // 6: Introduction to grenades
         levelNumber: 6,
         gridObjectLayout: [
-        [0, 0, 0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 8, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 1, 1, 2, 1, 1, 0, 0],
-        [0, 1, 1, 7, 2, 1, 1, 1, 0],
-        [0, 1, 1, 1, 2, 1, 1, 1, 0],
+        [0, 1, 1, 7, 2, 1, 1, 3, 0],
+        [0, 1, 1, 1, 2, 1, 1, 3, 0],
         [0, 1, 1, 1, 4, 1, 1, 1, 0],
-        [0, 5, 5, 5, 5, 5, 6, 1, 0],
+        [0, 5, 5, 2, 5, 1, 6, 1, 0],
         [0, 1, 1, 7, 1, 1, 1, 1, 0],
         [0, 0, 1, 1, 7, 1, 1, 0, 0],
         ],
-        levelDescription: "Ahh! The mounta... STOP! There's grenades here???" +
+        levelDescription: "Mmm! The mounta... STOP! There's grenades here???" +
         "\n\n" +
-        "MOVE grenades away from conga lines before portalling or you'll need to MOVE or ROTATE gotchis to rid them of soot.",
+        "CLICK & DRAG grenades away from conga lines before portalling or you'll need to MOVE or ROTATE gotchis to rid them of soot.",
         // "DO NOT conga if your gotchi line is near grenades or you'll need to MOVE/ROTATE gotchis to shake off the soot.",
         pos: [0.04, 0.232],
         curveThisPos: [0.044, 0.261],
         curvePrevPos: [0.088, 0.259],
+        actionsRemaining: 20,
+        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 0, 
+            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
     {
         // Introduction to grenade chains
@@ -188,81 +210,93 @@ export const levels: Array<LevelConfig> = [
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 6, 0, 0, 0, 0],
-        [0, 0, 0, 1, 7, 1, 0, 0, 0],
-        [0, 0, 2, 1, 1, 1, 7, 0, 0],
+        [0, 0, 7, 1, 7, 1, 7, 0, 0],
+        [0, 0, 1, 1, 1, 1, 7, 0, 0],
         [0, 1, 2, 7, 1, 7, 1, 1, 0],
         [1, 1, 2, 1, 1, 4, 1, 1, 1],
-        [1, 1, 1, 1, 1, 4, 1, 1, 1],
-        [1, 1, 1, 5, 5, 5, 1, 1, 1],
+        [1, 8, 1, 1, 1, 4, 1, 3, 3],
+        [1, 4, 1, 5, 5, 5, 1, 1, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
-        levelDescription: "We've been floating for aaaages... are we at NORTH BEACH yet? Ooh moar grenades!" +
+        levelDescription: "We've been floating for aaaages... are we at NORTH BEACH yet? Ooh moar grenades and a red POINT SPHERE!" +
         "\n\n" +
-        "SINGLE CLICK grenades to detonate them. Try get an ebic chain reaction to clear the path to the portal!",
+        "SINGLE CLICK grenades to detonate them. Be wary of chain reactions!",
         pos: [0.086, 0.145],
         curveThisPos: [0.04, 0.06],
         curvePrevPos: [0.03, 0.178],
+        actionsRemaining: 20,
+        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 1, 
+            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
     {
         // 8: Introduction to rofls
         levelNumber: 8,
         gridObjectLayout: [
         [ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0,  0,  1,  1,  1],
-        [ 0,  0,  1, 15,  1,  1,  1,  1,  1],
-        [ 0,  0,  1, 12,  1, 12, 14,  0,  0],
-        [ 0,  0, 13,  2,  1, 13,  1,  0,  0],
-        [ 0,  0,  1,  6,  1,  4,  1,  0,  0],
-        [ 1,  1,  1,  1,  1,  1,  1,  0,  0],
-        [ 1,  1,  1,  0,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0,  0,  1, 12,  14],
+        [ 0,  0,  1,  5,  1,  1,  1,  1,  1],
+        [ 0,  0,  1,  5,  3,  2,  3,  0,  0],
+        [ 0,  0,  3,  2,  1,  3,  1,  0,  0],
+        [ 0,  0,  1,  6,  8,  4,  1,  0,  0],
+        [ 1,  1,  7,  1,  1,  1,  13,  0,  0],
+        [ 1, 12,  1,  0,  0,  0,  0,  0,  0],
         [ 1,  1,  1,  0,  0,  0,  0,  0,  0],
         ],
-        levelDescription: "Ahh here we are... NORTH BEACH. A pebbles throw from ROFL REEF." +
+        levelDescription: "Ahh here we are... NORTH BEACH! A pebbles throw from ROFL REEF..." +
         "\n\n" +
         "ROFLs move, rotate & conga home like gotchis. They're worth moar points but can be tricky to save..",
         pos: [0.16, 0.075],
         curveThisPos: [0.105, 0.095],
         curvePrevPos: [0.085, 0.123],
+        actionsRemaining: 20,
+        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 1, 
+            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
     {
         // 9: Introduction to cactii
         levelNumber: 9,
         gridObjectLayout: [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 2, 1, 1, 0, 0],
-        [0, 0, 1, 1, 6, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0,  1, 1, 0],
+        [0, 0, 0, 0, 0, 1, 12, 1, 1],
+        [0, 0, 1, 1, 0, 9,  2, 1, 1],
+        [0, 2, 1, 1, 1, 1,  2, 1, 0],
+        [1, 2, 9, 9, 1, 1,  1, 0, 0],
+        [1, 3, 1, 5, 5, 4,  2, 0, 0],
+        [1, 1, 1, 1, 9, 2,  1, 0, 0],
+        [0, 5, 1, 1, 0, 1,  6, 1, 0],
+        [0, 0, 0, 0, 0, 0,  1, 0, 0],
         ],
-        levelDescription: "Ouch! Don't step on the.. ouch! cact.. OUUUUUUCH!!!" +
+        levelDescription: "Ouch! Don't conga past the cact.. OUCH!!" +
         "\n\n" +
-        "If your gotchis conga past CACTII they'll lose points. Move CACTII away or single click CACTII to uproot them safely.",
+        "Red block items can deduct points. Here's a new red POINT SPHERE to show how much. SINGLE CLICK cactii to uproot them safely.",
         pos: [0.177, 0.145],
         curveThisPos: [0.18, 0.111],
         curvePrevPos: [0.23, 0.085],
+        actionsRemaining: 20,
+        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 1, 
+            redDamage: 1, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
     {
         levelNumber: 10,
         gridObjectLayout: [
-        [0, 0, 0, 1, 4, 1, 0, 0, 0],
-        [0, 0, 1, 3, 1, 7, 1, 0, 0],
-        [0, 1, 3, 0, 1, 0, 1, 1, 0],
-        [0, 1, 7, 0, 1, 0, 2, 1, 0],
-        [0, 2, 4, 1, 6, 5, 8, 5, 0],
-        [0, 8, 1, 0, 0, 0, 1, 1, 0],
-        [1, 1, 2, 2, 1, 1, 3, 4, 1],
-        [0, 1, 1, 1, 2, 3, 2, 1, 0],
-        [0, 1, 0, 4, 0, 1, 0, 1, 0],  
+        [ 0, 0, 0, 1, 4, 1, 0, 0, 0],
+        [ 0, 0, 1, 3, 1, 7, 1, 0, 0],
+        [ 0, 1, 3, 0, 1, 0, 1, 1, 0],
+        [ 0, 1, 7, 0, 1, 0, 2, 1, 0],
+        [ 0, 2, 4, 9, 6, 5, 8, 5, 0],
+        [ 0, 8, 1, 0, 0, 0, 1, 1, 0],
+        [ 1, 1, 2, 2, 1, 9, 3, 4, 1],
+        [ 0, 1, 2, 8, 1, 3, 2, 1, 0],
+        [ 0,12, 0, 4, 0, 1, 0, 1, 0],  
         ],
-        levelDescription: "I swear to god... one more level with a gotchi eating tree..." +
+        levelDescription: "I swear to god... one more level with this smiling tree..." +
         "\n\n" +
-        "This level has a bit of everything. Use all your skills to escape the forest for good!",
+        "The final POINT SPHERE shows the points you get each time your gotchis jump. Form long lines to max out your score!",
         pos: [0.167, 0.272],
         curveThisPos: [0.19, 0.23],
         curvePrevPos: [0.165, 0.185],
+        actionsRemaining: 35,
+        statMask: {spareMove: 1, congaJump: 1, greenActivate: 1, redActivate: 1, 
+            redDamage: 1, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
     },
 ];

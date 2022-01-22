@@ -18,8 +18,13 @@ export class GO_Rofl extends GO_Gotchi {
       // set our rarity and rofl image based on this
       this.rarity = rarity;
 
-      this.setDisplaySize(gridSize*.5, gridSize*.5);
-      
+      // set our blocksprite direction
+      this.blockSprite?.setTexture(COMMON_DOWN_ROFL);
+      this.blockSprite?.setDisplaySize(this.gridSize*.45, this.gridSize*.45);
+      this.setDirection(direction);
+
+      // set our teleport score multiplier
+      this.teleportScoreMultiplier = 2;
   }
 
   public setDirection(direction: 'DOWN' | 'LEFT' | 'RIGHT' | 'UP') {
@@ -29,19 +34,19 @@ export class GO_Rofl extends GO_Gotchi {
     if (this.objectType === 'ROFL') {
         switch (direction) {
             case 'DOWN': {
-                this.setTexture(COMMON_DOWN_ROFL);
+                this.blockSprite?.setTexture(COMMON_DOWN_ROFL);
                 break;
             }
             case 'LEFT': {
-                this.setTexture(COMMON_LEFT_ROFL);
+                this.blockSprite?.setTexture(COMMON_LEFT_ROFL);
                 break;
             }
             case 'RIGHT': {
-                this.setTexture(COMMON_RIGHT_ROFL);
+                this.blockSprite?.setTexture(COMMON_RIGHT_ROFL);
                 break;
             }
             case 'UP': {
-                this.setTexture(COMMON_UP_ROFL);
+                this.blockSprite?.setTexture(COMMON_UP_ROFL);
                 break;
             }
             default: {

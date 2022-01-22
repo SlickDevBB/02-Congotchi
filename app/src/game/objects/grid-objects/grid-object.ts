@@ -1,7 +1,11 @@
 // grid-object.ts - base class for all grid objects
 import { GridLevel } from 'game/objects';
 import { GridPosition } from '../grid-level';
-import { DEPTH_GRID_OBJECTS } from 'game/helpers/constants';
+import { DEPTH_GO_DEFAULT_BLOCK, DEPTH_GO_PORTAL_BLOCK } from 'game/helpers/constants';
+import { Player } from '../player';
+import { GameScene } from 'game/scenes/game-scene';
+import { Gui } from '../gui';
+import { BLUE_BLOCK, GREEN_BLOCK, PINK_BLOCK, QUESTION_MARK_ICON, RED_BLOCK } from 'game/assets';
 
 export interface GO_Props {
     scene: Phaser.Scene;
@@ -11,16 +15,20 @@ export interface GO_Props {
     key: string;
     frame?: number;
     gridSize: number;
-    objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'ROFL';
+    objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'ROFL' | 'CACTII';
   }
   
 export class GridObject extends Phaser.GameObjects.Sprite {
     public gridPosition: GridPosition;
     protected gridLevel: GridLevel;
     protected gridSize: number;
-    protected objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'ROFL' = 'BASE_CLASS';
+    protected objectType: 'BASE_CLASS' | 'INACTIVE' | 'EMPTY' | 'GOTCHI' | 'PORTAL' | 'GRENADE' | 'MILKSHAKE' | 'CACTI' | 'ROFL' | 'CACTII' = 'BASE_CLASS';
     protected bgSquareColour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE' = 'NONE';
-    protected bgSquare: Phaser.GameObjects.Rectangle;
+    // protected bgSquare: Phaser.GameObjects.Rectangle;
+    // protected bgBlock?: Phaser.GameObjects.Image;
+    public blockSprite?: Phaser.GameObjects.Sprite;
+    protected player?: Player;
+    protected gui?: Gui;
 
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
       super(scene,
@@ -34,6 +42,10 @@ export class GridObject extends Phaser.GameObjects.Sprite {
       this.objectType = objectType;
       this.setScrollFactor(0);
 
+      // save our player and gui
+      this.player = (scene as GameScene).getPlayer();
+      this.gui = (scene as GameScene).getGui();
+
       // set our grid position
       this.gridPosition = {row: gridRow, col: gridCol };
 
@@ -44,40 +56,57 @@ export class GridObject extends Phaser.GameObjects.Sprite {
       this.scene.physics.world.enable(this);
   
       // set to size of grids from game
-      this.setDisplaySize(gridSize, gridSize);
+      this.setDisplaySize(gridSize*.95, gridSize*.95);
   
       // add to the scene
       this.scene.add.existing(this);
 
-      // set the depth
-      this.setDepth(DEPTH_GRID_OBJECTS);
-
-      // create a rectangle background with our base colour
-      this.bgSquare = this.scene.add.rectangle(
-        this.x, this.y, 
-        this.gridSize, this.gridSize
-        )
-        .setAlpha(0.5)
-        .setStrokeStyle(1, 0xffffff)
-        .setOrigin(0.5,0.5)
-        .setDepth(DEPTH_GRID_OBJECTS - 1)
+      // enable draggable input
+      this.setInteractive();
+      this.scene.input.setDraggable(this);
+      
+      // add block text. NOTE: Children classes need to overide this in their constructor
+      this.blockSprite = this.scene.add.sprite(this.x, this.y, QUESTION_MARK_ICON)
         .setScrollFactor(0)
+        .setOrigin(0.5,0.5)
+        .setDisplaySize(this.gridSize*.9, this.gridSize*.9);
 
-      this.setBgSquareColour('NONE');
-
+      // All blocks have same depth except portal blocks which are +1 so gotchi blocks tween below them during portalling
+      this.setDepth(DEPTH_GO_DEFAULT_BLOCK);
+      this.blockSprite.setDepth(DEPTH_GO_DEFAULT_BLOCK + 1);
     }
 
-    public setBgSquareColour(colour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE') {
-      this.bgSquare.setVisible(true);
-      switch (colour) {
-        case 'PINK': this.bgSquare.setFillStyle(0xfe019a); break;
-        case 'RED' : this.bgSquare.setFillStyle(0xff0000); break;
-        case 'GREEN' : this.bgSquare.setFillStyle(0x00ff00); break;
-        case 'BLUE' : this.bgSquare.setFillStyle(0x0000ff); break;
-        case 'NONE' : this.bgSquare.setVisible(false); break;
-        default: break;
-      }
-    }
+    // public setVisible(value: boolean): this {
+    //   super.setVisible(value);
+    //   this.blockSprite?.setVisible(value);
+    //   return this;
+    // }
+
+    // public setAlpha(alpha: number): this {
+    //   super.setAlpha(alpha);
+    //   this.blockSprite?.setAlpha(alpha);
+    //   return this;
+    // }
+
+    // public setDepth(depth: number): this {
+    //   super.setDepth(depth);
+    //   this.blockTexture?.setDepth(depth-1);
+    //   return this;
+    // }
+
+    // public setBgSquareColour(colour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE') {
+    //   if (this.bgBlock) {
+    //     this.bgBlock.setVisible(true);
+    //     switch (colour) {
+    //       case 'PINK': this.bgBlock.setTexture(PINK_BLOCK); break;
+    //       case 'RED' : this.bgBlock.setTexture(RED_BLOCK); break;
+    //       case 'GREEN' : this.bgBlock.setTexture(GREEN_BLOCK); break;
+    //       case 'BLUE' : this.bgBlock.setTexture(BLUE_BLOCK); break;
+    //       case 'NONE' : this.bgBlock.setVisible(false); break;
+    //       default: break;
+    //     }
+    //   }
+    // }
 
     public setGridPosition(row: number, col: number, customOnComplete?: () => any | undefined, keepOldObject = false, tweenDuration = 100, customEase = 'linear') {
       // store our old row and column
@@ -126,13 +155,14 @@ export class GridObject extends Phaser.GameObjects.Sprite {
 
     destroy() {
       super.destroy();
-      this.bgSquare.destroy();
+      // this.bgSquare.destroy();
+      this.blockSprite?.destroy();
     }
 
   
     update(): void {
       // make sure bg square follows this object
-      this.bgSquare.setPosition(this.x, this.y);
+      this.blockSprite?.setPosition(this.x, this.y);
     }
   }
   

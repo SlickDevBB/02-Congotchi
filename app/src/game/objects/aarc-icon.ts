@@ -26,7 +26,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     private initRadius = 0;
     private initHeight = 0;
     private initWidth = 0;
-    private badgeBG?: Phaser.GameObjects.Arc | 0;
+    // private badgeBG?: Phaser.GameObjects.Arc | 0;
     private badgeText: Phaser.GameObjects.Text | 0;
     private iconToCircleRatio;
     private badgeOffset = 0;
@@ -59,16 +59,17 @@ export class AarcIcon extends Phaser.GameObjects.Image {
             this.icon.displayWidth = this.icon.displayHeight * (this.initWidth/this.initHeight);
             this.icon.setDepth(DEPTH_PLAYER_ICON_IMAGES+100);
             this.icon.setAlpha(1);
+            this.icon.setScrollFactor(0);
         }
 
-        this.badgeBG = this.scene.add.circle(
-            this.x + radius*this.badgeOffset,
-            this.y + radius*this.badgeOffset,
-            radius*1.05,
-            0x000000,
-            1)
-            .setOrigin(0.5,0.5)
-            .setDepth(DEPTH_PLAYER_ICON_IMAGES+1)
+        // this.badgeBG = this.scene.add.circle(
+        //     this.x + radius*this.badgeOffset,
+        //     this.y + radius*this.badgeOffset,
+        //     radius*1.05,
+        //     0x000000,
+        //     1)
+        //     .setOrigin(0.5,0.5)
+        //     .setDepth(DEPTH_PLAYER_ICON_IMAGES+1)
 
         // add a badge if set to true in constructor
         if (useBadge) {
@@ -80,8 +81,9 @@ export class AarcIcon extends Phaser.GameObjects.Image {
                     fontSize: (radius*1.1).toString() + 'px',
                     fontFamily: 'Arial',
                     color: '#ffffff',
-                });
-            this.badgeText.setStroke('#000000', radius*0.1);
+                })
+                .setScrollFactor(0);
+            this.badgeText.setStroke('#000000', radius*0.25);
         } else {
             // this.badgeBG = 0;
             this.badgeText = 0;
@@ -97,8 +99,16 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     public setVisible(value: boolean): this {
         super.setVisible(value);
         if (this.icon) this.icon.setVisible(value);
-        if (this.badgeBG) this.badgeBG.setVisible(value);
+        // if (this.badgeBG) this.badgeBG.setVisible(value);
         if (this.badgeText) this.badgeText.setVisible(value);
+        return this;
+    }
+
+    public setAlpha(value: number): this {
+        super.setAlpha(value);
+        if (this.icon) this.icon.setAlpha(value);
+        // if (this.badgeBG) this.badgeBG.setVisible(value);
+        if (this.badgeText) this.badgeText.setAlpha(value);
         return this;
     }
 
@@ -106,12 +116,12 @@ export class AarcIcon extends Phaser.GameObjects.Image {
         if (looksEnabled) {
             this.setAlpha(ALPHA);
             if (this.icon) this.icon.setAlpha(1);
-            if (this.badgeBG) this.badgeBG.setAlpha(ALPHA);
+            // if (this.badgeBG) this.badgeBG.setAlpha(ALPHA);
             if (this.badgeText) this.badgeText.setAlpha(1);
         } else {
             this.setAlpha(ALPHA*0.35);
             if (this.icon) this.icon.setAlpha(0.35);
-            if (this.badgeBG) this.badgeBG.setAlpha(ALPHA*0.35);
+            // if (this.badgeBG) this.badgeBG.setAlpha(ALPHA*0.35);
             if (this.badgeText) this.badgeText.setAlpha(0.35);
         }
     }
@@ -158,7 +168,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     public setPosition(x: number, y: number) {
         super.setPosition(x,y);
         if (this.icon) this.icon.setPosition(x,y);
-        if (this.badgeBG) this.badgeBG.setPosition(x+this.initRadius*this.badgeOffset,y+this.initRadius*this.badgeOffset);
+        // if (this.badgeBG) this.badgeBG.setPosition(x+this.initRadius*this.badgeOffset,y+this.initRadius*this.badgeOffset);
         if (this.badgeText) this.badgeText.setPosition(x+this.initRadius*this.badgeOffset,y+this.initRadius*this.badgeOffset);
         return this;
     }
@@ -168,18 +178,18 @@ export class AarcIcon extends Phaser.GameObjects.Image {
         if (this.badgeText) { 
             this.badgeText.text = Math.trunc(value).toString()
             
-            // show a quick red tween to indicate the badge text has changed
-            const delta = { t: 0 }
-            this.scene.add.tween({
-                targets: delta,
-                duration: 1000,
-                t: 1,
-                onUpdate: () => {
-                    if (this.badgeText) {
-                        this.badgeText.setColor(this.lerpColor("#ff0000", "#ffffff", delta.t));
-                    }
-                }
-            })
+            // // show a quick red tween to indicate the badge text has changed
+            // const delta = { t: 0 }
+            // this.scene.add.tween({
+            //     targets: delta,
+            //     duration: 1000,
+            //     t: 1,
+            //     onUpdate: () => {
+            //         if (this.badgeText) {
+            //             this.badgeText.setColor(this.lerpColor("#ff0000", "#ffffff", delta.t));
+            //         }
+            //     }
+            // })
         }
     }
 
@@ -207,7 +217,7 @@ export class AarcIcon extends Phaser.GameObjects.Image {
     public setDepth(depth: number) {
         super.setDepth(depth);
         if (this.icon) this.icon.setDepth(depth+5);
-        if (this.badgeBG) this.badgeBG.setDepth(depth+2);
+        // if (this.badgeBG) this.badgeBG.setDepth(depth+2);
         if (this.badgeText) this.badgeText.setDepth(depth+3);
         return this;
     }

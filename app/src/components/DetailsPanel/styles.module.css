@@ -14,7 +14,7 @@
 }
 .traitRow p {
   font-size: 1.4rem;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .modifierRow {

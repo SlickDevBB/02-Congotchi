@@ -10,6 +10,7 @@ export class GO_Empty extends GridObject {
 
         // empty objects should just be invisible
         this.setVisible(false);
+        this.blockSprite?.setVisible(false);
     }
 
     update(): void {

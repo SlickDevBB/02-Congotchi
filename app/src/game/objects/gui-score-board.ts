@@ -76,11 +76,13 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
 
     public adjustScore(delta: number) {
         this.score += delta;
+        if (this.score < 0) this.score = 0;
         this.scoreText.text = this.score.toString().padStart(10,'0');
     }
 
     public setScore(score: number) {
         this.score = score;
+        if (this.score < 0) this.score = 0;
         this.scoreText.text = this.score.toString().padStart(10,'0');
     }
 
@@ -104,20 +106,32 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
         }
     }
 
-    public showLevelOverResults() {
-        // tween the scoreboard into middle of screen
-        this.scene.add.tween({
-            targets: [this],
-            x: getGameWidth(this.scene)*0.5,
-            y: getGameHeight(this.scene)*0.5,
-            displayWidth: getGameWidth(this.scene)*0.75,
-            displayHeight: getGameWidth(this.scene)*0.25,
-            duration: 250,
-        });
-
-        // call the main game scene and tell it the results of the finished level
-        (this.scene as GameScene).handleLevelResults(this.level, this.score, this.stars);
+    public getLevel() {
+        return this.level;
     }
+
+    public getScore() {
+        return this.score;
+    }
+
+    public getStarScore() {
+        return this.stars;
+    }
+
+    // public showLevelOverResults() {
+    //     // tween the scoreboard into middle of screen
+    //     this.scene.add.tween({
+    //         targets: [this],
+    //         x: getGameWidth(this.scene)*0.5,
+    //         y: getGameHeight(this.scene)*0.5,
+    //         displayWidth: getGameWidth(this.scene)*0.75,
+    //         displayHeight: getGameWidth(this.scene)*0.25,
+    //         duration: 250,
+    //     });
+
+    //     // call the main game scene and tell it the results of the finished level
+    //     (this.scene as GameScene).handleLevelResults(this.level, this.score, this.stars);
+    // }
 
     public resetScore() {
         this.setScore(0);

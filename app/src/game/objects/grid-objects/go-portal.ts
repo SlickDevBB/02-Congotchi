@@ -1,17 +1,8 @@
 // grid-object-base-class.ts - base class for all grid objects
 
 import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
-import { PORTAL_OPEN, SOUND_CONGA, SOUND_POP, SOUND_PORTAL_OPEN } from 'game/assets';
+import { PORTAL_CLOSED, PORTAL_OPEN, SOUND_CONGA, SOUND_POP, SOUND_PORTAL_OPEN } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
-import { DEPTH_GO_PORTAL } from 'game/helpers/constants';
-
-// interface Congotchi {
-//     gotchi: GO_Gotchi;
-//     newRow: number;
-//     newCol: number;
-//     newDir: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
-//     status: 'READY' | 'CONGOTCHING';
-// }
   
 export class GO_Portal extends GridObject {
     private status: 'OPEN' | 'CLOSED' = 'CLOSED';
@@ -19,7 +10,6 @@ export class GO_Portal extends GridObject {
     private gotchiChains: Array<GO_Gotchi>[] = [];
 
     private musicConga?: Phaser.Sound.HTML5AudioSound;
-    // private congaMusicPlaying = false;
 
     private congaCounter = 0;
     private jumpCounter = 0;
@@ -41,37 +31,11 @@ export class GO_Portal extends GridObject {
 
     // our constructor
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
-        super({scene, gridLevel, gridRow, gridCol, key, gridSize,objectType: 'PORTAL'});
+        super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType: 'PORTAL'});
 
-        // save our gridlevel
-        this.gridLevel = gridLevel;  
-        this.gridSize = gridSize;
-        this.objectType = objectType;
-
-        // set our background colour
-        this.setBgSquareColour('BLUE');
-        
-        // set our grid position
-        this.gridPosition = {row: gridRow, col: gridCol };
-
-        // lets set our origin about our base point
-        this.setOrigin(0.5, 0.5);
-
-        // physics
-        this.scene.physics.world.enable(this);
-  
-        // set to size of grids from game
-        this.setDisplaySize(gridSize*.8, gridSize*.8);
-
-        // set a specific depth
-        this.setDepth(DEPTH_GO_PORTAL);
-
-        // add to the scene
-        this.scene.add.existing(this);
-
-        // enable draggable input
-        this.setInteractive();
-        this.scene.input.setDraggable(this);
+        // Set the block sprite
+        this.blockSprite?.setTexture(PORTAL_CLOSED);
+        this.blockSprite?.setDisplaySize(this.gridSize*0.8, this.gridSize*0.8);
 
         // add sound and conga music
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
@@ -83,8 +47,6 @@ export class GO_Portal extends GridObject {
         this.on('pointerdown', () => {
             // get the time and grid we clicked in
             this.timer = new Date().getTime();
-            
-            console.log(this);
         });
 
         // set behaviour for pointer up event
@@ -92,29 +54,30 @@ export class GO_Portal extends GridObject {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // this is where we can open a portal if we have enough portal points
-                const gameScene = this.scene as GameScene;
-                const player = gameScene.getPlayer();
+                // this is where we can open a portal if we have actions left
+                if (this.gridLevel.getActionsRemaining() > 0) {
+                    // store the grid position pointer was lefted in finished in
+                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
 
-                if (gameScene && player) {
-                    if (player.getStat('INTERACT_BLUE') > 0) {
-                        // store the grid position pointer was lefted in finished in
-                        const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
+                    // only perform if we're still in the same grid
+                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col && this.status === 'CLOSED') {
+                        // check the status and set to opposite
+                        this.setStatus('OPEN');
 
-                        // show arrows only if we're still in the same grid as when the pointer went down
-                        if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
-                            // check the status and set to opposite
-                            this.setStatus(this.status === 'CLOSED' ? 'OPEN' : 'CLOSED');
+                        // reduce actions remaining
+                        this.gridLevel.adjustActionsRemaining(-1);
 
-                            // adjust blue interact stat
-                            player.adjustStat('INTERACT_BLUE', -1);
-
-                            // play sound based on status
-                            if (this.status === 'OPEN') this.soundInteract?.play();
-                            else this.soundInteract?.stop();
+                        // score points for opening a portal
+                        if (this.player) {
+                            this.gui?.adjustScoreWithAnim(this.player.getStat('PORTAL_OPEN'), this.x, this.y);
+                            this.player.animStat('PORTAL_OPEN');
                         }
+
+                        // play sound based on status
+                        this.soundInteract?.play();
                     }
                 }
+                
             }
         });
 
@@ -128,35 +91,30 @@ export class GO_Portal extends GridObject {
 
         // set behaviour for dragging
         this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-            const gameScene = this.scene as GameScene;
-            const player = gameScene.getPlayer();
+            // if we've got movement points left we can drag
+            if (this.gridLevel.getActionsRemaining() > 0) {
+                // only drag objects into grids they have space for
+                const gp = this.getGridPosition();
+                const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
+                const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
+                const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
+                const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
+                
+                const upLimit = aboveEmpty ? this.ogY - this.gridLevel.getGridSize() : this.ogY;
+                const downLimit = belowEmpty ? this.ogY + this.gridLevel.getGridSize() : this.ogY;
+                const leftLimit = leftEmpty ? this.ogX - this.gridLevel.getGridSize() : this.ogX;
+                const rightLimit = rightEmpty ? this.ogX + this.gridLevel.getGridSize() : this.ogX;
 
-            if (gameScene && player) {    
-                // if we've got movement points left we can drag
-                if (player.getStat('MOVE_BLUE') > 0) {
-                    // only drag objects into grids they have space for
-                    const gp = this.getGridPosition();
-                    const aboveEmpty = gp.row > 0 && this.gridLevel.isGridPositionEmpty(gp.row-1, gp.col);
-                    const belowEmpty = gp.row < this.gridLevel.getNumberRows()-1 && this.gridLevel.isGridPositionEmpty(gp.row+1, gp.col);
-                    const leftEmpty = gp.col > 0 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col-1);
-                    const rightEmpty = gp.col < this.gridLevel.getNumberCols()-1 && this.gridLevel.isGridPositionEmpty(gp.row, gp.col+1);
-                    
-                    const upLimit = aboveEmpty ? this.ogY - this.gridLevel.getGridSize() : this.ogY;
-                    const downLimit = belowEmpty ? this.ogY + this.gridLevel.getGridSize() : this.ogY;
-                    const leftLimit = leftEmpty ? this.ogX - this.gridLevel.getGridSize() : this.ogX;
-                    const rightLimit = rightEmpty ? this.ogX + this.gridLevel.getGridSize() : this.ogX;
+                // find out if we're further from original X or Y
+                const deltaX = this.ogX - dragX;
+                const deltaY = this.ogY - dragY;
 
-                    // find out if we're further from original X or Y
-                    const deltaX = this.ogX - dragX;
-                    const deltaY = this.ogY - dragY;
-
-                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                        if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
-                        this.y = this.ogY;
-                    } else {
-                        if (dragY > upLimit && dragY < downLimit) this.y = dragY;
-                        this.x = this.ogX;
-                    }
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (dragX > leftLimit && dragX < rightLimit) this.x = dragX;
+                    this.y = this.ogY;
+                } else {
+                    if (dragY > upLimit && dragY < downLimit) this.y = dragY;
+                    this.x = this.ogX;
                 }
             }
         });
@@ -166,18 +124,13 @@ export class GO_Portal extends GridObject {
             const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
             this.setGridPosition(finalGridPos.row, finalGridPos.col);
 
-            // get the player
-            const player = (this.scene as GameScene).getPlayer();
-    
-            // decrease the players move count
-            if (player) {
-                // check we didn't just end up back in original position
-                if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    player.adjustStat('MOVE_BLUE', -1);
+            // check we didn't just end up back in original position
+            if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                // reduce actions remaining
+                this.gridLevel.adjustActionsRemaining(-1);
 
-                    // play the move sound
-                    this.soundMove?.play();
-                }
+                // play the move sound
+                this.soundMove?.play();
             }
         })
 
@@ -380,6 +333,8 @@ export class GO_Portal extends GridObject {
 
                 // we can now move our conga leader into the portal if he's not burnt
                 if (congaLeader.status === 'READY_TO_CONGA') {
+                    congaLeader.cactiiSpike(-5);
+
                     congaLeader.congaIntoPortal(this.gridPosition.row, this.gridPosition.col);
                     congaLeader.status = 'CONGOTCHING';
 
@@ -399,14 +354,19 @@ export class GO_Portal extends GridObject {
                     // if leader congotching, we should be too unless we got burnt
                     if (leader.status === 'CONGOTCHING') {
                         if (g.status === 'READY_TO_CONGA') {
+                            g.cactiiSpike(-5);    
                             // conga our gotchi into position
-                            g.congaIntoPosition(g.newRow, g.newCol, jumpAtEnd);                
+                            g.congaIntoPosition(g.newRow, g.newCol, jumpAtEnd);               
                         } else if (g.status === 'WAITING') {
+                            g.cactiiSpike(-5);  
                             g.congaStationary(jumpAtEnd);
+                            
                         }
                     } else {
+                        g.cactiiSpike(-5); 
                         g.status = 'WAITING';
                         g.congaStationary(jumpAtEnd);
+                         
                         
                     }
                     if (this.newConga) this.sumCongaGotchis++;
@@ -464,7 +424,7 @@ export class GO_Portal extends GridObject {
 
     public setStatus(status: 'OPEN' | 'CLOSED') {
         this.status = status;
-        if (status === 'OPEN') this.setTexture(PORTAL_OPEN);
+        if (status === 'OPEN') this.blockSprite?.setTexture(PORTAL_OPEN);
         return this;
     }
 

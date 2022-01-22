@@ -1,12 +1,12 @@
 // player.ts - the aavegotchi player chooses to solve puzzles with
 
-import { BLUE_CIRCLE_SHADED, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, MOVE_ICON, PINK_CIRCLE_SHADED, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, } from "game/assets";
+import { BLUE_CIRCLE_SHADED, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, MOVE_ICON, PARTICLE_CONFETTI, PINK_CIRCLE_SHADED, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { GameScene } from "game/scenes/game-scene";
-import { calcStats, Stats } from "helpers/stats";
+import { calcStats, StatPoints } from "helpers/stats";
 import { AavegotchiGameObject } from "types";
-import { AarcIcon, WorldMap } from ".";
+import { AarcIcon, GridLevel, Gui, WorldMap } from ".";
 
 interface Props {
   scene: Phaser.Scene;
@@ -20,28 +20,30 @@ interface Props {
   gotchi?: AavegotchiGameObject | undefined;
 }
 
+interface StatMask {
+  spareMove: number, congaJump: number, greenActivate: number, redActivate: number, 
+  redDamage: number, greenBuff: number, gotchiSave: number, portalOpen: number
+}
+
 export class Player extends Phaser.GameObjects.Sprite {
-  // private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
+  
   public speed = 200;
 
   // object for current stats
-  public currentStats?: Stats;
+  public currentStats?: StatPoints;
 
   // declare all our icons
-  public interactPinkIcon;
-  public movePinkIcon;
+  public spareMoveIcon;
+  public congaJumpIcon;
 
-  public interactRedIcon;
-  public moveRedIcon;
+  public greenActivateIcon;
+  public redActivateIcon;
 
-  public interactBlueIcon;
-  public moveBlueIcon;
+  public redDamageIcon;
+  public greenBuffIcon;
 
-  public interactGreenIcon;
-  public moveGreenIcon;
-
-  public interactIcon;
-  public moveIcon;
+  public gotchiSaveIcon;
+  public portalOpenIcon;
 
   public gotchi;
 
@@ -52,8 +54,17 @@ export class Player extends Phaser.GameObjects.Sprite {
   private world;
   private levelNumber = 1;
 
+  private particleStat?: Array<Phaser.GameObjects.Particles.ParticleEmitterManager> = [];
+  private emitterStat?: Array<Phaser.GameObjects.Particles.ParticleEmitter> = [];
+
+  private gui?: Gui;
+
   // direction variable
   private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
+
+  // stat mask
+  private statMask: StatMask = {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+    redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
 
   constructor({ scene, x, y, key, world, width, height, gotchi }: Props) {
     super(scene, x, y, key);
@@ -103,126 +114,151 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.setDepth(DEPTH_PLAYER);
 
     // input
-    // this.cursorKeys = scene.input.keyboard.createCursorKeys();
     this.scene.add.existing(this);
     this.setDisplaySize(width, height);
-    const iconRadius = this.displayHeight * 0.2;
 
-    // create the question mark and move icon
-    this.interactIcon = new AarcIcon ({
-      scene: this.scene,
-      x: 0,//this.x - this.displayWidth*.5,
-      y: 0,//this.y - iconRadius*4,
-      keyBg: GREY_CIRCLE_SHADED,
-      keyIcon: QUESTION_MARK_ICON,
-      radius: iconRadius*1.5,
-      useBadge: false,
-      numBadge: 0,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.moveIcon = new AarcIcon ({
-      scene: this.scene,
-      x: 0,//this.x - this.displayWidth*.5,
-      y: 0,//this.y - iconRadius*4,
-      keyBg: GREY_CIRCLE_SHADED,
-      keyIcon: MOVE_ICON,
-      radius: iconRadius*1.5,
-      useBadge: false,
-      numBadge: 0,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
+    // create locations for our stat icons in a nice semicircle above our gotchi
+    const RADIUS = getGameWidth(this.scene) * 0.31;
+    const posX = getGameWidth(this.scene) * 0.5;
+    const posY = getGameHeight(this.scene);
+    const iconRadius = getGameHeight(this.scene)*0.0225;
 
     // create our icons
-    this.interactPinkIcon = new AarcIcon ({
+    this.spareMoveIcon = new AarcIcon ({
       scene: this.scene,
-      x: this.x - this.displayWidth*.5,
-      y: this.y - iconRadius*4,
-      keyBg: PINK_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.interactPink,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.movePinkIcon = new AarcIcon ({
-      scene: this.scene,
-      x: this.x + this.displayWidth*.5,
-      y: this.y - iconRadius*4,
-      keyBg: PINK_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.movePink,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.interactRedIcon = new AarcIcon ({
-      scene: this.scene,
-      x: this.x + this.displayWidth,
-      y: this.y - iconRadius*1.33,
-      keyBg: RED_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.interactRed,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.moveRedIcon = new AarcIcon ({
-      scene: this.scene,
-      x: this.x - this.displayWidth,
-      y: this.y - iconRadius*1.33,
-      keyBg: RED_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.moveRed,
-    }).setDepth(DEPTH_PLAYER_ICONS);
-
-    this.interactBlueIcon = new AarcIcon ({
-      scene: this.scene,
-      x: this.x - this.displayWidth,
-      y: this.y + iconRadius*1.33,
+      x: posX - RADIUS * Math.cos(11.25 * 1 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 1 * Math.PI / 180),
       keyBg: BLUE_CIRCLE_SHADED,
       keyIcon: "",
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.currentStats?.interactBlue,
-    }).setDepth(DEPTH_PLAYER_ICONS);
+      numBadge: this.currentStats?.spareMove,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
 
-    this.moveBlueIcon = new AarcIcon ({
+    this.congaJumpIcon = new AarcIcon ({
       scene: this.scene,
-      x: this.x + this.displayWidth,
-      y: this.y + iconRadius*1.33,
+      x: posX - RADIUS * Math.cos(11.25 * 3 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 3 * Math.PI / 180),
       keyBg: BLUE_CIRCLE_SHADED,
       keyIcon: "",
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.currentStats?.moveBlue,
-    }).setDepth(DEPTH_PLAYER_ICONS);
+      numBadge: this.currentStats?.congaJump,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
 
-    this.interactGreenIcon = new AarcIcon ({
+    // left icon
+    this.greenActivateIcon = new AarcIcon ({
       scene: this.scene,
-      x: this.x + this.displayWidth*.5,
-      y: this.y + iconRadius*4,
+      x: posX - RADIUS * Math.cos(11.25 * 5 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 5 * Math.PI / 180),
       keyBg: GREEN_CIRCLE_SHADED,
       keyIcon: "",
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.currentStats?.interactGreen,
-    }).setDepth(DEPTH_PLAYER_ICONS);
+      numBadge: this.currentStats?.greenActivate,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
 
-    this.moveGreenIcon = new AarcIcon ({
+    this.redActivateIcon = new AarcIcon ({
       scene: this.scene,
-      x: this.x - this.displayWidth*.5,
-      y: this.y + iconRadius*4,
+      x: posX - RADIUS * Math.cos(11.25 * 7 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 7 * Math.PI / 180),
+      keyBg: RED_CIRCLE_SHADED,
+      keyIcon: "",
+      radius: iconRadius,
+      useBadge: true,
+      numBadge: this.currentStats?.redActivate,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
+
+    this.redDamageIcon = new AarcIcon ({
+      scene: this.scene,
+      x: posX + RADIUS * Math.cos(11.25 * 7 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 7 * Math.PI / 180),
+      keyBg: RED_CIRCLE_SHADED,
+      keyIcon: "",
+      radius: iconRadius,
+      useBadge: true,
+      numBadge: this.currentStats?.redDamage,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
+
+    this.greenBuffIcon = new AarcIcon ({
+      scene: this.scene,
+      x: posX + RADIUS * Math.cos(11.25 * 5 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 5 * Math.PI / 180),
       keyBg: GREEN_CIRCLE_SHADED,
       keyIcon: "",
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.currentStats?.moveGreen,
-    }).setDepth(DEPTH_PLAYER_ICONS);
+      numBadge: this.currentStats?.greenBuff,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
 
-    // start off with all stats invisible
-    this.setStatsVisible(false);
+    this.gotchiSaveIcon = new AarcIcon ({
+      scene: this.scene,
+      x: posX + RADIUS * Math.cos(11.25 * 3 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 3 * Math.PI / 180),
+      keyBg: PINK_CIRCLE_SHADED,
+      keyIcon: "",
+      radius: iconRadius,
+      useBadge: true,
+      numBadge: this.currentStats?.gotchiSave,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
+
+    this.portalOpenIcon = new AarcIcon ({
+      scene: this.scene,
+      x: posX + RADIUS * Math.cos(11.25 * 1 * Math.PI / 180),
+      y: posY - RADIUS * Math.sin(11.25 * 1 * Math.PI / 180),
+      keyBg: PINK_CIRCLE_SHADED,
+      keyIcon: "",
+      radius: iconRadius,
+      useBadge: true,
+      numBadge: this.currentStats?.portalOpen,
+    })
+    .setDepth(DEPTH_PLAYER_ICONS)
+    .setScrollFactor(0);
+
+    
+    
+    for (let i = 0; i < 8; i++) {
+
+      // make some particles
+      this.particleStat?.push(this.scene.add.particles(PARTICLE_CONFETTI));
+      if (this.particleStat) {
+        this.particleStat[i].setDepth(10000);
+        const shape1 = new Phaser.Geom.Circle(0, 0, iconRadius*1.2);
+
+        this.emitterStat?.push(this.particleStat[i].createEmitter({
+          frame: { frames: [ 'red', 'green', 'blue', 'yellow' ], cycle: false },
+          x: 400,
+          y: 300,
+          scale: { start: getGameWidth(this.scene)*0.0003, end: 0 },
+          blendMode: 'ADD',
+          speed: 2,
+          lifespan: 1500,
+          quantity: 32,
+          frequency: 2000,
+          emitZone: { type: 'edge', source: shape1, quantity: 32, yoyo: false }
+        })
+        .setScrollFactor(0)
+        .stop()
+        )
+      }
+    }
+
+    // start off with all stats invisible and ignore statmask
+    this.setStatsVisible(false, true);
 
   }
 
@@ -237,140 +273,146 @@ export class Player extends Phaser.GameObjects.Sprite {
         gotchi.withSetsNumericTraits[3]);
       
       // set badge numbers for all icons
-      if (this.interactPinkIcon && this.movePinkIcon && this.moveRedIcon && this.interactRedIcon && this.interactBlueIcon && this.moveBlueIcon && this.moveGreenIcon && this.interactGreenIcon) {
-        this.interactPinkIcon.setBadge(this.currentStats.interactPink);
-        this.movePinkIcon.setBadge(this.currentStats.movePink);
+      if (this.spareMoveIcon && this.congaJumpIcon && this.greenActivateIcon && this.redActivateIcon && this.redDamageIcon && this.greenBuffIcon && this.gotchiSaveIcon && this.portalOpenIcon) {
+        this.spareMoveIcon.setBadge(this.currentStats.spareMove);
+        this.congaJumpIcon.setBadge(this.currentStats.congaJump);
 
-        this.interactRedIcon.setBadge(this.currentStats.interactRed);
-        this.moveRedIcon.setBadge(this.currentStats.moveRed);
+        this.greenActivateIcon.setBadge(this.currentStats.greenActivate);
+        this.redActivateIcon.setBadge(this.currentStats.redActivate);
         
-        this.interactGreenIcon.setBadge(this.currentStats.interactGreen);
-        this.moveGreenIcon.setBadge(this.currentStats.moveGreen);
+        this.redDamageIcon.setBadge(this.currentStats.redDamage);
+        this.greenBuffIcon.setBadge(this.currentStats.greenBuff);
 
-        this.interactBlueIcon.setBadge(this.currentStats.interactBlue);
-        this.moveBlueIcon.setBadge(this.currentStats.moveBlue);
+        this.gotchiSaveIcon.setBadge(this.currentStats.gotchiSave);
+        this.portalOpenIcon.setBadge(this.currentStats.portalOpen);
       }
     }
     
   }
 
 
-  // setStatsVisible()
-  public setStatsVisible(visible: boolean) {
-    this.interactIcon.setVisible(visible);
-    this.moveIcon.setVisible(visible);
-    this.interactPinkIcon.setVisible(visible);
-    this.movePinkIcon.setVisible(visible);
-    this.interactRedIcon.setVisible(visible);
-    this.moveRedIcon.setVisible(visible);
-    this.interactBlueIcon.setVisible(visible);
-    this.moveBlueIcon.setVisible(visible);
-    this.interactGreenIcon.setVisible(visible);
-    this.moveGreenIcon.setVisible(visible);
-
-    // get the camera current position
-    const camPos = new Phaser.Math.Vector2(this.scene.cameras.main.scrollX, this.scene.cameras.main.scrollY);
-    const leftPos = new Phaser.Math.Vector2(camPos.x + getGameWidth(this.scene)*0.2, camPos.y + getGameHeight(this.scene)*0.875);
-    const rightPos = new Phaser.Math.Vector2(camPos.x + getGameWidth(this.scene)*0.8, camPos.y + getGameHeight(this.scene)*0.875);
-    const OFFSET = getGameHeight(this.scene)*.075;
-
-    // setup two sides of icons
-    this.interactIcon.setPosition(leftPos.x, leftPos.y);
-    this.interactPinkIcon.setPosition(leftPos.x, leftPos.y - OFFSET);
-    this.interactRedIcon.setPosition(leftPos.x - OFFSET, leftPos.y);
-    this.interactBlueIcon.setPosition(leftPos.x, leftPos.y + OFFSET);
-    this.interactGreenIcon.setPosition(leftPos.x + OFFSET, leftPos.y);
-
-    this.moveIcon.setPosition(rightPos.x, rightPos.y);
-    this.movePinkIcon.setPosition(rightPos.x, rightPos.y - OFFSET);
-    this.moveRedIcon.setPosition(rightPos.x - OFFSET, rightPos.y);
-    this.moveBlueIcon.setPosition(rightPos.x, rightPos.y + OFFSET);
-    this.moveGreenIcon.setPosition(rightPos.x + OFFSET, rightPos.y);
+  // setStatsVisible() depending on mask parameters
+  public setStatsVisible(visible: boolean, ignoreMask: boolean) {
+    if (this.statMask.spareMove > 0 || ignoreMask) this.spareMoveIcon.setVisible(visible);
+    if (this.statMask.congaJump > 0 || ignoreMask) this.congaJumpIcon.setVisible(visible);
+    if (this.statMask.greenActivate > 0 || ignoreMask) this.greenActivateIcon.setVisible(visible);
+    if (this.statMask.redActivate > 0 || ignoreMask) this.redActivateIcon.setVisible(visible);
+    if (this.statMask.redDamage > 0 || ignoreMask) this.redDamageIcon.setVisible(visible);
+    if (this.statMask.greenBuff > 0 || ignoreMask) this.greenBuffIcon.setVisible(visible);
+    if (this.statMask.gotchiSave > 0 || ignoreMask) this.gotchiSaveIcon.setVisible(visible);
+    if (this.statMask.portalOpen > 0 || ignoreMask) this.portalOpenIcon.setVisible(visible);
   }
 
-  // create stat adjustment
-  public adjustStat(stat: 'INTERACT_PINK' | 'MOVE_PINK' | 'MOVE_RED' | 'INTERACT_RED' | 
-  'INTERACT_BLUE' | 'MOVE_BLUE' | 'MOVE_GREEN' | 'INTERACT_GREEN', value: number) {
-    if (this.currentStats) {
+  public setStatsAlpha(alpha: number) {
+    this.spareMoveIcon.setAlpha(alpha);
+    this.congaJumpIcon.setAlpha(alpha);
+    this.greenActivateIcon.setAlpha(alpha);
+    this.redActivateIcon.setAlpha(alpha);
+    this.redDamageIcon.setAlpha(alpha);
+    this.greenBuffIcon.setAlpha(alpha);
+    this.gotchiSaveIcon.setAlpha(alpha);
+    this.portalOpenIcon.setAlpha(alpha);
+  }
+
+  // setStatMask() hides certain stats 
+  public setStatMask(statMask: StatMask) {
+    this.statMask = statMask;
+  }
+
+  // this function will animate a given stat sphere if not masked
+  public animStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_ACTIVATE' | 
+  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'PORTAL_OPEN') {
+
+    const duration = 1500;
+
+    if (this.currentStats && this.emitterStat) {
       switch (stat) {
-        case 'INTERACT_PINK': {
-          this.currentStats.interactPink += Math.floor(value);
-          this.interactPinkIcon.setBadge(this.currentStats.interactPink);
+        case 'SPARE_MOVE': {
+          if (this.statMask.spareMove === 0) break;
+          this.emitterStat[0].setPosition(this.spareMoveIcon.x, this.spareMoveIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[0].stop()}, duration);
           break;
         }
-        case 'MOVE_PINK': {
-          this.currentStats.movePink += Math.floor(value);
-          this.movePinkIcon.setBadge(this.currentStats.movePink);
+        case 'CONGA_JUMP': {
+          if (this.statMask.congaJump === 0) break;
+          this.emitterStat[1].setPosition(this.congaJumpIcon.x, this.congaJumpIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[1].stop()}, duration);
           break;
         }
-        case 'MOVE_RED': {
-          this.currentStats.moveRed += Math.floor(value);
-          this.moveRedIcon.setBadge(this.currentStats.moveRed);
+        case 'GREEN_ACTIVATE': {
+          if (this.statMask.greenActivate === 0) break;
+          this.emitterStat[2].setPosition(this.greenActivateIcon.x, this.greenActivateIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[2].stop()}, duration);
           break;
         }
-        case 'INTERACT_RED': {
-          this.currentStats.interactRed += Math.floor(value);
-          this.interactRedIcon.setBadge(this.currentStats.interactRed);
+        case 'RED_ACTIVATE': {
+          if (this.statMask.redActivate === 0) break;
+          this.emitterStat[3].setPosition(this.redActivateIcon.x, this.redActivateIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[3].stop()}, duration);
           break;
         }
-        case 'INTERACT_BLUE': {
-          this.currentStats.interactBlue += Math.floor(value);
-          this.interactBlueIcon.setBadge(this.currentStats.interactBlue);
+        case 'RED_DAMAGE': {
+          if (this.statMask.redDamage === 0) break;
+          this.emitterStat[4].setPosition(this.redDamageIcon.x, this.redDamageIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[4].stop()}, duration);
           break;
         }
-        case 'MOVE_BLUE': {
-          this.currentStats.moveBlue += Math.floor(value);
-          this.moveBlueIcon.setBadge(this.currentStats.moveBlue);
+        case 'GREEN_BUFF': {
+          if (this.statMask.greenBuff === 0) break;
+          this.emitterStat[5].setPosition(this.greenBuffIcon.x, this.greenBuffIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[5].stop()}, duration);
           break;
         }
-        case 'MOVE_GREEN': {
-          this.currentStats.moveGreen += Math.floor(value);
-          this.moveGreenIcon.setBadge(this.currentStats.moveGreen);
+        case 'GOTCHI_SAVE': {
+          if (this.statMask.gotchiSave === 0) break;
+          this.emitterStat[6].setPosition(this.gotchiSaveIcon.x, this.gotchiSaveIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[6].stop()}, duration);
           break;
         }
-        case 'INTERACT_GREEN': {
-          this.currentStats.interactGreen += Math.floor(value);
-          this.interactGreenIcon.setBadge(this.currentStats.interactGreen);
+        case 'PORTAL_OPEN': {
+          if (this.statMask.portalOpen === 0) break;
+          this.emitterStat[7].setPosition(this.portalOpenIcon.x, this.portalOpenIcon.y).start();
+          setTimeout(() => {if (this.emitterStat) this.emitterStat[7].stop()}, duration);
           break;
         }
       }
     }
   }
 
-  public getStat(stat: 'INTERACT_PINK' | 'MOVE_PINK' | 'MOVE_RED' | 'INTERACT_RED' | 
-  'INTERACT_BLUE' | 'MOVE_BLUE' | 'MOVE_GREEN' | 'INTERACT_GREEN'): number {
+  public getStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_ACTIVATE' | 
+  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'PORTAL_OPEN'): number {
     if (this.currentStats) {
       switch (stat) {
-        case 'INTERACT_PINK': {
-          return this.currentStats?.interactPink;
+        case 'SPARE_MOVE': {
+          return this.currentStats?.spareMove;
           break;
         }
-        case 'MOVE_PINK': {
-          return this.currentStats?.movePink;
+        case 'CONGA_JUMP': {
+          return this.currentStats?.congaJump;
           break;
         }
-        case 'MOVE_RED': {
-          return this.currentStats?.moveRed;
+        case 'GREEN_ACTIVATE': {
+          return this.currentStats?.greenActivate;
           break;
         }
-        case 'INTERACT_RED': {
-          return this.currentStats?.interactRed;
+        case 'RED_ACTIVATE': {
+          return this.currentStats?.redActivate;
           break;
         }
-        case 'INTERACT_BLUE': {
-          return this.currentStats?.interactBlue;
+        case 'RED_DAMAGE': {
+          return this.currentStats?.redDamage;
           break;
         }
-        case 'MOVE_BLUE': {
-          return this.currentStats?.moveBlue;
+        case 'GREEN_BUFF': {
+          return this.currentStats?.greenBuff;
           break;
         }
-        case 'MOVE_GREEN': {
-          return this.currentStats?.moveGreen;
+        case 'GOTCHI_SAVE': {
+          return this.currentStats?.gotchiSave;
           break;
         }
-        case 'INTERACT_GREEN': {
-          return this.currentStats?.interactGreen;
+        case 'PORTAL_OPEN': {
+          return this.currentStats?.portalOpen;
           break;
         }
       }
@@ -414,16 +456,28 @@ export class Player extends Phaser.GameObjects.Sprite {
                 duration: 250,
                 onComplete: () => {
                     this.anims.play('still');
-                    this.setStatsVisible(true);
                 },
             })
         }
     });
+
+    // tween the stats into visibility
+    this.setStatsVisible(true, false);
+    this.setStatsAlpha(0);
+    const dt = {t:0};
+    this.scene.add.tween({
+      targets: dt,
+      t: 1,
+      duration: 500,
+      onUpdate: () => {
+        this.setStatsAlpha(dt.t);
+      },
+    })
   }
 
   public onEndLevel() {
     // hide our stats
-    this.setStatsVisible(false);
+    this.setStatsVisible(false, true);
 
     // tween the player back to the saved map position
     this.scene.add.tween({
