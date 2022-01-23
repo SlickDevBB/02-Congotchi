@@ -16,6 +16,9 @@ export class GO_Gotchi extends GridObject {
     private leader: GridObject | 0 = 0;
     private followers: Array<GridObject | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
     // private gotchi: AavegotchiGameObject;
+    
+    // a variable to show we're a congaleader aimed at a portal
+    private congaLeader = false;
 
     // create arrows which are used to depict direction changes
     private arrows: Array<Phaser.GameObjects.Image> = [];
@@ -29,10 +32,6 @@ export class GO_Gotchi extends GridObject {
 
     // store the active pointer
     private mousePointer: Phaser.Input.Pointer;
-
-    // need a little circle to use as a direction guide
-    private directionGuide: Phaser.GameObjects.Ellipse;
-    private directionLine: Phaser.GameObjects.Line;
 
     // conga side is a variable for tracking which side we conga on
     private congaSide: 'LEFT' | 'RIGHT' = 'LEFT';
@@ -114,166 +113,21 @@ export class GO_Gotchi extends GridObject {
             console.log('My status: ' + this.status);
         })
 
-        // create down arrow
-        this.arrows.push(
-            this.scene.add.image(this.x, this.y+this.gridSize, ARROW_ICON)
-            .setAngle(0)
-            .on('pointerup', () => {
-                // check we've got actions remaining and not already facing down, if so face down
-                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'DOWN') {
-                    // aim down
-                    this.setDirection('DOWN');
-                    
-                    // reduce actions remaining
-                    this.gridLevel.adjustActionsRemaining(-1);
-
-                    // in case we were burnt change status back to 'WAITING'
-                    this.status = 'WAITING';
-
-                    // play the interact sound
-                    this.soundInteract?.play();
-
-                    // hide arrows
-                    this.setRotateArrowsVisible(false);
-                }
-            })
-        );
-
-        // create left arrow
-        this.arrows.push(
-            this.scene.add.image(this.x-this.gridSize, this.y, ARROW_ICON)
-            .setAngle(90)
-            .on('pointerup', () => {
-                // check we've got enough interaction points
-                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'LEFT') {
-                    // aim left
-                    this.setDirection('LEFT');
-                    
-                    // reduce actions remaining
-                    this.gridLevel.adjustActionsRemaining(-1);
-
-                    // in case we were burnt change status back to 'WAITING'
-                    this.status = 'WAITING';
-
-                    // play the interact sound
-                    this.soundInteract?.play();
-
-                    // hide arrows
-                    this.setRotateArrowsVisible(false);
-                }
-            })
-        );
-
-        // create up arrow
-        this.arrows.push(
-            this.scene.add.image(this.x, this.y-this.gridSize, ARROW_ICON)
-            .setAngle(180)
-            .on('pointerup', () => {
-                // check we've got enough interaction points
-                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'UP') {
-                    // aim up
-                    this.setDirection('UP');
-                    
-                    // reduce actions remaining
-                    this.gridLevel.adjustActionsRemaining(-1);
-
-                    // in case we were burnt change status back to 'WAITING'
-                    this.status = 'WAITING';
-
-                    // play the interact sound
-                    this.soundInteract?.play();
-
-                    // hide arrows
-                    this.setRotateArrowsVisible(false);
-                }
-            })
-        );
-
-        // create right arrow
-        this.arrows.push(
-            this.scene.add.image(this.x+this.gridSize, this.y, ARROW_ICON)    
-            .setAngle(-90)
-            .on('pointerup', () => {
-                // check we've got enough interaction points
-                if (this.gridLevel.getActionsRemaining() > 0 && this.getDirection() !== 'RIGHT') {
-                    // aim right
-                    this.setDirection('RIGHT');
-                    
-                    // reduce actions remaining
-                    this.gridLevel.adjustActionsRemaining(-1);
-
-                    // in case we were burnt change status back to 'WAITING'
-                    this.status = 'WAITING';
-
-                    // play the interact sound
-                    this.soundInteract?.play();
-
-                    // hide arrows
-                    this.setRotateArrowsVisible(false);
-                }
-            })    
-        );
-
-        // set some standard arrow values
-        this.arrows.map(arrow => {
-            arrow.setDisplaySize(this.gridSize, this.gridSize)
-            .setDepth(DEPTH_GOTCHI_ICON)
-            .setAlpha(0.75)
-            .setScrollFactor(0)
-            .setVisible(false)
-            .setInteractive()
-            .on('pointerover', () => this.overArrows = true)
-            .on('pointerout', () => this.overArrows = false)
-        })
-
-        // create our direction guide
-        this.directionGuide = this.scene.add.ellipse(this.x, this.y,
-            this.displayWidth*0.12, this.displayWidth*0.12, 0xff00ff)
-            .setDepth(this.depth+1)
-            .setAlpha(0.9)
-            .setScrollFactor(0);
-
-        // create our direction line
-        this.directionLine = this.scene.add.line(
-            0, 
-            0,
-            0,
-            0,
-            0,
-            0,
-            0xff00ff)
-            .setDepth(this.depth+1)
-            .setAlpha(0.9)
-            .setScrollFactor(0);
-
         // set behaviour for pointer click down
         this.on('pointerdown', () => {
-            // get the time at which we clicked
+            // get the time and grid we clicked in
             this.timer = new Date().getTime();
         });
 
         // set behaviour for pointer up event
         this.on('pointerup', () => {
-            // See if we're close to a pointer down event (i.e. a single click occurred)
+            // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // check we've got enough interact points
-                if (this.gridLevel.getActionsRemaining() > 0) {
-                    // store the grid position pointer was lefted in finished in
-                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-
-                    // show arrows only if we're still in the same grid as when the pointer went down
-                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
-                        // we have enough interact points so toggle visible arrow status
-                        this.rotateArrowsVisible = !this.rotateArrowsVisible;
-                    }
-                }
+                // do something on click
+                
             }
         });
-
-        // set behaviour when over gotchi
-        this.on('pointerover', () => { this.overGotchi = true;})
-        this.on('pointerout', () => { this.overGotchi = false;})
 
         // dragstart
         this.on('dragstart', () => {
@@ -416,67 +270,79 @@ export class GO_Gotchi extends GridObject {
         }
     }
 
-    public findLeader() {
-        // start by setting leader to 0
-        this.leader = 0;
-
-        // go to the cell our gotchi is facing and see if there's a gotchi in it
-        let potentialLeader;
-        switch (this.getDirection()) {
-            case 'DOWN': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col); break;
-            case 'LEFT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1); break;
-            case 'UP': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col); break;
-            case 'RIGHT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1); break;
-            default: break;
-        }
-
-        // double check the grid object we found is a gotchi or rofl
-        if (potentialLeader !== 'OUT OF BOUNDS' && (potentialLeader?.getType() === 'GOTCHI' || potentialLeader?.getType() === 'ROFL') && (potentialLeader as GO_Gotchi).status !== 'BURNT') {
-            // check the gotchi/rofl isn't looking straight back at us
-            let lookingAtUs = false;
-            switch (this.getDirection()) {
-                case 'DOWN': if ( (potentialLeader as GO_Gotchi).getDirection() === 'UP') lookingAtUs = true; break;
-                case 'LEFT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'RIGHT') lookingAtUs = true; break;
-                case 'UP': if ( (potentialLeader as GO_Gotchi).getDirection() === 'DOWN') lookingAtUs = true; break;
-                case 'RIGHT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'LEFT') lookingAtUs = true; break;
-                default: break;
-            }
-            if (!lookingAtUs) this.setLeader(potentialLeader as GO_Gotchi);
-            else this.setLeader(0);
-        } else {
-            this.setLeader(0);
-        }
+    public makeCongaLeader(value: boolean) {
+        this.congaLeader = value;
     }
 
-    public findFollowers() {
-        // check each direction to see if there is a gotchi looking at us
-        const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
-        if (downGotchi !== 'OUT OF BOUNDS' &&
-            (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') &&
-            (downGotchi as GO_Gotchi).getDirection() === 'UP') {
-                this.followers[0] = downGotchi;
-        } else this.followers[0] = 0;
+    public isCongaLeader() {
+        return this.congaLeader;
+    }
 
-        const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
-        if (leftGotchi !== 'OUT OF BOUNDS' &&
-            (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') &&
-            (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') {
-                this.followers[1] = leftGotchi;
-        } else this.followers[1] = 0;
+    // public findLeader() {
+    //     // start by setting leader to 0
+    //     this.leader = 0;
 
-        const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
-        if (upGotchi !== 'OUT OF BOUNDS' &&
-            (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') &&
-            (upGotchi as GO_Gotchi).getDirection() === 'DOWN') {
-                this.followers[2] = upGotchi;
-        } else this.followers[2] = 0;
+    //     // go to the cell our gotchi is facing and see if there's a gotchi in it
+    //     let potentialLeader;
+    //     switch (this.getDirection()) {
+    //         case 'DOWN': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col); break;
+    //         case 'LEFT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1); break;
+    //         case 'UP': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col); break;
+    //         case 'RIGHT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1); break;
+    //         default: break;
+    //     }
 
-        const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
-        if (rightGotchi !== 'OUT OF BOUNDS' &&
-            (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') &&
-            (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') {
-                this.followers[3] = rightGotchi;
-        } else this.followers[3] = 0; 
+    //     // double check the grid object we found is a gotchi or rofl
+    //     if (potentialLeader !== 'OUT OF BOUNDS' && (potentialLeader?.getType() === 'GOTCHI' || potentialLeader?.getType() === 'ROFL') && (potentialLeader as GO_Gotchi).status !== 'BURNT') {
+    //         // check the gotchi/rofl isn't looking straight back at us
+    //         let lookingAtUs = false;
+    //         switch (this.getDirection()) {
+    //             case 'DOWN': if ( (potentialLeader as GO_Gotchi).getDirection() === 'UP') lookingAtUs = true; break;
+    //             case 'LEFT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'RIGHT') lookingAtUs = true; break;
+    //             case 'UP': if ( (potentialLeader as GO_Gotchi).getDirection() === 'DOWN') lookingAtUs = true; break;
+    //             case 'RIGHT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'LEFT') lookingAtUs = true; break;
+    //             default: break;
+    //         }
+    //         if (!lookingAtUs) this.setLeader(potentialLeader as GO_Gotchi);
+    //         else this.setLeader(0);
+    //     } else {
+    //         this.setLeader(0);
+    //     }
+    // }
+
+    // public findFollowers() {
+    //     // check each direction to see if there is a gotchi looking at us
+    //     const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
+    //     if (downGotchi !== 'OUT OF BOUNDS' &&
+    //         (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') &&
+    //         (downGotchi as GO_Gotchi).getDirection() === 'UP') {
+    //             this.followers[0] = downGotchi;
+    //     } else this.followers[0] = 0;
+
+    //     const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
+    //     if (leftGotchi !== 'OUT OF BOUNDS' &&
+    //         (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') &&
+    //         (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') {
+    //             this.followers[1] = leftGotchi;
+    //     } else this.followers[1] = 0;
+
+    //     const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
+    //     if (upGotchi !== 'OUT OF BOUNDS' &&
+    //         (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') &&
+    //         (upGotchi as GO_Gotchi).getDirection() === 'DOWN') {
+    //             this.followers[2] = upGotchi;
+    //     } else this.followers[2] = 0;
+
+    //     const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
+    //     if (rightGotchi !== 'OUT OF BOUNDS' &&
+    //         (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') &&
+    //         (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') {
+    //             this.followers[3] = rightGotchi;
+    //     } else this.followers[3] = 0; 
+    // }
+
+    public findLeaders() {
+        // check each 
     }
 
     public setLeader(leader: GO_Gotchi | 0) {
@@ -797,40 +663,128 @@ export class GO_Gotchi extends GridObject {
 
     destroy() {
         super.destroy();
-        this.directionGuide.destroy();
-        this.directionLine.destroy();
         this.arrows.map(arrow => arrow.destroy());
         this.blockSprite?.destroy();
     }
 
-    public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
-        // call our recursive function
-        this.getCongaChain(gotchiChain);
-    }
+    // public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
+    //     // call our recursive function
+    //     this.getCongaChain(gotchiChain);
+    // }
 
     // get conga chain
-    private getCongaChain(gotchiChain: Array<GO_Gotchi>) {
-        // for each follower that is a gotchi add them to the chain and call their followers too
-        if (this.followers[0] && (this.followers[0] as GO_Gotchi).status !== 'BURNT') {
-            // add to the gotchi chain and check the follower for followers
-            gotchiChain.push((this.followers[0] as GO_Gotchi));
-            (this.followers[0] as GO_Gotchi).getCongaChain(gotchiChain);
+    public getCongaChain(gotchiChain: Array<GO_Gotchi>) {
+        // first establish what followers this gotchi has that do not currently have leaders and are leaders/rofl's
+
+        // check down
+        const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
+        if (downGotchi !== 'OUT OF BOUNDS' && 
+            (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') &&
+            (downGotchi as GO_Gotchi).getLeader() === 0 &&
+            !(downGotchi as GO_Gotchi).isCongaLeader() ) {
+            // give us a new gotchi follower
+            this.followers[0] = downGotchi;
+
+            // give that follower a leader
+            (downGotchi as GO_Gotchi).setLeader(this);
+
+            // add this gotchi to the gotchi chain
+            gotchiChain.push((downGotchi as GO_Gotchi));
+
+            // call get conga chain on this gotchi
+            (downGotchi as GO_Gotchi).getCongaChain(gotchiChain);
         }
-        if (this.followers[1] && (this.followers[1] as GO_Gotchi).status !== 'BURNT') {
-            // add to the gotchi chain and check the follower for followers
-            gotchiChain.push((this.followers[1] as GO_Gotchi));
-            (this.followers[1] as GO_Gotchi).getCongaChain(gotchiChain);
+
+        // check left
+        const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
+        if (leftGotchi !== 'OUT OF BOUNDS' && 
+            (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') &&
+            (leftGotchi as GO_Gotchi).getLeader() === 0 &&
+            !(leftGotchi as GO_Gotchi).isCongaLeader() ) {
+            // give us a new gotchi follower
+            this.followers[1] = leftGotchi;
+
+            // give that follower a leader
+            (leftGotchi as GO_Gotchi).setLeader(this);
+
+            // add this gotchi to the gotchi chain
+            gotchiChain.push((leftGotchi as GO_Gotchi));
+
+            // call get conga chain on this gotchi
+            (leftGotchi as GO_Gotchi).getCongaChain(gotchiChain);
         }
-        if (this.followers[2] && (this.followers[2] as GO_Gotchi).status !== 'BURNT') {
-            // add to the gotchi chain and check the follower for followers
-            gotchiChain.push((this.followers[2] as GO_Gotchi));
-            (this.followers[2] as GO_Gotchi).getCongaChain(gotchiChain);
+
+        // check up
+        const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
+        if (upGotchi !== 'OUT OF BOUNDS' && 
+            (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') &&
+            (upGotchi as GO_Gotchi).getLeader() === 0 &&
+            !(upGotchi as GO_Gotchi).isCongaLeader() ) {
+            // give us a new gotchi follower
+            this.followers[2] = upGotchi;
+
+            // give that follower a leader
+            (upGotchi as GO_Gotchi).setLeader(this);
+
+            // add this gotchi to the gotchi chain
+            gotchiChain.push((upGotchi as GO_Gotchi));
+
+            // call get conga chain on this gotchi
+            (upGotchi as GO_Gotchi).getCongaChain(gotchiChain);
         }
-        if (this.followers[3] && (this.followers[3] as GO_Gotchi).status !== 'BURNT') {
-            // add to the gotchi chain and check the follower for followers
-            gotchiChain.push((this.followers[3] as GO_Gotchi));
-            (this.followers[3] as GO_Gotchi).getCongaChain(gotchiChain);
+
+        // check right
+        const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
+        if (rightGotchi !== 'OUT OF BOUNDS' && 
+            (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') &&
+            (rightGotchi as GO_Gotchi).getLeader() === 0 &&
+            !(rightGotchi as GO_Gotchi).isCongaLeader() ) {
+            // give us a new gotchi follower
+            this.followers[3] = rightGotchi;
+
+            // give that follower a leader
+            (rightGotchi as GO_Gotchi).setLeader(this);
+
+            // add this gotchi to the gotchi chain
+            gotchiChain.push((rightGotchi as GO_Gotchi));
+
+            // call get conga chain on this gotchi
+            (rightGotchi as GO_Gotchi).getCongaChain(gotchiChain);
         }
+
+        // // for each follower that is a gotchi add them to the chain and call their followers too
+        // if (this.followers[0] && 
+        //     (this.followers[0].getType() === 'GOTCHI' || this.followers[0].getType() === 'ROFL') && 
+        //     (this.followers[0] as GO_Gotchi).status !== 'BURNT' &&
+        //     (this.followers[0] as GO_Gotchi).getLeader() === 0) {
+        //     // add to the gotchi chain and check the follower for followers
+        //     gotchiChain.push((this.followers[0] as GO_Gotchi));
+        //     (this.followers[0] as GO_Gotchi).getCongaChain(gotchiChain);
+        // }
+        // if (this.followers[1] && 
+        //     (this.followers[1].getType() === 'GOTCHI' || this.followers[1].getType() === 'ROFL') && 
+        //     (this.followers[1] as GO_Gotchi).status !== 'BURNT' &&
+        //     (this.followers[1] as GO_Gotchi).getLeader() === 0) {
+        //     // add to the gotchi chain and check the follower for followers
+        //     gotchiChain.push((this.followers[1] as GO_Gotchi));
+        //     (this.followers[1] as GO_Gotchi).getCongaChain(gotchiChain);
+        // }
+        // if (this.followers[2] && 
+        //     (this.followers[2].getType() === 'GOTCHI' || this.followers[2].getType() === 'ROFL') && 
+        //     (this.followers[2] as GO_Gotchi).status !== 'BURNT' &&
+        //     (this.followers[2] as GO_Gotchi).getLeader() === 0) {
+        //     // add to the gotchi chain and check the follower for followers
+        //     gotchiChain.push((this.followers[2] as GO_Gotchi));
+        //     (this.followers[2] as GO_Gotchi).getCongaChain(gotchiChain);
+        // }
+        // if (this.followers[3] && 
+        //     (this.followers[3].getType() === 'GOTCHI' || this.followers[3].getType() === 'ROFL') && 
+        //     (this.followers[3] as GO_Gotchi).status !== 'BURNT' &&
+        //     (this.followers[3] as GO_Gotchi).getLeader() === 0) {
+        //     // add to the gotchi chain and check the follower for followers
+        //     gotchiChain.push((this.followers[3] as GO_Gotchi));
+        //     (this.followers[3] as GO_Gotchi).getCongaChain(gotchiChain);
+        // }
 
     }        
 
@@ -841,50 +795,8 @@ export class GO_Gotchi extends GridObject {
     update(): void {
         super.update(); 
 
-        // update direction guide and line position
-        switch (this.getDirection()) {
-            case 'DOWN': { 
-                this.directionGuide.setPosition(this.x, this.y+this.displayHeight/2); 
-                this.directionLine.setTo(this.x, this.y+this.displayHeight/4, this.x, this.y+this.displayHeight/2);
-                break; 
-            }
-            case 'LEFT': { 
-                this.directionGuide.setPosition(this.x-this.displayWidth/2, this.y); 
-                this.directionLine.setTo(this.x-this.displayWidth/4, this.y, this.x-this.displayWidth/2, this.y);
-                break; 
-            }
-            case 'UP': { 
-                this.directionGuide.setPosition(this.x, this.y-this.displayHeight/2); 
-                this.directionLine.setTo(this.x, this.y-this.displayHeight/4, this.x, this.y-this.displayHeight/2);
-                break; 
-            }
-            case 'RIGHT': { 
-                this.directionGuide.setPosition(this.x+this.displayWidth/2, this.y); 
-                this.directionLine.setTo(this.x+this.displayWidth/4, this.y, this.x+this.displayWidth/2, this.y);
-                break; 
-            }
-        }
-
-        // make sure rotate arrows follow their gotchi
-        if (this.arrows.length === 4) {
-            this.arrows[0].setPosition(this.x, this.y+this.gridSize);
-            this.arrows[1].setPosition(this.x-this.gridSize, this.y);
-            this.arrows[2].setPosition(this.x, this.y-this.gridSize);
-            this.arrows[3].setPosition(this.x+this.gridSize, this.y);
-        }
-
         // make sure particles follow our grid object
         this.emitterConfetti?.setPosition(this.x, this.y);
-
-        // update visibility of all arrows
-        this.arrows.map(arrow => {
-            arrow.setVisible(this.rotateArrowsVisible);
-        })
-
-        // if there is a click hide the arrows of the gotchi
-        if (this.mousePointer.isDown && !this.overArrows && !this.overGotchi) {
-            this.rotateArrowsVisible = false;
-        }
 
         // if the gotchi has burnt status set tint to grey/black
         if (this.status === 'BURNT') {

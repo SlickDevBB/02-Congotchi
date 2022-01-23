@@ -7,10 +7,10 @@
 // 0 = no grid cell
 // 1 = empty grid cell
 
-// 2 = gotchi down
-// 3 = gotchi left
-// 4 = gotchi up
-// 5 = gotchi right
+// 2 = gotchi (direction randomly assigned but doesn't matter in game)
+
+// 3 = portal (always open)
+// 4 = 
 
 // 6 = portal
 
@@ -18,10 +18,12 @@
 // 8 = milkshake
 // 9 = cactii
 
-// 12, 22, 32, 42, 52, 62 = common, uncommon, rare, legendary, mythical, godlike DOWN rofls respectively
-// 13, 23, 33, 43, 53, 63 = common, uncommon, rare, legendary, mythical, godlike LEFT rofls respectively
-// 14, 24, 34, 44, 54, 64 = common, uncommon, rare, legendary, mythical, godlike UP rofls respectively
-// 15, 25, 35, 45, 55, 65 = common, uncommon, rare, legendary, mythical, godlike RIGHT rofls respectively
+// 11 = common rofl
+// 12 = uncommon rofl
+// 13 = rare rofl
+// 14 = legendary rofl
+// 15 = mythical rofl
+// 16 = godlike rofl
 
 export interface LevelConfig {
     levelNumber: number,
@@ -63,9 +65,9 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 1, 2, 1, 1, 0, 0],
         [0, 0, 1, 1, 2, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 2, 1, 0, 0],
+        [0, 0, 1, 1, 2, 1, 1, 0, 0],
         [0, 0, 1, 2, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 6, 1, 1, 0, 0],
+        [0, 0, 1, 1, 3, 1, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
@@ -87,10 +89,10 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 1, 6, 5, 3, 3, 0, 0],
-        [0, 0, 1, 4, 1, 1, 1, 0, 0],
-        [0, 0, 1, 3, 1, 1, 1, 0, 0],
-        [0, 0, 1, 4, 1, 1, 1, 0, 0],
+        [0, 0, 3, 1, 2, 2, 2, 0, 0],
+        [0, 0, 1, 2, 1, 1, 1, 0, 0],
+        [0, 0, 1, 2, 1, 1, 1, 0, 0],
+        [0, 0, 1, 2, 1, 1, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
@@ -110,13 +112,13 @@ export const levels: Array<LevelConfig> = [
         levelNumber: 3,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 6, 0, 0],
-        [0, 5, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 3, 0, 0],
+        [0, 2, 1, 1, 1, 1, 1, 0, 0],
         [0, 0, 1, 1, 1, 2, 1, 0, 0],
         [0, 0, 2, 1, 1, 2, 1, 0, 0],
         [0, 0, 2, 1, 1, 2, 1, 0, 0],
-        [0, 0, 1, 4, 1, 1, 1, 5, 0],
-        [0, 0, 6, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 2, 1, 1, 1, 2, 0],
+        [0, 0, 3, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
@@ -128,7 +130,7 @@ export const levels: Array<LevelConfig> = [
         curvePrevPos: [0.262, 0.395],
         actionsRemaining: 20,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 1, portalOpen: 1}
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // 4: Introduction to milkshakes and gotchi point system
@@ -136,13 +138,13 @@ export const levels: Array<LevelConfig> = [
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 1, 0, 0],
         [0, 0, 0, 1, 1, 1, 0, 0, 0],
-        [0, 1, 1, 1, 3, 1, 1, 1, 0],
-        [0, 1, 3, 1, 8, 8, 1, 1, 0],
-        [0, 0, 3, 1, 1, 1, 1, 0, 0],
-        [0, 0, 4, 1, 2, 2, 4, 0, 0],
-        [0, 0, 5, 1, 1, 6, 1, 0, 0],
-        [0, 0, 0, 1, 1, 4, 0, 0, 0],
-        [0, 0, 1, 3, 8, 3, 2, 0, 0],
+        [0, 1, 1, 2, 1, 1, 1, 1, 0],
+        [0, 1, 2, 1, 4, 4, 1, 1, 0],
+        [0, 0, 2, 1, 1, 1, 1, 0, 0],
+        [0, 0, 2, 1, 2, 2, 2, 0, 0],
+        [0, 0, 2, 1, 1, 3, 1, 0, 0],
+        [0, 0, 0, 1, 1, 2, 0, 0, 0],
+        [0, 0, 1, 2, 2, 2, 2, 0, 0],
         ],
         levelDescription: 
         "Milkshakes! And two moar POINT SPHERES for green blocks this time!" +
@@ -152,22 +154,22 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.12, 0.44],
         curvePrevPos: [0.1, 0.4],
         actionsRemaining: 20,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 1, redActivate: 0, 
-            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // Introduction to getting at least one star to progress
         levelNumber: 5,
         gridObjectLayout: [
-        [0, 0, 0, 1, 4, 1, 0, 0, 0],
-        [0, 0, 1, 3, 1, 1, 1, 0, 0],
-        [0, 1, 3, 0, 8, 0, 1, 1, 0],
-        [0, 1, 2, 0, 2, 0, 2, 1, 0],
-        [0, 2, 4, 1, 6, 5, 8, 5, 0],
+        [0, 0, 0, 1, 2, 1, 0, 0, 0],
+        [0, 0, 1, 2, 1, 1, 1, 0, 0],
+        [0, 1, 2, 0, 4, 0, 1, 1, 0],
+        [0, 1, 2, 0, 1, 0, 2, 1, 0],
+        [0, 2, 2, 1, 3, 1, 2, 2, 0],
         [0, 8, 1, 0, 0, 0, 1, 1, 0],
-        [1, 1, 2, 2, 1, 1, 3, 4, 1],
-        [0, 1, 1, 1, 2, 3, 2, 1, 0],
-        [0, 1, 0, 4, 0, 8, 0, 1, 0],  
+        [4, 1, 2, 2, 1, 1, 2, 1, 4],
+        [0, 1, 1, 1, 2, 2, 2, 1, 0],
+        [0, 1, 0, 4, 0, 2, 0, 1, 0],  
         ],
         levelDescription: "The TREE OF FUD! It sure looks... friendly?" +
         "\n\n" +
@@ -176,8 +178,8 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.075, 0.289],
         curvePrevPos: [0.037, 0.336],
         actionsRemaining: 25,
-        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 0, 
-            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // 6: Introduction to grenades
@@ -186,12 +188,12 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 1, 8, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 1, 1, 2, 1, 1, 0, 0],
-        [0, 1, 1, 7, 2, 1, 1, 3, 0],
-        [0, 1, 1, 1, 2, 1, 1, 3, 0],
-        [0, 1, 1, 1, 4, 1, 1, 1, 0],
-        [0, 5, 5, 2, 5, 1, 6, 1, 0],
-        [0, 1, 1, 7, 1, 1, 1, 1, 0],
-        [0, 0, 1, 1, 7, 1, 1, 0, 0],
+        [0, 1, 1, 5, 2, 1, 1, 2, 0],
+        [0, 1, 1, 1, 2, 1, 1, 2, 0],
+        [0, 1, 1, 1, 2, 1, 1, 1, 0],
+        [0, 2, 2, 2, 2, 1, 3, 1, 0],
+        [0, 1, 1, 5, 1, 1, 1, 1, 0],
+        [0, 0, 1, 1, 5, 1, 1, 0, 0],
         ],
         levelDescription: "Mmm! The mounta... STOP! There's grenades here???" +
         "\n\n" +
@@ -201,21 +203,21 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.044, 0.261],
         curvePrevPos: [0.088, 0.259],
         actionsRemaining: 20,
-        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 0, 
-            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // Introduction to grenade chains
         levelNumber: 7,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 6, 0, 0, 0, 0],
-        [0, 0, 7, 1, 7, 1, 7, 0, 0],
-        [0, 0, 1, 1, 1, 1, 7, 0, 0],
-        [0, 1, 2, 7, 1, 7, 1, 1, 0],
-        [1, 1, 2, 1, 1, 4, 1, 1, 1],
-        [1, 8, 1, 1, 1, 4, 1, 3, 3],
-        [1, 4, 1, 5, 5, 5, 1, 1, 1],
+        [0, 0, 0, 0, 3, 0, 0, 0, 0],
+        [0, 0, 5, 1, 5, 1, 5, 0, 0],
+        [0, 0, 1, 1, 1, 1, 5, 0, 0],
+        [0, 1, 2, 2, 1, 5, 1, 1, 0],
+        [1, 1, 2, 1, 1, 2, 1, 1, 1],
+        [1, 5, 1, 1, 1, 2, 1, 2, 2],
+        [1, 2, 1, 2, 2, 2, 1, 1, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: "We've been floating for aaaages... are we at NORTH BEACH yet? Ooh moar grenades and a red POINT SPHERE!" +
@@ -225,21 +227,21 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.04, 0.06],
         curvePrevPos: [0.03, 0.178],
         actionsRemaining: 20,
-        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 1, 
-            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // 8: Introduction to rofls
         levelNumber: 8,
         gridObjectLayout: [
         [ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0,  0,  1, 12,  14],
-        [ 0,  0,  1,  5,  1,  1,  1,  1,  1],
-        [ 0,  0,  1,  5,  3,  2,  3,  0,  0],
-        [ 0,  0,  3,  2,  1,  3,  1,  0,  0],
-        [ 0,  0,  1,  6,  8,  4,  1,  0,  0],
-        [ 1,  1,  7,  1,  1,  1,  13,  0,  0],
-        [ 1, 12,  1,  0,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0,  0, 1, 11,  11],
+        [ 0,  0,  1,  2,  1,  1,  1,  1,  1],
+        [ 0,  0,  1,  2,  2,  2,  2,  0,  0],
+        [ 0,  0,  2,  1,  1,  2,  1,  0,  0],
+        [ 0,  0,  1,  3,  1,  2,  1,  0,  0],
+        [ 1,  1,  7,  1,  2,  2, 11,  0,  0],
+        [ 1, 11,  1,  0,  0,  0,  0,  0,  0],
         [ 1,  1,  1,  0,  0,  0,  0,  0,  0],
         ],
         levelDescription: "Ahh here we are... NORTH BEACH! A pebbles throw from ROFL REEF..." +
@@ -249,21 +251,21 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.105, 0.095],
         curvePrevPos: [0.085, 0.123],
         actionsRemaining: 20,
-        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 1, 
-            redDamage: 0, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         // 9: Introduction to cactii
         levelNumber: 9,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0,  1, 1, 0],
-        [0, 0, 0, 0, 0, 1, 12, 1, 1],
+        [0, 0, 0, 0, 0, 1, 11, 1, 1],
         [0, 0, 1, 1, 0, 9,  2, 1, 1],
         [0, 2, 1, 1, 1, 1,  2, 1, 0],
-        [1, 2, 9, 9, 1, 1,  1, 0, 0],
-        [1, 3, 1, 5, 5, 4,  2, 0, 0],
-        [1, 1, 1, 1, 9, 2,  1, 0, 0],
-        [0, 5, 1, 1, 0, 1,  6, 1, 0],
+        [1, 2, 6, 6, 1, 1,  1, 0, 0],
+        [1, 2, 1, 2, 2, 2,  2, 0, 0],
+        [1, 1, 1, 1, 6, 2,  1, 0, 0],
+        [0, 2, 1, 1, 0, 1,  3, 1, 0],
         [0, 0, 0, 0, 0, 0,  1, 0, 0],
         ],
         levelDescription: "Ouch! Don't conga past the cact.. OUCH!!" +
@@ -273,21 +275,21 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.18, 0.111],
         curvePrevPos: [0.23, 0.085],
         actionsRemaining: 20,
-        statMask: {spareMove: 1, congaJump: 0, greenActivate: 1, redActivate: 1, 
-            redDamage: 1, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
         levelNumber: 10,
         gridObjectLayout: [
-        [ 0, 0, 0, 1, 4, 1, 0, 0, 0],
-        [ 0, 0, 1, 3, 1, 7, 1, 0, 0],
-        [ 0, 1, 3, 0, 1, 0, 1, 1, 0],
-        [ 0, 1, 7, 0, 1, 0, 2, 1, 0],
-        [ 0, 2, 4, 9, 6, 5, 8, 5, 0],
-        [ 0, 8, 1, 0, 0, 0, 1, 1, 0],
-        [ 1, 1, 2, 2, 1, 9, 3, 4, 1],
-        [ 0, 1, 2, 8, 1, 3, 2, 1, 0],
-        [ 0,12, 0, 4, 0, 1, 0, 1, 0],  
+        [ 0, 0, 0, 1, 2, 1, 0, 0, 0],
+        [ 0, 0, 1, 2, 1, 7, 1, 0, 0],
+        [ 0, 1, 2, 0, 1, 0, 1, 1, 0],
+        [ 0, 1, 2, 0, 1, 0, 2, 1, 0],
+        [ 0, 2, 4, 6, 3, 5, 2, 2, 0],
+        [ 0, 2, 1, 0, 0, 0, 1, 1, 0],
+        [ 1, 1, 2, 2, 1, 2, 2, 2, 1],
+        [ 0, 1, 2, 2, 1, 2, 2, 1, 0],
+        [ 0,11, 0, 2, 0, 1, 0, 1, 0],  
         ],
         levelDescription: "I swear to god... one more level with this smiling tree..." +
         "\n\n" +
@@ -296,7 +298,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.19, 0.23],
         curvePrevPos: [0.165, 0.185],
         actionsRemaining: 35,
-        statMask: {spareMove: 1, congaJump: 1, greenActivate: 1, redActivate: 1, 
-            redDamage: 1, greenBuff: 1, gotchiSave: 1, portalOpen: 1}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
 ];

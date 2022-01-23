@@ -5,7 +5,7 @@ import { PORTAL_CLOSED, PORTAL_OPEN, SOUND_CONGA, SOUND_POP, SOUND_PORTAL_OPEN }
 import { GameScene } from 'game/scenes/game-scene';
   
 export class GO_Portal extends GridObject {
-    private status: 'OPEN' | 'CLOSED' = 'CLOSED';
+    private status: 'OPEN' | 'CLOSED' = 'OPEN';
     private congaLeaders: Array<GO_Gotchi | 0> = [0, 0, 0, 0]; // element 0 is down, 1 is left, 2 is up, 3 is right
     private gotchiChains: Array<GO_Gotchi>[] = [];
 
@@ -34,7 +34,7 @@ export class GO_Portal extends GridObject {
         super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType: 'PORTAL'});
 
         // Set the block sprite
-        this.blockSprite?.setTexture(PORTAL_CLOSED);
+        this.blockSprite?.setTexture(PORTAL_OPEN);
         this.blockSprite?.setDisplaySize(this.gridSize*0.8, this.gridSize*0.8);
 
         // add sound and conga music
@@ -54,29 +54,7 @@ export class GO_Portal extends GridObject {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // this is where we can open a portal if we have actions left
-                if (this.gridLevel.getActionsRemaining() > 0) {
-                    // store the grid position pointer was lefted in finished in
-                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-
-                    // only perform if we're still in the same grid
-                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col && this.status === 'CLOSED') {
-                        // check the status and set to opposite
-                        this.setStatus('OPEN');
-
-                        // reduce actions remaining
-                        this.gridLevel.adjustActionsRemaining(-1);
-
-                        // score points for opening a portal
-                        if (this.player) {
-                            this.gui?.adjustScoreWithAnim(this.player.getStat('PORTAL_OPEN'), this.x, this.y);
-                            this.player.animStat('PORTAL_OPEN');
-                        }
-
-                        // play sound based on status
-                        this.soundInteract?.play();
-                    }
-                }
+                // do something on click
                 
             }
         });
@@ -142,25 +120,25 @@ export class GO_Portal extends GridObject {
         // check each direction to see if there is a gotchi looking at us
         const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
         if (downGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[0] = ((downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') && (downGotchi as GO_Gotchi).getDirection() === 'UP') ? 
+            this.congaLeaders[0] = ((downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') ) ? 
                 (downGotchi as GO_Gotchi) : 0;
         }
 
         const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
         if (leftGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[1] = ((leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') && (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') ? 
+            this.congaLeaders[1] = ((leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') ) ? 
                 (leftGotchi as GO_Gotchi) : 0;
         }
 
         const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
         if (upGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[2] = ((upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') && (upGotchi as GO_Gotchi).getDirection() === 'DOWN') ? 
+            this.congaLeaders[2] = ((upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') ) ? 
                 (upGotchi as GO_Gotchi) : 0;
         }
 
         const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
         if (rightGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[3] = ((rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') && (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') ? 
+            this.congaLeaders[3] = ((rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') ) ? 
                 (rightGotchi as GO_Gotchi) : 0;
         }
 
@@ -208,11 +186,22 @@ export class GO_Portal extends GridObject {
         }
     }
 
-    // this code should run every single update loop of the grid level
-    // returns TRUE if a conga is run, returns FALSE if no conga is run
-    public runCongaChains() {
+    // function to clear leaders of all gotchis
+    public clearLeaders() {
+        // for every gotchi in level check what's around it
+        this.gridLevel.getGridCells().map(row => row.map( cell => {
+          if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
+            (cell.gridObject as GO_Gotchi).setLeader(0);
+          }
+        }));
+      }
 
-        // find all gotchis adjacent the portal
+    // this runs whenever a conga isn't happening
+    public runCongaChains() {
+        // clear all the leaders of all gotchis
+        this.clearLeaders();
+
+        // find all gotchis adjacent this portal
         this.findCongaLeaders();
 
         ////////////////////////////////////////////////////////////////////////////////////////
@@ -232,8 +221,11 @@ export class GO_Portal extends GridObject {
                 // First set leader status to ready
                 congaLeader.status = 'READY_TO_CONGA';
 
+                // make the congaleader a conga leader
+                congaLeader.makeCongaLeader(true);
+
                 // calc up gotchi chain
-                congaLeader.calcCongaChain(this.gotchiChains[i]);
+                congaLeader.getCongaChain(this.gotchiChains[i]);
 
                 // go through conga chain and assign the congotchis new positions to target.
                 this.gotchiChains[i].map( g => {
@@ -282,6 +274,12 @@ export class GO_Portal extends GridObject {
         // THIRD PASS - Re-evaluate the gotchi chains taking into account burnt ones
         ////////////////////////////////////////////////////////////////////////////////////
 
+        // clear all the leaders of all gotchis
+        this.clearLeaders();
+
+        // find all gotchis adjacent this portal
+        this.findCongaLeaders();
+
         // go through each possible conga leader
         for (let i = 0; i < 4; i++) {
             // create a local conga leader const
@@ -295,8 +293,11 @@ export class GO_Portal extends GridObject {
                 // First set leader status to ready
                 congaLeader.status = 'READY_TO_CONGA';
 
+                // make the congaleader a conga leader
+                congaLeader.makeCongaLeader(true);
+
                 // calc up gotchi chain
-                congaLeader.calcCongaChain(this.gotchiChains[i]);
+                congaLeader.getCongaChain(this.gotchiChains[i]);
 
                 // go through conga chain and assign the congotchis new positions to target.
                 this.gotchiChains[i].map( g => {

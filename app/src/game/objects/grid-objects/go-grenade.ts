@@ -45,23 +45,8 @@ export class GO_Grenade extends GridObject {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // check we've got enough interact points
-                if (this.gridLevel.getActionsRemaining() > 0) {
-                    // store the grid position pointer was lefted in finished in
-                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-
-                    // show arrows only if we're still in the same grid as when the pointer went down
-                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
-                        // reduce actions remaining
-                        this.gridLevel.adjustActionsRemaining(-1);
-
-                        // we have enough so make bomb explode
-                        this.explode();
-
-                        // play the interact sound
-                        this.soundInteract?.play();
-                    }
-                }
+                // do something on click
+                
             }
         });
 

@@ -5,12 +5,12 @@ import { GO_Gotchi, GridLevel } from 'game/objects';
 import { GO_Gotchi_Props } from './go-gotchi';
 
 export interface GO_Rofl_Props extends GO_Gotchi_Props {
-    rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'GODLIKE';
+    rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'MYTHICAL' | 'GODLIKE';
 }
 
 export class GO_Rofl extends GO_Gotchi {
   // rofls only real differentiating stat from a gotchi
-  private rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'GODLIKE';
+  private rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'MYTHICAL' | 'GODLIKE';
 
   constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType = 'ROFL', direction, rarity }: GO_Rofl_Props) {
       super({scene, gridLevel, gridRow, gridCol, key, gridSize, objectType, direction});

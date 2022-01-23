@@ -158,32 +158,14 @@ export class GridLevel {
                 gridRectangle: this.makeRectangle(i,j)}
               break;
             }
-            // DOWN GOTCHI
+            // GOTCHI
             case 2: {
-              // call our local gotchi ggenerator
-              this.generateGridCellGotchi('DOWN', i, j);
-              break;
-            }
-            // LEFT GOTCHI
-            case 3: {
-              // call our local gotchi ggenerator
-              this.generateGridCellGotchi('LEFT', i, j);  
-              break;
-            }
-            // UP GOTCHI
-            case 4: {
-              // call our local gotchi ggenerator
-              this.generateGridCellGotchi('UP', i, j);          
-              break;
-            }
-            // RIGHT GOTCHI
-            case 5: {
-              // call our local gotchi ggenerator
-              this.generateGridCellGotchi('RIGHT', i, j);
+              // call our local gotchi generator
+              this.generateGridCellGotchi(i, j);
               break;
             }
             // PORTAL
-            case 6: {
+            case 3: {
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
@@ -192,18 +174,8 @@ export class GridLevel {
               }
               break;
             }
-            // GRENADE
-            case 7: {
-              this.gridCells[i][j] = { 
-                row: i, 
-                col: j,
-                gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: RED_BLOCK, gridSize: this.gridSize, objectType: 'GRENADE',}),
-                gridRectangle: this.makeRectangle(i,j),
-              }
-              break;
-            }
             // MILKSHAKE
-            case 8: {
+            case 4: {
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
@@ -212,8 +184,18 @@ export class GridLevel {
               }
               break;
             }
+            // GRENADE
+            case 5: {
+              this.gridCells[i][j] = { 
+                row: i, 
+                col: j,
+                gridObject: new GO_Grenade({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: RED_BLOCK, gridSize: this.gridSize, objectType: 'GRENADE',}),
+                gridRectangle: this.makeRectangle(i,j),
+              }
+              break;
+            }
             // CACTII
-            case 9: {
+            case 6: {
               this.gridCells[i][j] = { 
                 row: i, 
                 col: j,
@@ -222,21 +204,34 @@ export class GridLevel {
               }
               break;
             }
-            // ROFL's
+            // COMMON ROFL
+            case 11: {
+              this.generateGridCellRofl(i, j, 'COMMON');
+              break;
+            }
+            // UNCOMMON ROFL
             case 12: {
-              this.generateGridCellRofl('DOWN', i, j, COMMON_DOWN_ROFL, 'COMMON');
+              this.generateGridCellRofl(i, j, 'UNCOMMON');
               break;
             }
+            // RARE ROFL
             case 13: {
-              this.generateGridCellRofl('LEFT', i, j, COMMON_LEFT_ROFL, 'COMMON');
+              this.generateGridCellRofl(i, j, 'RARE');
               break;
             }
+            // LEGENDARY ROFL
             case 14: {
-              this.generateGridCellRofl('UP', i, j, COMMON_UP_ROFL, 'COMMON');
+              this.generateGridCellRofl(i, j, 'LEGENDARY');
               break;
             }
+            // MYTHIC ROFL
             case 15: {
-              this.generateGridCellRofl('RIGHT', i, j, COMMON_RIGHT_ROFL, 'COMMON');
+              this.generateGridCellRofl(i, j, 'MYTHICAL');
+              break;
+            }
+            // GODLIKE ROFL
+            case 16: {
+              this.generateGridCellRofl(i, j, 'COMMON');
               break;
             }
             default: {
@@ -245,9 +240,6 @@ export class GridLevel {
           }
         }
       }
-
-      // now find all the initial leaders and followers
-      this.setupLeadersAndFollowers();
 
       // init all the grid colours by simply setting their gridobject to themselves
       this.gridCells.map(row => row.map( cell => {
@@ -262,7 +254,17 @@ export class GridLevel {
   }
 
   // helper function to make a new random gotchi
-  private generateGridCellGotchi (direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT', row: number, col: number) {
+  private generateGridCellGotchi (row: number, col: number) {
+    // assign a random direction
+    let direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
+    const rand = Math.floor(Math.random()*4) + 1;
+    switch (rand) {
+      case 1: direction = 'DOWN'; break;
+      case 2: direction = 'LEFT'; break;
+      case 3: direction = 'UP'; break;
+      case 4: direction = 'RIGHT'; break;
+    }
+
     if (this.randomGotchis) {
       // try get a new random gotchi
       let randGotchi = this.randomGotchis[this.randomGotchiCount];
@@ -299,11 +301,21 @@ export class GridLevel {
   }
 
   // helper function to make a new ROFL
-  private generateGridCellRofl(direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT', row: number, col: number, key: string, rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'GODLIKE') {
+  private generateGridCellRofl(row: number, col: number, rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY' | 'MYTHICAL' | 'GODLIKE') {
+    // assign a random direction
+    let direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
+    const rand = Math.floor(Math.random()*4) + 1;
+    switch (rand) {
+      case 1: direction = 'DOWN'; break;
+      case 2: direction = 'LEFT'; break;
+      case 3: direction = 'UP'; break;
+      case 4: direction = 'RIGHT'; break;
+    }
+    
     this.gridCells[row][col] = { 
       row: row, 
       col: col,
-      gridObject: new GO_Rofl({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: BLUE_BLOCK, gridSize: this.gridSize, objectType: 'ROFL', direction: 'DOWN', rarity: 'COMMON'}),
+      gridObject: new GO_Rofl({scene: this.scene, gridLevel: this, gridRow: row, gridCol: col, key: BLUE_BLOCK, gridSize: this.gridSize, objectType: 'ROFL', direction: direction, rarity: rarity}),
       gridRectangle:  this.makeRectangle(row,col)
     }
   }
@@ -605,14 +617,28 @@ export class GridLevel {
   }
 
   // set all the leader/follower relationships
-  public setupLeadersAndFollowers() {
-    // for every gotchi in level check what's around it
-    this.gridCells.map(row => row.map( cell => {
-      if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
-        (cell.gridObject as GO_Gotchi).findLeader();
-        (cell.gridObject as GO_Gotchi).findFollowers();
-      }
-    }));
+  // public setupLeadersAndFollowers() {
+  //   // for every gotchi in level check what's around it
+  //   this.gridCells.map(row => row.map( cell => {
+  //     if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
+  //       (cell.gridObject as GO_Gotchi).findLeader();
+  //       (cell.gridObject as GO_Gotchi).findFollowers();
+  //     }
+  //   }));
+  // }
+
+  // set all the leader/follower relationships
+  // public clearLeaders() {
+  //   // for every gotchi in level check what's around it
+  //   this.gridCells.map(row => row.map( cell => {
+  //     if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
+  //       (cell.gridObject as GO_Gotchi).setLeader(0);
+  //     }
+  //   }));
+  // }
+
+  public getGridCells() {
+    return this.gridCells;
   }
 
   // runCongaPortals() --- checks for gotchis near open portals and congas them in
@@ -651,8 +677,8 @@ export class GridLevel {
 
     // if gotchis are ready (nobody congotching) we can check for available conga lines
     if (!this.isCongaStepRunning()) {
-        // setup all leader and follower relationships for gotchis
-        this.setupLeadersAndFollowers(); 
+        // clear all gotchis leader status
+        // this.clearLeaders();
 
         // conga gotchi lines next to any open portals
         this.runCongaPortals();

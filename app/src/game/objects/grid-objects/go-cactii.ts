@@ -41,29 +41,8 @@ export class GO_Cactii extends GridObject {
             // see if we're close to a pointer down event for a single click
             const delta = new Date().getTime() - this.timer;
             if (delta < 200) {
-                // check we've got action points
-                if (this.gridLevel.getActionsRemaining() > 0) {
-                    // store the grid position pointer finished in
-                    const finalGridPos = this.gridLevel.getGridPositionFromXY(this.x, this.y);
-
-                    // only explode if we're still in the same grid
-                    if (finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col) {
-                        // we have enough so make bomb explode
-                        this.explode();
-
-                        // reduce actions remaining
-                        this.gridLevel.adjustActionsRemaining(-1);
-
-                        // update the score for destroying the cactii and play the stat point anim
-                        if (this.player) {
-                            this.gui?.adjustScoreWithAnim(this.player?.getStat('RED_ACTIVATE'), this.x, this.y)
-                            this.player.animStat('RED_ACTIVATE');
-                        }
-
-                        // play the interact sound
-                        this.soundInteract?.play();
-                    }
-                }
+                // do something on click
+                
             }
         });
 
