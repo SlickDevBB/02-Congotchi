@@ -6,6 +6,7 @@ import { GameScene } from 'game/scenes/game-scene';
 import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI, DEPTH_GO_GOTCHI_BLOCK } from 'game/helpers/constants';
 import { getGameHeight } from 'game/helpers';
 import { GO_Cactii } from './go-cactii';
+import { textChangeRangeIsUnchanged } from 'typescript';
 
 export interface GO_Gotchi_Props extends GO_Props {
     direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
@@ -278,69 +279,6 @@ export class GO_Gotchi extends GridObject {
         return this.congaLeader;
     }
 
-    // public findLeader() {
-    //     // start by setting leader to 0
-    //     this.leader = 0;
-
-    //     // go to the cell our gotchi is facing and see if there's a gotchi in it
-    //     let potentialLeader;
-    //     switch (this.getDirection()) {
-    //         case 'DOWN': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col); break;
-    //         case 'LEFT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1); break;
-    //         case 'UP': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col); break;
-    //         case 'RIGHT': potentialLeader = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1); break;
-    //         default: break;
-    //     }
-
-    //     // double check the grid object we found is a gotchi or rofl
-    //     if (potentialLeader !== 'OUT OF BOUNDS' && (potentialLeader?.getType() === 'GOTCHI' || potentialLeader?.getType() === 'ROFL') && (potentialLeader as GO_Gotchi).status !== 'BURNT') {
-    //         // check the gotchi/rofl isn't looking straight back at us
-    //         let lookingAtUs = false;
-    //         switch (this.getDirection()) {
-    //             case 'DOWN': if ( (potentialLeader as GO_Gotchi).getDirection() === 'UP') lookingAtUs = true; break;
-    //             case 'LEFT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'RIGHT') lookingAtUs = true; break;
-    //             case 'UP': if ( (potentialLeader as GO_Gotchi).getDirection() === 'DOWN') lookingAtUs = true; break;
-    //             case 'RIGHT': if ( (potentialLeader as GO_Gotchi).getDirection() === 'LEFT') lookingAtUs = true; break;
-    //             default: break;
-    //         }
-    //         if (!lookingAtUs) this.setLeader(potentialLeader as GO_Gotchi);
-    //         else this.setLeader(0);
-    //     } else {
-    //         this.setLeader(0);
-    //     }
-    // }
-
-    // public findFollowers() {
-    //     // check each direction to see if there is a gotchi looking at us
-    //     const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
-    //     if (downGotchi !== 'OUT OF BOUNDS' &&
-    //         (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') &&
-    //         (downGotchi as GO_Gotchi).getDirection() === 'UP') {
-    //             this.followers[0] = downGotchi;
-    //     } else this.followers[0] = 0;
-
-    //     const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
-    //     if (leftGotchi !== 'OUT OF BOUNDS' &&
-    //         (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') &&
-    //         (leftGotchi as GO_Gotchi).getDirection() === 'RIGHT') {
-    //             this.followers[1] = leftGotchi;
-    //     } else this.followers[1] = 0;
-
-    //     const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
-    //     if (upGotchi !== 'OUT OF BOUNDS' &&
-    //         (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') &&
-    //         (upGotchi as GO_Gotchi).getDirection() === 'DOWN') {
-    //             this.followers[2] = upGotchi;
-    //     } else this.followers[2] = 0;
-
-    //     const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
-    //     if (rightGotchi !== 'OUT OF BOUNDS' &&
-    //         (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') &&
-    //         (rightGotchi as GO_Gotchi).getDirection() === 'LEFT') {
-    //             this.followers[3] = rightGotchi;
-    //     } else this.followers[3] = 0; 
-    // }
-
     public findLeaders() {
         // check each 
     }
@@ -403,11 +341,6 @@ export class GO_Gotchi extends GridObject {
         return this;
     }
 
-    public setRotateArrowsVisible(visible: boolean) {
-        this.arrows.map(arrow => arrow.setVisible(visible));
-        this.rotateArrowsVisible = visible;
-    }
-
     public setRandomDirection() {
         const rand = Math.floor(Math.random()*4);
         if (rand === 0) this.setDirection('DOWN');
@@ -415,6 +348,23 @@ export class GO_Gotchi extends GridObject {
         else if (rand === 2) this.setDirection('RIGHT');
         else this.setDirection('UP');
         return this;
+    }
+
+    // aimAtGridPosition() does the best job of aiming a gotchi at a certain given grid position.
+    public aimAtGridPosition(row: number, col: number) {
+        // find out the row and column deltas
+        const deltaRow = this.gridPosition.row - row;
+        const deltaCol = this.gridPosition.col - col;
+
+        // if smaller difference in columns than rows its a left/right direction
+        if (Math.abs(deltaRow) < Math.abs(deltaCol)) {
+            if (deltaCol > 0) this.setDirection('LEFT');
+            else this.setDirection('RIGHT');
+        } // or if column delta is less we're up/down (however sometimes we end up with same deltas so just treat up/down as default fallback as well)
+        else {
+            if (deltaRow > 0) this.setDirection('UP');
+            else this.setDirection('DOWN');
+        }
     }
 
     public congaIntoPosition(row: number, col: number, jumpAtEnd: boolean) {
@@ -426,7 +376,7 @@ export class GO_Gotchi extends GridObject {
             row,
             col,
             () => {
-                this.setDirection(this.newDir);
+                // this.setDirection(this.newDir);
                 if (!jumpAtEnd) {
                     setTimeout( () => {
                         this.status = 'WAITING' 
@@ -667,11 +617,6 @@ export class GO_Gotchi extends GridObject {
         this.blockSprite?.destroy();
     }
 
-    // public calcCongaChain(gotchiChain: Array<GO_Gotchi>) {
-    //     // call our recursive function
-    //     this.getCongaChain(gotchiChain);
-    // }
-
     // get conga chain
     public getCongaChain(gotchiChain: Array<GO_Gotchi>) {
         // first establish what followers this gotchi has that do not currently have leaders and are leaders/rofl's
@@ -751,41 +696,6 @@ export class GO_Gotchi extends GridObject {
             // call get conga chain on this gotchi
             (rightGotchi as GO_Gotchi).getCongaChain(gotchiChain);
         }
-
-        // // for each follower that is a gotchi add them to the chain and call their followers too
-        // if (this.followers[0] && 
-        //     (this.followers[0].getType() === 'GOTCHI' || this.followers[0].getType() === 'ROFL') && 
-        //     (this.followers[0] as GO_Gotchi).status !== 'BURNT' &&
-        //     (this.followers[0] as GO_Gotchi).getLeader() === 0) {
-        //     // add to the gotchi chain and check the follower for followers
-        //     gotchiChain.push((this.followers[0] as GO_Gotchi));
-        //     (this.followers[0] as GO_Gotchi).getCongaChain(gotchiChain);
-        // }
-        // if (this.followers[1] && 
-        //     (this.followers[1].getType() === 'GOTCHI' || this.followers[1].getType() === 'ROFL') && 
-        //     (this.followers[1] as GO_Gotchi).status !== 'BURNT' &&
-        //     (this.followers[1] as GO_Gotchi).getLeader() === 0) {
-        //     // add to the gotchi chain and check the follower for followers
-        //     gotchiChain.push((this.followers[1] as GO_Gotchi));
-        //     (this.followers[1] as GO_Gotchi).getCongaChain(gotchiChain);
-        // }
-        // if (this.followers[2] && 
-        //     (this.followers[2].getType() === 'GOTCHI' || this.followers[2].getType() === 'ROFL') && 
-        //     (this.followers[2] as GO_Gotchi).status !== 'BURNT' &&
-        //     (this.followers[2] as GO_Gotchi).getLeader() === 0) {
-        //     // add to the gotchi chain and check the follower for followers
-        //     gotchiChain.push((this.followers[2] as GO_Gotchi));
-        //     (this.followers[2] as GO_Gotchi).getCongaChain(gotchiChain);
-        // }
-        // if (this.followers[3] && 
-        //     (this.followers[3].getType() === 'GOTCHI' || this.followers[3].getType() === 'ROFL') && 
-        //     (this.followers[3] as GO_Gotchi).status !== 'BURNT' &&
-        //     (this.followers[3] as GO_Gotchi).getLeader() === 0) {
-        //     // add to the gotchi chain and check the follower for followers
-        //     gotchiChain.push((this.followers[3] as GO_Gotchi));
-        //     (this.followers[3] as GO_Gotchi).getCongaChain(gotchiChain);
-        // }
-
     }        
 
    public getStatus() {

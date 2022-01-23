@@ -198,15 +198,15 @@ export class GO_Portal extends GridObject {
 
     // this runs whenever a conga isn't happening
     public runCongaChains() {
+        ////////////////////////////////////////////////////////////////////////////////////////
+        // FIRST PASS - determine which gotchis are READY_TO_CONGA (don't worry about line waiting yet)
+        ////////////////////////////////////////////////////////////////////////////////////////
+
         // clear all the leaders of all gotchis
         this.clearLeaders();
 
         // find all gotchis adjacent this portal
         this.findCongaLeaders();
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // FIRST PASS - determine which gotchis are READY_TO_CONGA (don't worry about line waiting yet)
-        ////////////////////////////////////////////////////////////////////////////////////////
 
         // go through each possible conga leader
         for (let i = 0; i < 4; i++) {
@@ -224,6 +224,9 @@ export class GO_Portal extends GridObject {
                 // make the congaleader a conga leader
                 congaLeader.makeCongaLeader(true);
 
+                // for this pass lets aim at the portal
+                congaLeader.aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
+
                 // calc up gotchi chain
                 congaLeader.getCongaChain(this.gotchiChains[i]);
 
@@ -233,7 +236,10 @@ export class GO_Portal extends GridObject {
                     if (leader && leader.status !== 'BURNT') {
                         g.newRow = leader.getGridPosition().row;
                         g.newCol = leader.getGridPosition().col;
-                        g.newDir = leader.getDirection();
+                        // g.newDir = leader.getDirection();
+
+                        // aim in new direction
+                        g.aimAtGridPosition(g.newRow, g.newCol);
 
                         // if gotchi is top priority and not burnt, set status to ready
                         if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && g.status !== 'BURNT') {
@@ -296,6 +302,9 @@ export class GO_Portal extends GridObject {
                 // make the congaleader a conga leader
                 congaLeader.makeCongaLeader(true);
 
+                // for this pass lets aim at the portal
+                // congaLeader.aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
+
                 // calc up gotchi chain
                 congaLeader.getCongaChain(this.gotchiChains[i]);
 
@@ -306,9 +315,12 @@ export class GO_Portal extends GridObject {
                         // if gotchi is top priority and not burnt, set status to ready
                         if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && g.status !== 'BURNT') {
                             g.status = 'READY_TO_CONGA';
+                            // g.aimAtGridPosition(leader.gridPosition.row, leader.gridPosition.col);
                         } else if (g.status !== 'BURNT') {
                             g.status = 'WAITING';
+                            // g.aimAtGridPosition(leader.gridPosition.row, leader.gridPosition.col);
                         }
+
                     } 
                 });
             }

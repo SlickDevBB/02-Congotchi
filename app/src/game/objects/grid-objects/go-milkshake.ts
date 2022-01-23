@@ -5,6 +5,9 @@ import { MILKSHAKE, PIXEL_PINK_SPLASH, SOUND_POP, SOUND_SLURP } from 'game/asset
 import { GameScene } from 'game/scenes/game-scene';
   
 export class GO_Milkshake extends GridObject {
+    // status of milkshake
+    private status: 'ACTIVE' | 'DRANK' = 'ACTIVE';
+
     // timer is for click events
     private timer = 0;
 
@@ -102,42 +105,39 @@ export class GO_Milkshake extends GridObject {
         })
     }
 
-    public quenchThirst() {
-        // go through a 3x3 grid of all objects and find gotchis
-        for (let i = this.gridPosition.row-1; i < this.gridPosition.row + 2; i++) {
-            for (let j = this.gridPosition.col-1; j < this.gridPosition.col + 2; j++) {
-                const go = this.gridLevel.getGridObject(i, j);
-                if (go !== 'OUT OF BOUNDS' && (go.getType() === 'GOTCHI' || go.getType() === 'ROFL')) {
-                    // score some points for feeding a gotchi or rofl
-                    const gotchi = (go as GO_Gotchi);
-                    if (this.player) {
-                        this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_BUFF'), go.x, go.y);
-                        this.player.animStat('GREEN_BUFF');
-                    }
+    public quenchThirst(thirstyGotchis: Array<GO_Gotchi>) {
+        // Set milkshake to drank
+        this.status = 'DRANK';
 
-                    // generate a pink splash image
-                    const explosionImage = this.scene.add.image(
-                        gotchi.x,
-                        gotchi.y,
-                        PIXEL_PINK_SPLASH
-                    )
-                    .setDisplaySize(gotchi.displayWidth, gotchi.displayHeight)
-                    .setDepth(gotchi.depth+1)
-                    .setOrigin(0.5, 0.5)
-                    .setAlpha(1)
-                    .setScrollFactor(0);
-            
-                    this.scene.add.tween({
-                        targets: [explosionImage],
-                        alpha: 0,
-                        duration: 500,
-                        onComplete: () => { 
-                            explosionImage.destroy() 
-                        },
-                    })
-                }
+        // Go through thirstY gotchis and give them all a drink
+        thirstyGotchis.map( gotchi => {
+            // score some points for feeding a gotchi or rofl
+            if (this.player) {
+                this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_BUFF'), gotchi.x, gotchi.y);
+                this.player.animStat('GREEN_BUFF');
             }
-        }
+
+            // generate a pink splash image
+            const explosionImage = this.scene.add.image(
+                gotchi.x,
+                gotchi.y,
+                PIXEL_PINK_SPLASH
+            )
+            .setDisplaySize(gotchi.displayWidth, gotchi.displayHeight)
+            .setDepth(gotchi.depth+10000)
+            .setOrigin(0.5, 0.5)
+            .setAlpha(1)
+            .setScrollFactor(0);
+    
+            this.scene.add.tween({
+                targets: [explosionImage],
+                alpha: 0,
+                duration: 500,
+                onComplete: () => { 
+                    explosionImage.destroy() 
+                },
+            })
+        });
 
         // hide milkshake 
         this.setVisible(false);
@@ -154,6 +154,42 @@ export class GO_Milkshake extends GridObject {
 
     update(): void {
         super.update();
+
+        if (this.status === 'ACTIVE') {
+
+            let drinkTime = false;
+
+            const thirstyGotchis: Array<GO_Gotchi> = [];
+
+            // anytime a milkshake is near a gotchi activate quench thirst
+            const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
+            if (downGotchi !== 'OUT OF BOUNDS' && (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL')) {
+                drinkTime = true;
+                thirstyGotchis.push(downGotchi as GO_Gotchi);
+            }
+
+            const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
+            if (leftGotchi !== 'OUT OF BOUNDS' && (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL')) {
+                drinkTime = true;
+                thirstyGotchis.push(leftGotchi as GO_Gotchi);
+            }
+
+            const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
+            if (upGotchi !== 'OUT OF BOUNDS' && (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL')) {
+                drinkTime = true;
+                thirstyGotchis.push(upGotchi as GO_Gotchi);
+            }
+
+            const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
+            if (rightGotchi !== 'OUT OF BOUNDS' && (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL')) {
+                drinkTime = true;
+                thirstyGotchis.push(rightGotchi as GO_Gotchi);
+            }
+
+            // if drink time quench thirst
+            if (drinkTime) this.quenchThirst(thirstyGotchis);
+        }
+
     }
 }
   
