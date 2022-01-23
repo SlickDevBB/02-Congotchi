@@ -267,7 +267,7 @@ export class GO_Portal extends GridObject {
         }
 
         // As we now know which gotchis are READY_TO_CONGA, detonate any adjacent grenades
-        this.gridLevel.explodeGrenadesNearCongotchis();
+        this.gridLevel.triggerGrenadesNearCongotchis();
 
         ///////////////////////////////////////////////////////////////////////////////////////
         // SECOND PASS - Re-evaluate gotchi chains and set any gotchis behind burnt ones to waiting

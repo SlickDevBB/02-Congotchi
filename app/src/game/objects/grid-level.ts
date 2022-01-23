@@ -561,7 +561,7 @@ export class GridLevel {
     return this.status;
   }
 
-  public explodeGrenadesNearCongotchis() {
+  public triggerGrenadesNearCongotchis() {
     this.gridCells.map(row => row.map (cell => {
       if (cell.gridObject.getType() === 'GRENADE') {
         // go through a 3x3 grid of all objects adjacent grenade
@@ -569,7 +569,7 @@ export class GridLevel {
           for (let j = cell.gridObject.gridPosition.col-1; j < cell.gridObject.gridPosition.col + 2; j++) {
               const go = this.getGridObject(i, j);
               if (go !== 'OUT OF BOUNDS' && go.getType() === 'GOTCHI' && (go as GO_Gotchi).status === 'READY_TO_CONGA') {
-                  (cell.gridObject as GO_Grenade).explode();
+                  (cell.gridObject as GO_Grenade).trigger();
               }
           }
         }

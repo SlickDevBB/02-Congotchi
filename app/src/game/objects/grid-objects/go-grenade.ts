@@ -5,10 +5,15 @@ import { M67_GRENADE, PIXEL_EXPLOSION, SOUND_EXPLOSION, SOUND_POP } from 'game/a
 import { GameScene } from 'game/scenes/game-scene';
 import { GO_Milkshake } from './go-milkshake';
 import { GO_Cactii } from './go-cactii';
+import { getGameHeight, getGameWidth } from 'game/helpers';
   
 export class GO_Grenade extends GridObject {
     // our bomb status
-    private status: 'LIVE' | 'EXPLODED' = 'LIVE';
+    private status: 'LIVE' | 'TRIGGERED' | 'EXPLODED' = 'LIVE';
+
+    // some phaser text for countdown
+    private countdownText?: Phaser.GameObjects.Text;
+    private countdown = 3;
 
     // timer is for click events
     private timer = 0;
@@ -33,6 +38,20 @@ export class GO_Grenade extends GridObject {
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
         this.soundInteract = this.scene.sound.add(SOUND_EXPLOSION, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+
+        // create countdown text
+        const fontHeight = this.displayHeight*0.75;
+        this.countdownText = this.scene.add.text(
+            this.x, 
+            this.y,
+            this.countdown.toString(),
+            { font: fontHeight+'px Courier', color: '#ffcc14' })
+            .setAlign('center')
+            .setStroke('#5e2c00', this.displayHeight*0.1)
+            .setDepth(this.depth+10)
+            .setOrigin(0.5,0.5)
+            .setScrollFactor(0)
+            .setVisible(false);
 
         // set behaviour for pointer click down
         this.on('pointerdown', () => {
@@ -102,13 +121,67 @@ export class GO_Grenade extends GridObject {
 
                 // play the move sound
                 this.soundMove?.play();
+
+                // trigger the bomb!
+                this.trigger();
             }
         })
     }
 
+    // trigger() - use this function to start 3 second countdown on grenade after which time it will explode()
+    public trigger() {
+        // trigger only works with live grenades...
+        if (this.status === 'LIVE') {
+            // change status
+            this.status = 'TRIGGERED';
+
+            // declare duration between 3, 2 and 1
+            const deltaTime = 750;
+            const easeType = 'Quad.easeIn';
+
+            // make text visible and set to 3
+            this.countdownText?.setVisible(true);
+            this.countdownText?.setText('3');
+
+            // Use 3 tweens to show countdown
+            this.scene.add.tween({
+                targets: this.countdownText,
+                alpha: 0,
+                ease: easeType,
+                duration: deltaTime,
+                onComplete: () => {
+                    // reset alpha to 1, set text to 2 and tween fade out
+                    this.countdownText?.setAlpha(1);
+                    this.countdownText?.setText('2');
+                    this.scene.add.tween({
+                        targets: this.countdownText,
+                        alpha: 0,
+                        ease: easeType,
+                        duration: deltaTime,
+                        onComplete: () => {
+                            // reset alpha to 1, set text to 1 and tween fade out again
+                            this.countdownText?.setAlpha(1);
+                            this.countdownText?.setText('1');
+                            this.scene.add.tween({
+                                targets: this.countdownText,
+                                alpha: 0,
+                                ease: easeType,
+                                duration: deltaTime,
+                                onComplete: () => {
+                                    // explode
+                                    this.explode();
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+        }
+    }
+
     public explode() {
         // check grenade hasn't already exploded
-        if (this.status === 'LIVE') {
+        if (this.status !== 'EXPLODED') {
             // change status
             this.status = 'EXPLODED';
 
@@ -178,6 +251,9 @@ export class GO_Grenade extends GridObject {
 
     update(): void {
         super.update();
+
+        // update position of the countdown text
+        this.countdownText?.setPosition(this.x, this.y);
     }
 }
   
