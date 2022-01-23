@@ -70,6 +70,8 @@ export const GREY_CIRCLE_SHADED = 'grey-circle-shaded';
 export const BLACK_SQUARE = 'black_square';
 export const WHITE_SQUARE = 'white_square';
 
+export const GRID_BG_COBBLE_STONES = 'grid_bg_cobble_stones';
+
 export const BLUE_BLOCK = 'blue_block';
 export const RED_BLOCK = 'red_block';
 export const GREEN_BLOCK = 'green_block';
@@ -281,6 +283,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
   {
     key: WHITE_SQUARE,
     src: 'assets/icons/white_square.png',
+    type: 'IMAGE',
+  },
+
+  {
+    key: GRID_BG_COBBLE_STONES,
+    src: 'assets/images/cobble_stones.jpeg',
     type: 'IMAGE',
   },
 

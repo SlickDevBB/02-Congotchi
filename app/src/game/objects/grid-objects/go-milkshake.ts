@@ -109,6 +109,9 @@ export class GO_Milkshake extends GridObject {
         // Set milkshake to drank
         this.status = 'DRANK';
 
+        // play slurp
+        this.soundInteract?.play();
+
         // Go through thirstY gotchis and give them all a drink
         thirstyGotchis.map( gotchi => {
             // score some points for feeding a gotchi or rofl
@@ -130,7 +133,7 @@ export class GO_Milkshake extends GridObject {
             .setScrollFactor(0);
     
             this.scene.add.tween({
-                targets: [explosionImage],
+                targets: [explosionImage, this, this.blockSprite],
                 alpha: 0,
                 duration: 500,
                 onComplete: () => { 
@@ -138,10 +141,6 @@ export class GO_Milkshake extends GridObject {
                 },
             })
         });
-
-        // hide milkshake 
-        this.setVisible(false);
-        this.blockSprite?.setVisible(false);
 
         // I have no idea but i have to do a weird timeout for this to work properly????
         // instantly setting to empty grid object doesn't seem to be recognized
@@ -166,24 +165,28 @@ export class GO_Milkshake extends GridObject {
             if (downGotchi !== 'OUT OF BOUNDS' && (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL')) {
                 drinkTime = true;
                 thirstyGotchis.push(downGotchi as GO_Gotchi);
+                (downGotchi as GO_Gotchi).aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
             }
 
             const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
             if (leftGotchi !== 'OUT OF BOUNDS' && (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL')) {
                 drinkTime = true;
                 thirstyGotchis.push(leftGotchi as GO_Gotchi);
+                (leftGotchi as GO_Gotchi).aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
             }
 
             const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
             if (upGotchi !== 'OUT OF BOUNDS' && (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL')) {
                 drinkTime = true;
                 thirstyGotchis.push(upGotchi as GO_Gotchi);
+                (upGotchi as GO_Gotchi).aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
             }
 
             const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
             if (rightGotchi !== 'OUT OF BOUNDS' && (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL')) {
                 drinkTime = true;
                 thirstyGotchis.push(rightGotchi as GO_Gotchi);
+                (rightGotchi as GO_Gotchi).aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
             }
 
             // if drink time quench thirst

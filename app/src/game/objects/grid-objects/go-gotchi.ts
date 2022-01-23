@@ -301,6 +301,10 @@ export class GO_Gotchi extends GridObject {
         return this.followers;
     }
 
+    public clearFollowers() {
+        this.followers = [];
+    }
+
     public hasFollower() {
         let haveFollower = false;
         this.followers.map( follower => { if (follower) haveFollower = true; });
@@ -626,7 +630,8 @@ export class GO_Gotchi extends GridObject {
         if (downGotchi !== 'OUT OF BOUNDS' && 
             (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') &&
             (downGotchi as GO_Gotchi).getLeader() === 0 &&
-            !(downGotchi as GO_Gotchi).isCongaLeader() ) {
+            !(downGotchi as GO_Gotchi).isCongaLeader() &&
+            (downGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
             // give us a new gotchi follower
             this.followers[0] = downGotchi;
 
@@ -645,7 +650,8 @@ export class GO_Gotchi extends GridObject {
         if (leftGotchi !== 'OUT OF BOUNDS' && 
             (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') &&
             (leftGotchi as GO_Gotchi).getLeader() === 0 &&
-            !(leftGotchi as GO_Gotchi).isCongaLeader() ) {
+            !(leftGotchi as GO_Gotchi).isCongaLeader() &&
+            (leftGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
             // give us a new gotchi follower
             this.followers[1] = leftGotchi;
 
@@ -664,7 +670,8 @@ export class GO_Gotchi extends GridObject {
         if (upGotchi !== 'OUT OF BOUNDS' && 
             (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') &&
             (upGotchi as GO_Gotchi).getLeader() === 0 &&
-            !(upGotchi as GO_Gotchi).isCongaLeader() ) {
+            !(upGotchi as GO_Gotchi).isCongaLeader() &&
+            (upGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
             // give us a new gotchi follower
             this.followers[2] = upGotchi;
 
@@ -683,7 +690,8 @@ export class GO_Gotchi extends GridObject {
         if (rightGotchi !== 'OUT OF BOUNDS' && 
             (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') &&
             (rightGotchi as GO_Gotchi).getLeader() === 0 &&
-            !(rightGotchi as GO_Gotchi).isCongaLeader() ) {
+            !(rightGotchi as GO_Gotchi).isCongaLeader() &&
+            (rightGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
             // give us a new gotchi follower
             this.followers[3] = rightGotchi;
 

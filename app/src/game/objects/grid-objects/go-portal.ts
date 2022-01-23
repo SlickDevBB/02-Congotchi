@@ -117,6 +117,9 @@ export class GO_Portal extends GridObject {
     }
 
     public findCongaLeaders() {
+        // first clear out our congaleaders array
+        this.congaLeaders = [];
+
         // check each direction to see if there is a gotchi looking at us
         const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
         if (downGotchi !== 'OUT OF BOUNDS') {
@@ -188,13 +191,24 @@ export class GO_Portal extends GridObject {
 
     // function to clear leaders of all gotchis
     public clearLeaders() {
-        // for every gotchi in level check what's around it
+        // for every gotchi in level check what's around it and also ensure its not longer a conga leader
         this.gridLevel.getGridCells().map(row => row.map( cell => {
           if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
             (cell.gridObject as GO_Gotchi).setLeader(0);
+            (cell.gridObject as GO_Gotchi).makeCongaLeader(false);
           }
         }));
-      }
+    }
+
+    // function to clear followers
+    public clearFollowers() {
+        // for every gotchi in level call clear followers
+        this.gridLevel.getGridCells().map(row => row.map( cell => {
+            if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
+              (cell.gridObject as GO_Gotchi).clearFollowers();
+            }
+          }));
+    }
 
     // this runs whenever a conga isn't happening
     public runCongaChains() {
@@ -202,8 +216,9 @@ export class GO_Portal extends GridObject {
         // FIRST PASS - determine which gotchis are READY_TO_CONGA (don't worry about line waiting yet)
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        // clear all the leaders of all gotchis
+        // clear all the leaders and followers of all gotchis
         this.clearLeaders();
+        this.clearFollowers();
 
         // find all gotchis adjacent this portal
         this.findCongaLeaders();
@@ -280,8 +295,9 @@ export class GO_Portal extends GridObject {
         // THIRD PASS - Re-evaluate the gotchi chains taking into account burnt ones
         ////////////////////////////////////////////////////////////////////////////////////
 
-        // clear all the leaders of all gotchis
+        // clear all the leaders and followers of all gotchis
         this.clearLeaders();
+        this.clearFollowers();
 
         // find all gotchis adjacent this portal
         this.findCongaLeaders();

@@ -3,7 +3,7 @@
 
 import { getGameHeight, getGameWidth, } from '../helpers';
 import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GO_Rofl, GO_Cactii, GridObject, LevelConfig, Player } from 'game/objects';
-import { BLACK_SQUARE, BLUE_BLOCK, COMMON_DOWN_ROFL, COMMON_LEFT_ROFL, COMMON_RIGHT_ROFL, COMMON_UP_ROFL, GREEN_BLOCK, M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PARTICLE_CONFETTI, PINK_BLOCK, PORTAL_CLOSED, RED_BLOCK, SOUND_DEFEAT, SOUND_SOFT_RESET, SOUND_VICTORY, UNCOMMON_CACTII,} from 'game/assets';
+import { BLACK_SQUARE, BLUE_BLOCK, COMMON_DOWN_ROFL, COMMON_LEFT_ROFL, COMMON_RIGHT_ROFL, COMMON_UP_ROFL, GREEN_BLOCK, GRID_BG_COBBLE_STONES, M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PARTICLE_CONFETTI, PINK_BLOCK, PORTAL_CLOSED, RED_BLOCK, SOUND_DEFEAT, SOUND_SOFT_RESET, SOUND_VICTORY, UNCOMMON_CACTII,} from 'game/assets';
 import '../helpers/constants';
 import { DEPTH_GRID_LEVEL, DEPTH_GRID_SQUARES } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
@@ -118,8 +118,9 @@ export class GridLevel {
       for (let j = 0; j < this.numberCols; j++) {
         if (this.gridCells[i][j].gridRectangle !== 'INACTIVE') {
           this.gridSquares.push(this.scene.add.image(this.gridCells[i][j].gridObject.x, this.gridCells[i][j].gridObject.y,
-            BLACK_SQUARE)
-            .setTintFill(0x000000, 0x252525, 0x252525, 0x4d4d4d)
+            GRID_BG_COBBLE_STONES)
+            // .setTintFill(0x000000, 0x252525, 0x252525, 0x4d4d4d)
+            .setTint(0x505050)
             .setDepth(DEPTH_GRID_SQUARES)
             .setOrigin(0.5,0.5)
             .setDisplaySize(this.gridSize*.95, this.gridSize*.95)
@@ -235,6 +236,7 @@ export class GridLevel {
               break;
             }
             default: {
+              alert('No grid object configured for number "' + this.levelConfig.gridObjectLayout[i][j] + '"');
               break;
             }
           }
