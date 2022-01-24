@@ -72,8 +72,10 @@ export class MoveTips {
         
         // for simplicity we will disable the tooltip after a hover event
         this.hand?.on('pointerover', () => {
-            setTimeout(() => this.active = false, 500);
+            this.active = false;
+            this.hand?.destroy();
         });
+
     }
 
     public clickDragAcrossLoop(rowStart: number, colStart: number, rowEnd: number, colEnd: number) {
