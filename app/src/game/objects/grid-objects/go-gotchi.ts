@@ -724,11 +724,15 @@ export class GO_Gotchi extends GridObject {
             // call get conga chain on this gotchi
             (rightGotchi as GO_Gotchi).getCongaChain(gotchiChain);
         }
-    }        
+    }   
+    
+    public setStatus(status: 'READY_TO_CONGA' | 'READY_TO_JUMP' | 'CONGOTCHING' | 'JUMPING' | 'FINISHED_CONGA' | 'WAITING' | 'BURNT' | 'TELEPORTING') {
+        this.status = status;
+    }
 
-   public getStatus() {
-       return this.status;
-   }
+    public getStatus() {
+        return this.status;
+    }
   
     update(): void {
         super.update(); 

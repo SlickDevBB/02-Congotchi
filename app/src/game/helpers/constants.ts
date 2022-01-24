@@ -29,4 +29,6 @@ export const DEPTH_ACTIONS_REMAINING_TEXT = 90;
 export const DEPTH_GUI_LEVEL_OVER = 100;
 export const DEPTH_GUI_SCORE = 100;
 
+export const DEPTH_MOVE_TIPS = 200;
+
 

@@ -42,9 +42,13 @@ export const SOUND_DEFEAT = 'sound_defeat';
 export const SOUND_CONGA = 'sound_conga';
 export const SOUND_SOFT_RESET = 'sound_soft_reset';
 export const SOUND_SEND = 'sound_send';
+export const SOUND_BOMB_COUNT = 'sound_bomb_count';
 
 export const MUSIC_WORLD_MAP = 'music_world_map';
 export const MUSIC_GRID_LEVEL_A = 'music_grid_level_a';
+
+export const ICON_HAND_POINTING = 'icon_hand_pointing';
+export const ICON_HAND_CLOSED = 'icon_hand_closed';
 
 export const ARROW_DOWN = 'arrow_down';
 export const M67_GRENADE = 'm67_grenade';
@@ -71,6 +75,11 @@ export const BLACK_SQUARE = 'black_square';
 export const WHITE_SQUARE = 'white_square';
 
 export const GRID_BG_COBBLE_STONES = 'grid_bg_cobble_stones';
+export const GRID_BG_COBBLE_STONES_RECTANGLE = 'grid_bg_cobble_stones_rectangle';
+export const GRID_BG_DIRT = 'grid_bg_dirt';
+export const GRID_BG_DIRT_ROUNDED = 'grid_bg_dirt_rounded';
+export const GRID_BG_GRASS = 'grid_bg_grass';
+export const GRID_BG_SAND_STONE = 'grid_bg_sand_stone';
 
 export const BLUE_BLOCK = 'blue_block';
 export const RED_BLOCK = 'red_block';
@@ -174,6 +183,12 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     src: 'assets/sounds/send.mp3',
     type: 'AUDIO',
   },
+  {
+    key: SOUND_BOMB_COUNT,
+    src: 'assets/sounds/bomb_count.ogg',
+    type: 'AUDIO',
+  },
+
 
   {
     key: MUSIC_WORLD_MAP,
@@ -184,6 +199,18 @@ export const assets: Array<Asset | SpritesheetAsset> = [
     key: MUSIC_GRID_LEVEL_A,
     src: 'assets/music/Grid_Level_Carnivale Intrigue.ogg',
     type: 'AUDIO',
+  },
+
+  // declare some move tip icons
+  {
+    key: ICON_HAND_POINTING,
+    src: 'assets/icons/hand_pointer_icon.png',
+    type: 'IMAGE',
+  },
+  {
+    key: ICON_HAND_CLOSED,
+    src: 'assets/icons/hand_closed_icon.png',
+    type: 'IMAGE',
   },
 
   {
@@ -288,7 +315,32 @@ export const assets: Array<Asset | SpritesheetAsset> = [
 
   {
     key: GRID_BG_COBBLE_STONES,
-    src: 'assets/images/cobble_stones.jpeg',
+    src: 'assets/gridTextures/cobble_stones_rounded.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GRID_BG_COBBLE_STONES_RECTANGLE,
+    src: 'assets/gridTextures/cobble_stones_rectangle_dark.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GRID_BG_DIRT,
+    src: 'assets/gridTextures/dirt.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GRID_BG_DIRT_ROUNDED,
+    src: 'assets/gridTextures/dirt_rounded.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GRID_BG_GRASS,
+    src: 'assets/gridTextures/grass_dark.png',
+    type: 'IMAGE',
+  },
+  {
+    key: GRID_BG_SAND_STONE,
+    src: 'assets/gridTextures/sand_stone.png',
     type: 'IMAGE',
   },
 

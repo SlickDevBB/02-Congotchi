@@ -1,7 +1,7 @@
 // grid-object-base-class.ts - base class for all grid objects
 
 import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
-import { M67_GRENADE, PIXEL_EXPLOSION, SOUND_EXPLOSION, SOUND_POP } from 'game/assets';
+import { M67_GRENADE, PIXEL_EXPLOSION, SOUND_BOMB_COUNT, SOUND_EXPLOSION, SOUND_POP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
 import { GO_Milkshake } from './go-milkshake';
 import { GO_Cactii } from './go-cactii';
@@ -25,7 +25,8 @@ export class GO_Grenade extends GridObject {
 
     // add sound effects
     private soundMove?: Phaser.Sound.HTML5AudioSound;
-    private soundInteract?: Phaser.Sound.HTML5AudioSound;
+    private soundCount?: Phaser.Sound.HTML5AudioSound;
+    private soundExplosion?: Phaser.Sound.HTML5AudioSound;
 
     // our constructor
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize }: GO_Props) {
@@ -37,7 +38,9 @@ export class GO_Grenade extends GridObject {
 
         // add sound
         this.soundMove = this.scene.sound.add(SOUND_POP, { loop: false }) as Phaser.Sound.HTML5AudioSound;
-        this.soundInteract = this.scene.sound.add(SOUND_EXPLOSION, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundCount = this.scene.sound.add(SOUND_BOMB_COUNT, { loop: false }) as Phaser.Sound.HTML5AudioSound;
+        this.soundCount.setVolume(0.3);
+        this.soundExplosion = this.scene.sound.add(SOUND_EXPLOSION, { loop: false }) as Phaser.Sound.HTML5AudioSound;
 
         // create countdown text
         const fontHeight = this.displayHeight*0.75;
@@ -143,6 +146,9 @@ export class GO_Grenade extends GridObject {
             this.countdownText?.setVisible(true);
             this.countdownText?.setText('3');
 
+            // play count sound
+            this.soundCount?.play();
+
             // Use 3 tweens to show countdown
             this.scene.add.tween({
                 targets: this.countdownText,
@@ -153,6 +159,10 @@ export class GO_Grenade extends GridObject {
                     // reset alpha to 1, set text to 2 and tween fade out
                     this.countdownText?.setAlpha(1);
                     this.countdownText?.setText('2');
+
+                    // play count sound
+                    this.soundCount?.play();
+
                     this.scene.add.tween({
                         targets: this.countdownText,
                         alpha: 0,
@@ -162,6 +172,10 @@ export class GO_Grenade extends GridObject {
                             // reset alpha to 1, set text to 1 and tween fade out again
                             this.countdownText?.setAlpha(1);
                             this.countdownText?.setText('1');
+
+                            // play count sound
+                            this.soundCount?.play();
+
                             this.scene.add.tween({
                                 targets: this.countdownText,
                                 alpha: 0,
@@ -184,6 +198,9 @@ export class GO_Grenade extends GridObject {
         if (this.status !== 'EXPLODED') {
             // change status
             this.status = 'EXPLODED';
+
+            // play explosion sound
+            this.soundExplosion?.play();
 
             // score some points for exploding grenade
             if (this.player) {

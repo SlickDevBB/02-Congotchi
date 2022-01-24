@@ -8,6 +8,7 @@ import '../helpers/constants';
 import { DEPTH_GRID_LEVEL, DEPTH_GRID_SQUARES } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
 import { AavegotchiGameObject } from 'types';
+import { MoveTips } from './move-tips';
 
 interface Props {
   scene: Phaser.Scene;
@@ -46,6 +47,8 @@ export class GridLevel {
   private initialGotchiCount = 0;
   private status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN';
   private victoryStatus: 'VICTORY' | 'DEFEAT' | 'STILL_PLAYING' = 'STILL_PLAYING';
+
+  private moveTips?: MoveTips;
 
   private gridSquares: Array<Phaser.GameObjects.Image> = [];
 
@@ -118,9 +121,9 @@ export class GridLevel {
       for (let j = 0; j < this.numberCols; j++) {
         if (this.gridCells[i][j].gridRectangle !== 'INACTIVE') {
           this.gridSquares.push(this.scene.add.image(this.gridCells[i][j].gridObject.x, this.gridCells[i][j].gridObject.y,
-            GRID_BG_COBBLE_STONES)
+            levelConfig.gridTexture)
             // .setTintFill(0x000000, 0x252525, 0x252525, 0x4d4d4d)
-            .setTint(0x505050)
+            // .setTint(0x505050)
             .setDepth(DEPTH_GRID_SQUARES)
             .setOrigin(0.5,0.5)
             .setDisplaySize(this.gridSize*.95, this.gridSize*.95)
@@ -133,6 +136,9 @@ export class GridLevel {
 
     // set the players stat mask so our level only sees stat points as per its levelconfig
     this.player.setStatMask(levelConfig.statMask);
+
+    // create the movetips object
+    this.moveTips = new MoveTips(this.scene, this, levelConfig.levelNumber);
   }
 
   public populateGridCells() {
@@ -203,6 +209,13 @@ export class GridLevel {
                 gridObject: new GO_Cactii({scene: this.scene, gridLevel: this, gridRow: i, gridCol: j, key: RED_BLOCK, gridSize: this.gridSize, objectType: 'CACTII',}),
                 gridRectangle: this.makeRectangle(i,j),
               }
+              break;
+            }
+            // BURNT GOTCHI
+            case 9: {
+              // call our local gotchi generator
+              this.generateGridCellGotchi(i, j);
+              (this.gridCells[i][j].gridObject as GO_Gotchi).setStatus('BURNT');
               break;
             }
             // COMMON ROFL
@@ -455,6 +468,14 @@ export class GridLevel {
     return { row: Math.floor(offsetY/this.gridSize), col: Math.floor(offsetX/this.gridSize) }
   }
 
+  public getXFromCol(col: number) {
+    return this.x + col * this.gridSize + 0.5*this.gridSize;
+  }
+
+  public getYFromRow(row: number) {
+    return this.y + row * this.gridSize + 0.5*this.gridSize;
+  }
+
   public isCoordWithinGrid(x: number, y: number) {
     const gp = this.getGridPositionFromXY(x,y);
     if (this.gridCells[gp.row][gp.col]) {
@@ -504,6 +525,9 @@ export class GridLevel {
     // depending on status play end of level music
     if (this.victoryStatus === 'VICTORY') this.soundVictory?.play();
     else this.soundDefeat?.play();
+
+    // destory our move tips
+    this.moveTips?.destroy();
   }
 
   // function that allows player to reset mid level if they stuffed up
@@ -543,6 +567,11 @@ export class GridLevel {
 
     // reset level status to ACTIVE
     this.status = 'ACTIVE';
+
+    // delete the move tips and then recreate them
+    this.moveTips?.destroy();
+    this.moveTips = new MoveTips(this.scene, this, this.levelConfig.levelNumber);
+
   }
 
   public setStatus(status: 'ACTIVE' | 'INACTIVE' | 'LEVEL_OVER_SCREEN') {
@@ -702,6 +731,10 @@ export class GridLevel {
     this.gridCells.map(row => row.map(cell => {
       cell.gridObject.update();
     }))
+
+
+    // call update for our move tips
+    this.moveTips?.update();
 
     
   }

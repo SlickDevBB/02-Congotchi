@@ -6,6 +6,7 @@ export * from './level-button';
 export * from './level-configs';
 export * from './gui';
 export * from './gui-score-board';
+export * from './move-tips';
 
 export * from './grid-objects/grid-object';
 export * from './grid-objects/go-inactive';

@@ -118,21 +118,6 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
         return this.stars;
     }
 
-    // public showLevelOverResults() {
-    //     // tween the scoreboard into middle of screen
-    //     this.scene.add.tween({
-    //         targets: [this],
-    //         x: getGameWidth(this.scene)*0.5,
-    //         y: getGameHeight(this.scene)*0.5,
-    //         displayWidth: getGameWidth(this.scene)*0.75,
-    //         displayHeight: getGameWidth(this.scene)*0.25,
-    //         duration: 250,
-    //     });
-
-    //     // call the main game scene and tell it the results of the finished level
-    //     (this.scene as GameScene).handleLevelResults(this.level, this.score, this.stars);
-    // }
-
     public resetScore() {
         this.setScore(0);
         this.setStarScore(0);

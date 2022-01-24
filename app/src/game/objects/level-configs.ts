@@ -1,6 +1,8 @@
 // level-configs.ts
 // this file defines all the different levels
 
+import { GRID_BG_COBBLE_STONES_RECTANGLE, GRID_BG_DIRT, GRID_BG_DIRT_ROUNDED, GRID_BG_GRASS, GRID_BG_SAND_STONE } from "game/assets";
+
 // upon creation, each grid level should be passed this "levels" config object that defines how to set all the levels up
 // the config will be a 2d matrix that defines what element will be in each grid cell initially
 
@@ -15,6 +17,8 @@
 // 5 = grenade
 // 6 = cactii
 
+// 9 = burnt gotchi (as in a normal gotchi that just starts a level burnt)
+
 // 11 = common rofl
 // 12 = uncommon rofl
 // 13 = rare rofl
@@ -26,6 +30,7 @@ export interface LevelConfig {
     levelNumber: number,
     gridObjectLayout: Array<number[]>,
     levelDescription: string,
+    gridTexture: string,
     pos: number[],
     curveThisPos: number[],
     curvePrevPos: number[],
@@ -55,7 +60,7 @@ export const levels: Array<LevelConfig> = [
     // },
     {
         
-        // 1: Introduce players to moving grid objects around
+        // 1: Introduce players to moving gotchis
         levelNumber: 1,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -71,7 +76,8 @@ export const levels: Array<LevelConfig> = [
         levelDescription: 
         'Welcome aadventurer! Our frens have been blockified throughout the REAALM & need saving!' +
         "\n\n" +
-        'CLICK & DRAG gotchis into conga lines then SINGLE CLICK portals to bring them home :)',
+        'Tip: CLICK & DRAG gotchis into conga lines in front of portals to bring them home :)',
+        gridTexture: GRID_BG_COBBLE_STONES_RECTANGLE,
         pos: [0.23, 0.65 ],
         curveThisPos: [],
         curvePrevPos: [],
@@ -80,7 +86,7 @@ export const levels: Array<LevelConfig> = [
             redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
-        // 2: Introduce players to rotating gotchis (and multi portal entry)
+        // 2: Introduce players to moving portals
         levelNumber: 2,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -94,9 +100,10 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
-        "Phew! So far so good. The GRID is a bit more dangerous though & you'll need to learn how to rotate." +
+        "Phew! So far so good. The GRID is a bit more dangerous though and you'll need to think carefully out here..." +
         "\n\n" +
-        "SINGLE CLICK on gotchis to help point them in the right direction.",
+        "Tip: Sometimes it's more efficient to bring the portal to the gotchi ;) ",
+        gridTexture: GRID_BG_GRASS,
         pos: [0.258, 0.480 ],
         curveThisPos: [0.25, 0.49],
         curvePrevPos: [0.285, 0.62],
@@ -105,7 +112,7 @@ export const levels: Array<LevelConfig> = [
             redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
-        // 3: Introduction to stat changes
+        // 3: Introduce players to the move counts
         levelNumber: 3,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -119,9 +126,10 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
-        "Wow! You unlocked two POINT SPHERES! These will hover near your gotchi while you solve levels :)" +
+        "Wow, we're right on the cusp of the DAARK FOREST... wonder what's inside?" +
         "\n\n" +
-        "These two spheres show the points you get for saving gotchis and opening portals.",
+        "Tip: Keep an eye on your move count at the bottom of each level. It reduces every time you move an object.",
+        gridTexture: GRID_BG_GRASS,
         pos: [0.181, 0.375 ],
         curveThisPos: [0.204, 0.418],
         curvePrevPos: [0.262, 0.395],
@@ -130,7 +138,7 @@ export const levels: Array<LevelConfig> = [
             redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
-        // 4: Introduction to milkshakes and gotchi point system
+        // 4: Introduction to milkshakes
         levelNumber: 4,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 1, 0, 0],
@@ -144,9 +152,10 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 1, 2, 2, 2, 2, 0, 0],
         ],
         levelDescription: 
-        "Milkshakes! And two moar POINT SPHERES for green blocks this time!" +
+        "Milkshakes! Mmmm.. mmm.. nomm.. nom... m.. MMMMM!" +
         "\n\n" +
-        "SINGLE CLICK green block items for points. For milkshakes, click them next to gotchis for moar points!",
+        "Tip: Gotchis are sometimes greedy ghosts. Any gotchi next to a milkshake will slurp it up immediately for some points!",
+        gridTexture: GRID_BG_GRASS,
         pos: [0.06, 0.4],
         curveThisPos: [0.12, 0.44],
         curvePrevPos: [0.1, 0.4],
@@ -155,22 +164,23 @@ export const levels: Array<LevelConfig> = [
             redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
     {
-        // Introduction to getting at least one star to progress
+        // Introduction to the tree of fud
         levelNumber: 5,
         gridObjectLayout: [
         [0, 0, 0, 1, 2, 1, 0, 0, 0],
-        [0, 0, 1, 2, 1, 1, 1, 0, 0],
+        [0, 0, 1, 9, 1, 1, 1, 0, 0],
         [0, 1, 2, 0, 4, 0, 1, 1, 0],
         [0, 1, 2, 0, 1, 0, 2, 1, 0],
         [0, 2, 2, 1, 3, 1, 2, 2, 0],
         [0, 1, 1, 0, 0, 0, 1, 1, 0],
         [4, 1, 2, 2, 1, 1, 2, 1, 4],
-        [0, 1, 1, 1, 2, 2, 2, 1, 0],
-        [0, 1, 0, 4, 0, 2, 0, 1, 0],  
+        [0, 1, 1, 1, 2, 9, 2, 1, 0],
+        [0, 1, 0, 4, 0, 9, 0, 1, 0],  
         ],
-        levelDescription: "The TREE OF FUD! It sure looks... friendly?" +
+        levelDescription: "The TREE OF FUD! Don't panic.. it looks.. friendly?" +
         "\n\n" +
-        "Saving 33% of your frens still allows you to progress. Leftover moves are worth points though as shown on this new POINT SPHERE!",
+        "Tip: Some gotchis in this level have been out in the sun too long and are burnt. Move them to allow them to conga again.",
+        gridTexture: GRID_BG_DIRT,
         pos: [0.115, 0.273],
         curveThisPos: [0.075, 0.289],
         curvePrevPos: [0.037, 0.336],
@@ -192,10 +202,10 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 1, 5, 1, 1, 1, 1, 0],
         [0, 0, 1, 1, 5, 1, 1, 0, 0],
         ],
-        levelDescription: "Mmm! The mounta... STOP! There's grenades here???" +
+        levelDescription: "Aaaah the mountai... STOP! There's grenades here???" +
         "\n\n" +
-        "CLICK & DRAG grenades away from conga lines before portalling or you'll need to MOVE or ROTATE gotchis to rid them of soot.",
-        // "DO NOT conga if your gotchi line is near grenades or you'll need to MOVE/ROTATE gotchis to shake off the soot.",
+        "Tip: Moving grenades or starting a conga next to one begins a detonation countdown. Keep gotchis away from explosions!",
+        gridTexture: GRID_BG_GRASS,
         pos: [0.04, 0.232],
         curveThisPos: [0.044, 0.261],
         curvePrevPos: [0.088, 0.259],
@@ -217,9 +227,10 @@ export const levels: Array<LevelConfig> = [
         [1, 2, 1, 2, 2, 2, 1, 1, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
-        levelDescription: "We've been floating for aaaages... are we at NORTH BEACH yet? Ooh moar grenades and a red POINT SPHERE!" +
+        levelDescription: "We've been floating for aaaages... are we at NORTH BEACH yet? Ooooh moar grenades!" +
         "\n\n" +
-        "SINGLE CLICK grenades to detonate them. Be wary of chain reactions!",
+        "Tip: Create a grenade chain reaction to clear the way to the portal!",
+        gridTexture: GRID_BG_GRASS,
         pos: [0.086, 0.145],
         curveThisPos: [0.04, 0.06],
         curvePrevPos: [0.03, 0.178],
@@ -243,7 +254,8 @@ export const levels: Array<LevelConfig> = [
         ],
         levelDescription: "Ahh here we are... NORTH BEACH! A pebbles throw from ROFL REEF..." +
         "\n\n" +
-        "ROFLs move, rotate & conga home like gotchis. They're worth moar points but can be tricky to save..",
+        "Tip: ROFLs move, rotate & conga home like gotchis. They're worth moar points but can be tricky to save..",
+        gridTexture: GRID_BG_SAND_STONE,
         pos: [0.16, 0.075],
         curveThisPos: [0.105, 0.095],
         curvePrevPos: [0.085, 0.123],
@@ -259,15 +271,16 @@ export const levels: Array<LevelConfig> = [
         [0, 0, 0, 0, 0, 1, 11, 1, 1],
         [0, 0, 1, 1, 0, 6,  2, 1, 1],
         [0, 2, 1, 1, 1, 1,  2, 1, 0],
-        [1, 2, 6, 6, 1, 1,  1, 0, 0],
+        [1, 2, 2, 6, 1, 1,  1, 0, 0],
         [1, 2, 1, 2, 2, 2,  2, 0, 0],
         [1, 1, 1, 1, 6, 2,  1, 0, 0],
         [0, 2, 1, 1, 0, 1,  3, 1, 0],
         [0, 0, 0, 0, 0, 0,  1, 0, 0],
         ],
-        levelDescription: "Ouch! Don't conga past the cact.. OUCH!!" +
+        levelDescription: "Welcome to the DEFI DESERT, home of the.. OUCH.. Cact.. OUCH!!" +
         "\n\n" +
-        "Red block items can deduct points. Here's a new red POINT SPHERE to show how much. SINGLE CLICK cactii to uproot them safely.",
+        "Tip: Gotchis that conga next to cactii lose points. Move them away from conga lines just to be safe fren :)",
+        gridTexture: GRID_BG_SAND_STONE,
         pos: [0.177, 0.145],
         curveThisPos: [0.18, 0.111],
         curvePrevPos: [0.23, 0.085],
@@ -279,18 +292,19 @@ export const levels: Array<LevelConfig> = [
         levelNumber: 10,
         gridObjectLayout: [
         [ 0, 0, 0, 1, 2, 1, 0, 0, 0],
-        [ 0, 0, 1, 2, 1, 1, 1, 0, 0],
+        [ 0, 0, 1, 2, 2, 5, 1, 0, 0],
         [ 0, 1, 2, 0, 1, 0, 1, 1, 0],
-        [ 0, 1, 2, 0, 1, 0, 2, 1, 0],
-        [ 0, 2, 4, 6, 3, 5, 2, 2, 0],
+        [ 0, 2, 1, 0, 5, 0, 2, 2, 0],
+        [ 0, 1, 4, 5, 3, 4, 1, 2, 0],
         [ 0, 2, 1, 0, 0, 0, 1, 1, 0],
-        [ 1, 1, 2, 2, 1, 2, 2, 2, 1],
-        [ 0, 1, 2, 2, 1, 2, 2, 1, 0],
-        [ 0,11, 0, 2, 0, 1, 0, 1, 0],  
+        [ 1, 5, 2, 6, 1, 2, 2, 2, 1],
+        [ 0, 1, 2, 2, 2, 1, 2, 1, 0],
+        [ 0,11, 0, 2, 0, 4, 0, 1, 0],  
         ],
         levelDescription: "I swear to god... one more level with this smiling tree..." +
         "\n\n" +
-        "The final POINT SPHERE shows the points you get each time your gotchis jump. Form long lines to max out your score!",
+        "Tip: Gotchis score points when they 'jump' in a conga line so make those lines as long as possible!",
+        gridTexture: GRID_BG_DIRT,
         pos: [0.167, 0.272],
         curveThisPos: [0.19, 0.23],
         curvePrevPos: [0.165, 0.185],
