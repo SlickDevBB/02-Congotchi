@@ -76,38 +76,6 @@ export class GridObject extends Phaser.GameObjects.Sprite {
       this.blockSprite.setDepth(DEPTH_GO_DEFAULT_BLOCK + 1);
     }
 
-    // public setVisible(value: boolean): this {
-    //   super.setVisible(value);
-    //   this.blockSprite?.setVisible(value);
-    //   return this;
-    // }
-
-    // public setAlpha(alpha: number): this {
-    //   super.setAlpha(alpha);
-    //   this.blockSprite?.setAlpha(alpha);
-    //   return this;
-    // }
-
-    // public setDepth(depth: number): this {
-    //   super.setDepth(depth);
-    //   this.blockTexture?.setDepth(depth-1);
-    //   return this;
-    // }
-
-    // public setBgSquareColour(colour: 'PINK' | 'RED' | 'GREEN' | 'BLUE' | 'NONE') {
-    //   if (this.bgBlock) {
-    //     this.bgBlock.setVisible(true);
-    //     switch (colour) {
-    //       case 'PINK': this.bgBlock.setTexture(PINK_BLOCK); break;
-    //       case 'RED' : this.bgBlock.setTexture(RED_BLOCK); break;
-    //       case 'GREEN' : this.bgBlock.setTexture(GREEN_BLOCK); break;
-    //       case 'BLUE' : this.bgBlock.setTexture(BLUE_BLOCK); break;
-    //       case 'NONE' : this.bgBlock.setVisible(false); break;
-    //       default: break;
-    //     }
-    //   }
-    // }
-
     public setGridPosition(row: number, col: number, customOnComplete?: () => any | undefined, keepOldObject = false, tweenDuration = 100, customEase = 'linear') {
       // store our old row and column
       const oldRow = this.gridPosition.row;

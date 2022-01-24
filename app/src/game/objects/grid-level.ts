@@ -580,6 +580,7 @@ export class GridLevel {
   public congaLineStarted() {
     this.musicGridLevel?.stop();
     this.congaRunning = true;
+    // alert('Conga line STARTED');
   }
 
   public congaLineFinished() {
@@ -594,6 +595,8 @@ export class GridLevel {
     })
 
     this.congaRunning = false;
+
+    // alert('Conga line FINISHED');
   }
 
   public isCongaStepRunning() {
@@ -617,27 +620,6 @@ export class GridLevel {
 
     return congaRunning;
   }
-
-  // set all the leader/follower relationships
-  // public setupLeadersAndFollowers() {
-  //   // for every gotchi in level check what's around it
-  //   this.gridCells.map(row => row.map( cell => {
-  //     if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
-  //       (cell.gridObject as GO_Gotchi).findLeader();
-  //       (cell.gridObject as GO_Gotchi).findFollowers();
-  //     }
-  //   }));
-  // }
-
-  // set all the leader/follower relationships
-  // public clearLeaders() {
-  //   // for every gotchi in level check what's around it
-  //   this.gridCells.map(row => row.map( cell => {
-  //     if (cell.gridObject.getType() === 'GOTCHI' || cell.gridObject.getType() === 'ROFL') {
-  //       (cell.gridObject as GO_Gotchi).setLeader(0);
-  //     }
-  //   }));
-  // }
 
   public getGridCells() {
     return this.gridCells;
@@ -679,9 +661,6 @@ export class GridLevel {
 
     // if gotchis are ready (nobody congotching) we can check for available conga lines
     if (!this.isCongaStepRunning()) {
-        // clear all gotchis leader status
-        // this.clearLeaders();
-
         // conga gotchi lines next to any open portals
         this.runCongaPortals();
     } 
@@ -693,23 +672,31 @@ export class GridLevel {
             // we got all gotchis so victory status should be VICTORY
             this.victoryStatus = 'VICTORY';
         }
-
+        
         // Second check if we got through all our action points
+        // NOTE: this needs to be on a timeout as some tweens are likely still resolving
         if (this.actionsRemaining === 0) {
-          // if we got at least one star we can declare VICTORY
-          if (gui && gui.getStarScore() > 0) {
-            this.victoryStatus = 'VICTORY';
-          } else {
-            this.victoryStatus = 'DEFEAT';
-          }
+          setTimeout( () => {
+              if (this.actionsRemaining === 0 && !this.congaRunning) {
+                // if we got at least one star we can declare VICTORY
+                if (gui && gui.getStarScore() > 0) {
+                  this.victoryStatus = 'VICTORY';
+                } else {
+                  this.victoryStatus = 'DEFEAT';
+                }
+                // show level over screen
+                (this.scene as GameScene).showLevelOverScreen()
+              }
+          }, 250);
         }
 
         // if we got a victory condition we can show level over screen
         if (this.victoryStatus !== 'STILL_PLAYING') {
-          setTimeout( () => { (this.scene as GameScene).showLevelOverScreen(); }, 750);
+          setTimeout( () => { (this.scene as GameScene).showLevelOverScreen(); }, 250);
         }
-
     }
+
+    
 
     // call update for all our grid objects
     this.gridCells.map(row => row.map(cell => {

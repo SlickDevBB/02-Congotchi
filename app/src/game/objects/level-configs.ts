@@ -10,13 +10,10 @@
 // 2 = gotchi (direction randomly assigned but doesn't matter in game)
 
 // 3 = portal (always open)
-// 4 = 
 
-// 6 = portal
-
-// 7 = grenade
-// 8 = milkshake
-// 9 = cactii
+// 4 = milkshake
+// 5 = grenade
+// 6 = cactii
 
 // 11 = common rofl
 // 12 = uncommon rofl
@@ -78,7 +75,7 @@ export const levels: Array<LevelConfig> = [
         pos: [0.23, 0.65 ],
         curveThisPos: [],
         curvePrevPos: [],
-        actionsRemaining: 10,
+        actionsRemaining: 3,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
@@ -202,7 +199,7 @@ export const levels: Array<LevelConfig> = [
         pos: [0.04, 0.232],
         curveThisPos: [0.044, 0.261],
         curvePrevPos: [0.088, 0.259],
-        actionsRemaining: 20,
+        actionsRemaining: 17,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
     },
@@ -235,12 +232,12 @@ export const levels: Array<LevelConfig> = [
         levelNumber: 8,
         gridObjectLayout: [
         [ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0,  0, 1, 11,  11],
+        [ 0,  0,  0,  0,  0,  0,  1,  5, 11],
         [ 0,  0,  1,  2,  1,  1,  1,  1,  1],
         [ 0,  0,  1,  2,  2,  2,  2,  0,  0],
         [ 0,  0,  2,  1,  1,  2,  1,  0,  0],
         [ 0,  0,  1,  3,  1,  2,  1,  0,  0],
-        [ 1,  1,  7,  1,  2,  2, 11,  0,  0],
+        [ 1,  1,  5,  1,  2,  2, 11,  0,  0],
         [ 1, 11,  1,  0,  0,  0,  0,  0,  0],
         [ 1,  1,  1,  0,  0,  0,  0,  0,  0],
         ],
@@ -260,7 +257,7 @@ export const levels: Array<LevelConfig> = [
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0,  1, 1, 0],
         [0, 0, 0, 0, 0, 1, 11, 1, 1],
-        [0, 0, 1, 1, 0, 9,  2, 1, 1],
+        [0, 0, 1, 1, 0, 6,  2, 1, 1],
         [0, 2, 1, 1, 1, 1,  2, 1, 0],
         [1, 2, 6, 6, 1, 1,  1, 0, 0],
         [1, 2, 1, 2, 2, 2,  2, 0, 0],
@@ -282,7 +279,7 @@ export const levels: Array<LevelConfig> = [
         levelNumber: 10,
         gridObjectLayout: [
         [ 0, 0, 0, 1, 2, 1, 0, 0, 0],
-        [ 0, 0, 1, 2, 1, 7, 1, 0, 0],
+        [ 0, 0, 1, 2, 1, 1, 1, 0, 0],
         [ 0, 1, 2, 0, 1, 0, 1, 1, 0],
         [ 0, 1, 2, 0, 1, 0, 2, 1, 0],
         [ 0, 2, 4, 6, 3, 5, 2, 2, 0],

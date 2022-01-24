@@ -120,29 +120,41 @@ export class GO_Portal extends GridObject {
         // first clear out our congaleaders array
         this.congaLeaders = [];
 
-        // check each direction to see if there is a gotchi looking at us
+        // check each direction for adjacent ggotchis to make a leader
         const downGotchi = this.gridLevel.getGridObject(this.gridPosition.row+1, this.gridPosition.col);
         if (downGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[0] = ((downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') ) ? 
-                (downGotchi as GO_Gotchi) : 0;
+            if ( (downGotchi.getType() === 'GOTCHI' || downGotchi.getType() === 'ROFL') && 
+                (downGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
+                this.congaLeaders[0] = downGotchi as GO_Gotchi;
+                this.congaLeaders[0].makeCongaLeader(true);
+            }
         }
 
         const leftGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col-1);
         if (leftGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[1] = ((leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') ) ? 
-                (leftGotchi as GO_Gotchi) : 0;
+            if ( (leftGotchi.getType() === 'GOTCHI' || leftGotchi.getType() === 'ROFL') && 
+                (leftGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
+                this.congaLeaders[1] = leftGotchi as GO_Gotchi;
+                this.congaLeaders[1].makeCongaLeader(true);
+            }
         }
 
         const upGotchi = this.gridLevel.getGridObject(this.gridPosition.row-1, this.gridPosition.col);
         if (upGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[2] = ((upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') ) ? 
-                (upGotchi as GO_Gotchi) : 0;
+            if ( (upGotchi.getType() === 'GOTCHI' || upGotchi.getType() === 'ROFL') && 
+                (upGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
+                this.congaLeaders[2] = upGotchi as GO_Gotchi;
+                this.congaLeaders[2].makeCongaLeader(true);
+            }
         }
 
         const rightGotchi = this.gridLevel.getGridObject(this.gridPosition.row, this.gridPosition.col+1);
         if (rightGotchi !== 'OUT OF BOUNDS') {
-            this.congaLeaders[3] = ((rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') ) ? 
-                (rightGotchi as GO_Gotchi) : 0;
+            if ( (rightGotchi.getType() === 'GOTCHI' || rightGotchi.getType() === 'ROFL') && 
+                (rightGotchi as GO_Gotchi).getStatus() !== 'BURNT' ) {
+                this.congaLeaders[3] = rightGotchi as GO_Gotchi;
+                this.congaLeaders[3].makeCongaLeader(true);
+            }
         }
 
         return this.congaLeaders;
@@ -237,7 +249,7 @@ export class GO_Portal extends GridObject {
                 congaLeader.status = 'READY_TO_CONGA';
 
                 // make the congaleader a conga leader
-                congaLeader.makeCongaLeader(true);
+                // congaLeader.makeCongaLeader(true);
 
                 // for this pass lets aim at the portal
                 congaLeader.aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
@@ -251,7 +263,6 @@ export class GO_Portal extends GridObject {
                     if (leader && leader.status !== 'BURNT') {
                         g.newRow = leader.getGridPosition().row;
                         g.newCol = leader.getGridPosition().col;
-                        // g.newDir = leader.getDirection();
 
                         // aim in new direction
                         g.aimAtGridPosition(g.newRow, g.newCol);
@@ -316,10 +327,7 @@ export class GO_Portal extends GridObject {
                 congaLeader.status = 'READY_TO_CONGA';
 
                 // make the congaleader a conga leader
-                congaLeader.makeCongaLeader(true);
-
-                // for this pass lets aim at the portal
-                // congaLeader.aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
+                // congaLeader.makeCongaLeader(true);
 
                 // calc up gotchi chain
                 congaLeader.getCongaChain(this.gotchiChains[i]);
@@ -331,10 +339,8 @@ export class GO_Portal extends GridObject {
                         // if gotchi is top priority and not burnt, set status to ready
                         if (this.getFollowerPriority(leader, g) === 'TOP_PRIORITY' && g.status !== 'BURNT') {
                             g.status = 'READY_TO_CONGA';
-                            // g.aimAtGridPosition(leader.gridPosition.row, leader.gridPosition.col);
                         } else if (g.status !== 'BURNT') {
                             g.status = 'WAITING';
-                            // g.aimAtGridPosition(leader.gridPosition.row, leader.gridPosition.col);
                         }
 
                     } 

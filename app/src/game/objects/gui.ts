@@ -88,7 +88,7 @@ export class Gui {
         fontHeight = getGameHeight(this.scene)*0.0285;
         this.actionsRemainingText = this.scene.add.text(
             getGameWidth(this.scene)*0.5, 
-            getGameHeight(this.scene)*(1-0.23),
+            getGameHeight(this.scene)*0.78,
             'Actions Remaining: ',
             { font: fontHeight+'px Courier', color: '#ffffff' })
             .setWordWrapWidth(getGameWidth(this.scene)*0.85)

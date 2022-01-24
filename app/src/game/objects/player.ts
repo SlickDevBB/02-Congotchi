@@ -451,7 +451,7 @@ export class Player extends Phaser.GameObjects.Sprite {
             this.scene.add.tween({
                 targets: this,
                 x: this.scene.cameras.main.scrollX+getGameWidth(this.scene)*0.5,
-                y: this.scene.cameras.main.scrollY+getGameHeight(this.scene),
+                y: this.scene.cameras.main.scrollY+getGameHeight(this.scene)*0.965,
                 scale: getGameHeight(this.scene)*0.002,
                 duration: 250,
                 onComplete: () => {

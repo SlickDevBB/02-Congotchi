@@ -185,9 +185,6 @@ export class GO_Gotchi extends GridObject {
                 }
             });
         })
-
-        
-
     }
 
     public setGotchiSprite(key: string) {
@@ -277,10 +274,6 @@ export class GO_Gotchi extends GridObject {
 
     public isCongaLeader() {
         return this.congaLeader;
-    }
-
-    public findLeaders() {
-        // check each 
     }
 
     public setLeader(leader: GO_Gotchi | 0) {
@@ -380,13 +373,14 @@ export class GO_Gotchi extends GridObject {
             row,
             col,
             () => {
-                // this.setDirection(this.newDir);
                 if (!jumpAtEnd) {
                     setTimeout( () => {
-                        this.status = 'WAITING' 
+                        // check we didn't get blown up mid conga
+                        if (this.status !== 'BURNT') this.status = 'WAITING';
                     } , this.congaStepDuration*0.5);
                 } else {
-                    this.congaJump();
+                    // again check we didn't get blown up mid conga
+                    if (this.status !== 'BURNT') this.congaJump();
                 }
             },
             false,
@@ -398,8 +392,9 @@ export class GO_Gotchi extends GridObject {
         this.scene.add.tween({
             targets: this.blockSprite,
             angle: this.congaSide === 'LEFT' ? -20 : 20,
-            duration: this.congaStepDuration*0.5,
-            ease: 'Bounce.easeOut',
+            duration: this.congaStepDuration*0.25,
+            ease: 'Quint.easeOut',
+            yoyo: true,
             onComplete: () => {
                 // change conga side
                 this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
@@ -415,13 +410,15 @@ export class GO_Gotchi extends GridObject {
         this.scene.add.tween({
             targets: this.blockSprite,
             angle: this.congaSide === 'LEFT' ? -20 : 20,
-            duration: this.congaStepDuration*0.5,
-            ease: 'Bounce.easeOut',
+            duration: this.congaStepDuration*0.25,
+            ease: 'Quint.easeOut',
+            yoyo: true,
             onComplete: () => {
                 // change conga side
                 this.congaSide = this.congaSide === 'LEFT' ? 'RIGHT' : 'LEFT';
                 if (jumpAtEnd) {
-                    this.congaJump();
+                    // Check we didn't get blown up mid conga
+                    if (this.status !== 'BURNT') this.congaJump();
                 }
             }
         })
@@ -430,14 +427,16 @@ export class GO_Gotchi extends GridObject {
     }
 
     public congaJump() {
-        // change anim to happy
+        // change anim to happy (only if we're a gotchi)
         if (this.objectType === 'GOTCHI') this.blockSprite?.anims.play(this.getDirection().toLowerCase() + '_happy');
 
+        // throw some confetti
         this.emitterConfetti?.start();
         setTimeout( () => {
             this.emitterConfetti?.stop();
         }, 75);
 
+        // change status to jumping
         this.status = 'JUMPING';
 
         // score some points and animated the stat point
@@ -460,20 +459,41 @@ export class GO_Gotchi extends GridObject {
                     ease: 'Quad.easeIn',
                     onComplete: () => { 
                         setTimeout( () => {
-                            this.status = 'WAITING';
+                            // check we didn't ge burnt mid jump
+                            if (this.status !== 'BURNT') this.status = 'WAITING';
                         }, this.congaStepDuration );
                     }
                 })
             }
         });
-        
+    }
 
-        // tween gotchi into vertical position
+    // milkshakeJump() - an excited jump when a gotchi gets fed a milkshake
+    public milkshakeJump() {
+        // change anim to happy (only if we're a gotchi)
+        if (this.objectType === 'GOTCHI') this.blockSprite?.anims.play(this.getDirection().toLowerCase() + '_happy');
+
+        // tween a jump
         this.scene.add.tween({
             targets: this,
-            angle: 0,
+            y: this.y - this.displayHeight*0.35,
             duration: this.congaStepDuration*0.25,
-        })
+            ease: 'Quad.easeOut',
+            onComplete: () => {
+                this.scene.add.tween({
+                    targets: this,
+                    y: this.y + this.displayHeight*0.35,
+                    duration: this.congaStepDuration*0.25,
+                    ease: 'Quad.easeIn',
+                    onComplete: () => { 
+                        setTimeout( () => {
+                            // check we didn't ge burnt mid jump
+                            if (this.status !== 'BURNT') this.status = 'WAITING';
+                        }, this.congaStepDuration );
+                    }
+                })
+            }
+        });
     }
 
     public congaIntoPortal(row: number, col: number) {
@@ -543,29 +563,29 @@ export class GO_Gotchi extends GridObject {
             this.spiked = true;
         }
 
-        // check bottom left
-        const downLeftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col+1);
-        if (downLeftCactii !== 'OUT OF BOUNDS' && downLeftCactii.getType() === 'CACTII') {
-            this.spiked = true;
-        }
+        // // check bottom left
+        // const downLeftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col+1);
+        // if (downLeftCactii !== 'OUT OF BOUNDS' && downLeftCactii.getType() === 'CACTII') {
+        //     this.spiked = true;
+        // }
 
-        // check top left
-        const upLeftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col-1);
-        if (upLeftCactii !== 'OUT OF BOUNDS' && upLeftCactii.getType() === 'CACTII') {
-            this.spiked = true;
-        }
+        // // check top left
+        // const upLeftCactii = this.gridLevel.getGridObject(pos.row-1, pos.col-1);
+        // if (upLeftCactii !== 'OUT OF BOUNDS' && upLeftCactii.getType() === 'CACTII') {
+        //     this.spiked = true;
+        // }
 
-        // check top right
-        const upRightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col-1);
-        if (upRightCactii !== 'OUT OF BOUNDS' && upRightCactii.getType() === 'CACTII') {
-            this.spiked = true;
-        }
+        // // check top right
+        // const upRightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col-1);
+        // if (upRightCactii !== 'OUT OF BOUNDS' && upRightCactii.getType() === 'CACTII') {
+        //     this.spiked = true;
+        // }
 
-        // check bottom right
-        const downRightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col+1);
-        if (downRightCactii !== 'OUT OF BOUNDS' && downRightCactii.getType() === 'CACTII') {
-            this.spiked = true;
-        }
+        // // check bottom right
+        // const downRightCactii = this.gridLevel.getGridObject(pos.row+1, pos.col+1);
+        // if (downRightCactii !== 'OUT OF BOUNDS' && downRightCactii.getType() === 'CACTII') {
+        //     this.spiked = true;
+        // }
 
         // do stuff if we got spiked
         const dt = {t: 0};
@@ -583,7 +603,7 @@ export class GO_Gotchi extends GridObject {
                 duration: 250,
                 onUpdate: () => {
                     const colour = Phaser.Display.Color.HexStringToColor(this.lerpColor('#ff0000', '#ffffff', dt.t));
-                    this.setTint(colour.color);
+                    this.blockSprite?.setTint(colour.color);
                 },
                 onComplete: () => { 
                     this.spiked = false; 

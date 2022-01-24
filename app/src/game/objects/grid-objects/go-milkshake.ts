@@ -120,6 +120,9 @@ export class GO_Milkshake extends GridObject {
                 this.player.animStat('GREEN_BUFF');
             }
 
+            // do a milkshake jump for the gotchi
+            gotchi.milkshakeJump();
+
             // generate a pink splash image
             const explosionImage = this.scene.add.image(
                 gotchi.x,
