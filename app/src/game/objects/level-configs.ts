@@ -35,8 +35,8 @@ export interface LevelConfig {
     curveThisPos: number[],
     curvePrevPos: number[],
     actionsRemaining: number,
-    statMask: {spareMove: number, congaJump: number, greenActivate: number, redActivate: number, 
-        redDamage: number, greenBuff: number, gotchiSave: number, portalOpen: number}
+    statMask: {spareMove: number, congaJump: number, greenActivate: number, redDestroy: number, 
+        redDamage: number, greenBuff: number, gotchiSave: number, congaStart: number}
 }
 
 export const levels: Array<LevelConfig> = [
@@ -82,8 +82,8 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [],
         curvePrevPos: [],
         actionsRemaining: 3,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // 2: Introduce players to moving portals
@@ -104,25 +104,25 @@ export const levels: Array<LevelConfig> = [
         "\n\n" +
         "Tip: Sometimes it's more efficient to bring the portal to the gotchi ;) ",
         gridTexture: GRID_BG_GRASS,
-        pos: [0.258, 0.480 ],
-        curveThisPos: [0.25, 0.49],
-        curvePrevPos: [0.285, 0.62],
+        pos: [0.260, 0.523 ],
+        curveThisPos: [0.255, 0.569],
+        curvePrevPos: [0.258, 0.611],
         actionsRemaining: 10,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // 3: Introduce players to the move counts
         levelNumber: 3,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 3, 0, 0],
-        [0, 2, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 2, 1, 0, 0],
-        [0, 0, 2, 1, 1, 2, 1, 0, 0],
-        [0, 0, 2, 1, 1, 2, 1, 0, 0],
-        [0, 0, 1, 2, 1, 1, 1, 2, 0],
-        [0, 0, 3, 0, 0, 0, 0, 0, 0],
+        [0, 0, 2, 1, 0, 1, 3, 0, 0],
+        [0, 3, 1, 1, 2, 1, 1, 2, 0],
+        [0, 1, 1, 2, 1, 2, 1, 1, 0],
+        [0, 0, 2, 1, 1, 1, 2, 0, 0],
+        [0, 1, 1, 2, 1, 2, 1, 1, 0],
+        [0, 2, 1, 1, 2, 1, 1, 3, 0],
+        [0, 0, 3, 1, 0, 1, 2, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
         levelDescription: 
@@ -130,186 +130,186 @@ export const levels: Array<LevelConfig> = [
         "\n\n" +
         "Tip: Keep an eye on your move count at the bottom of each level. It reduces every time you move an object.",
         gridTexture: GRID_BG_GRASS,
-        pos: [0.181, 0.375 ],
-        curveThisPos: [0.204, 0.418],
-        curvePrevPos: [0.262, 0.395],
+        pos: [0.199, 0.388 ],
+        curveThisPos: [0.227, 0.427],
+        curvePrevPos: [0.264, 0.371],
         actionsRemaining: 20,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // 4: Introduction to milkshakes
         levelNumber: 4,
         gridObjectLayout: [
         [0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 1, 1, 1, 0, 0, 0],
-        [0, 1, 1, 2, 1, 1, 1, 1, 0],
-        [0, 1, 2, 1, 4, 4, 1, 1, 0],
-        [0, 0, 2, 1, 1, 1, 1, 0, 0],
-        [0, 0, 2, 1, 2, 2, 1, 0, 0],
-        [0, 0, 2, 1, 1, 1, 3, 0, 0],
-        [0, 0, 0, 1, 1, 2, 0, 0, 0],
-        [0, 0, 1, 2, 2, 2, 2, 0, 0],
+        [0, 0, 0, 1, 2, 1, 0, 0, 0],
+        [0, 1, 4, 1, 1, 2, 1, 4, 0],
+        [0, 4, 1, 2, 1, 1, 1, 1, 0],
+        [0, 0, 2, 1, 3, 1, 2, 0, 0],
+        [0, 0, 1, 2, 1, 2, 1, 0, 0],
+        [0, 0, 2, 1, 4, 1, 2, 0, 0],
+        [0, 0, 0, 4, 1, 2, 0, 0, 0],
+        [0, 0, 2, 1, 2, 1, 2, 0, 0],
         ],
         levelDescription: 
         "Milkshakes! Mmmm.. mmm.. nomm.. nom... m.. MMMMM!" +
         "\n\n" +
         "Tip: Gotchis are sometimes greedy ghosts. Any gotchi next to a milkshake will slurp it up immediately for some points!",
         gridTexture: GRID_BG_GRASS,
-        pos: [0.06, 0.4],
-        curveThisPos: [0.12, 0.44],
-        curvePrevPos: [0.1, 0.4],
+        pos: [0.066, 0.402],
+        curveThisPos: [0.123, 0.458],
+        curvePrevPos: [0.161, 0.338],
         actionsRemaining: 20,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // Introduction to the tree of fud
         levelNumber: 5,
         gridObjectLayout: [
         [0, 0, 0, 1, 2, 1, 0, 0, 0],
-        [0, 0, 1, 9, 1, 1, 1, 0, 0],
-        [0, 1, 2, 0, 4, 0, 1, 1, 0],
-        [0, 1, 2, 0, 1, 0, 2, 1, 0],
-        [0, 2, 2, 1, 3, 1, 2, 2, 0],
-        [0, 1, 1, 0, 0, 0, 1, 1, 0],
-        [4, 1, 2, 2, 1, 1, 2, 1, 4],
-        [0, 1, 1, 1, 2, 9, 2, 1, 0],
-        [0, 1, 0, 4, 0, 9, 0, 1, 0],  
+        [0, 0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 2, 0, 4, 0, 1, 2, 0],
+        [0, 2, 1, 0, 1, 0, 2, 1, 0],
+        [0, 1, 2, 1, 3, 4, 1, 2, 0],
+        [0, 2, 1, 0, 0, 0, 1, 1, 0],
+        [9, 1, 1, 2, 1, 1, 2, 1, 9],
+        [0, 1, 2, 1, 1, 2, 1, 1, 0],
+        [0, 9, 0, 4, 0, 9, 0, 4, 0],  
         ],
         levelDescription: "The TREE OF FUD! Don't panic.. it looks.. friendly?" +
         "\n\n" +
         "Tip: Some gotchis in this level have been out in the sun too long and are burnt. Move them to allow them to conga again.",
         gridTexture: GRID_BG_DIRT,
-        pos: [0.115, 0.273],
-        curveThisPos: [0.075, 0.289],
-        curvePrevPos: [0.037, 0.336],
+        pos: [0.113, 0.281],
+        curveThisPos: [0.137, 0.327],
+        curvePrevPos: [0.023, 0.334],
         actionsRemaining: 25,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // 6: Introduction to grenades
         levelNumber: 6,
         gridObjectLayout: [
-        [0, 0, 0, 0, 1, 5, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 1, 2, 1, 1, 0, 0],
-        [0, 1, 1, 5, 2, 1, 1, 2, 0],
-        [0, 1, 1, 1, 2, 1, 1, 2, 0],
-        [0, 1, 1, 1, 2, 1, 1, 1, 0],
-        [0, 2, 2, 2, 2, 1, 3, 1, 0],
-        [0, 1, 1, 5, 1, 1, 1, 1, 0],
-        [0, 0, 1, 1, 5, 1, 1, 0, 0],
-        ],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 3, 0, 0, 0, 0],
+            [0, 0, 1, 1, 1, 5, 1, 0, 0],
+            [0, 0, 1, 5, 2, 1, 1, 0, 0],
+            [0, 1, 1, 1, 2, 1, 1, 1, 0],
+            [1, 1, 2, 2, 1, 1, 1, 5, 1],
+            [1, 1, 1, 1, 1, 2, 1, 2, 2],
+            [1, 2, 2, 1, 1, 2, 1, 1, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
         levelDescription: "Aaaah the mountai... STOP! There's grenades here???" +
         "\n\n" +
         "Tip: Moving grenades or starting a conga next to one begins a detonation countdown. Keep gotchis away from explosions!",
         gridTexture: GRID_BG_GRASS,
-        pos: [0.04, 0.232],
-        curveThisPos: [0.044, 0.261],
-        curvePrevPos: [0.088, 0.259],
+        pos: [0.028, 0.178],
+        curveThisPos: [0.026, 0.281],
+        curvePrevPos: [0.081, 0.240],
         actionsRemaining: 17,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // Introduction to grenade chains
         levelNumber: 7,
         gridObjectLayout: [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 3, 0, 0, 0, 0],
-        [0, 0, 5, 1, 5, 1, 5, 0, 0],
-        [0, 0, 1, 1, 1, 1, 5, 0, 0],
-        [0, 1, 2, 2, 1, 5, 1, 1, 0],
-        [1, 1, 2, 1, 1, 2, 1, 1, 1],
-        [1, 5, 1, 1, 1, 2, 1, 2, 2],
-        [1, 2, 1, 2, 2, 2, 1, 1, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ],
+            [0, 0, 0, 0, 5, 3, 0, 0, 0],
+            [0, 0, 0, 0, 5, 0, 0, 0, 0],
+            [0, 0, 1, 5, 1, 1, 2, 0, 0],
+            [0, 1, 5, 4, 1, 2, 1, 2, 0],
+            [0, 1, 5, 1, 2, 1, 1, 1, 0],
+            [0, 5, 1, 1, 1, 2, 1, 4, 0],
+            [0, 1, 5, 1, 2, 1, 1, 1, 0],
+            [0, 1, 1, 4, 1, 1, 1, 2, 0],
+            [0, 0, 5, 1, 2, 1, 2, 0, 0],
+            ],
         levelDescription: "We've been floating for aaaages... are we at NORTH BEACH yet? Ooooh moar grenades!" +
         "\n\n" +
         "Tip: Create a grenade chain reaction to clear the way to the portal!",
         gridTexture: GRID_BG_GRASS,
-        pos: [0.086, 0.145],
-        curveThisPos: [0.04, 0.06],
-        curvePrevPos: [0.03, 0.178],
-        actionsRemaining: 20,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        pos: [0.086, 0.139],
+        curveThisPos: [0.057, 0.093],
+        curvePrevPos: [0.024, 0.175],
+        actionsRemaining: 17,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // 8: Introduction to rofls
         levelNumber: 8,
         gridObjectLayout: [
-        [ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0,  0,  1,  5, 11],
-        [ 0,  0,  1,  2,  1,  1,  1,  1,  1],
-        [ 0,  0,  1,  2,  2,  2,  2,  0,  0],
-        [ 0,  0,  2,  1,  1,  2,  1,  0,  0],
-        [ 0,  0,  1,  3,  1,  2,  1,  0,  0],
-        [ 1,  1,  5,  1,  2,  2, 11,  0,  0],
-        [ 1, 11,  1,  0,  0,  0,  0,  0,  0],
-        [ 1,  1,  1,  0,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0,  0,  4,  1, 11],
+        [ 0,  0,  0,  0,  0,  0,  5,  0,  0],
+        [ 11, 1,  0,  1,  4,  1,  2,  1,  0],
+        [ 0,  5,  1,  2,  1,  2,  1,  1,  0],
+        [ 0,  0,  2,  1,  3,  1,  2,  1,  0],
+        [ 0,  0,  1,  1,  1,  2,  1,  0,  0],
+        [ 1,  4,  5,  1,  2,  1,  1,  4,  0],
+        [ 11, 1,  1,  5,  1,  2,  1,  0,  0],
+        [ 0,  0,  2,  1,  1,  1,  0,  0,  0],
         ],
         levelDescription: "Ahh here we are... NORTH BEACH! A pebbles throw from ROFL REEF..." +
         "\n\n" +
         "Tip: ROFLs move, rotate & conga home like gotchis. They're worth moar points but can be tricky to save..",
         gridTexture: GRID_BG_SAND_STONE,
-        pos: [0.16, 0.075],
-        curveThisPos: [0.105, 0.095],
-        curvePrevPos: [0.085, 0.123],
-        actionsRemaining: 20,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        pos: [0.137, 0.069],
+        curveThisPos: [0.098, 0.057],
+        curvePrevPos: [0.122, 0.207],
+        actionsRemaining: 33,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         // 9: Introduction to cactii
         levelNumber: 9,
         gridObjectLayout: [
-        [0, 0, 0, 0, 0, 0,  1, 1, 0],
-        [0, 0, 0, 0, 0, 1, 11, 1, 1],
-        [0, 0, 1, 1, 0, 6,  2, 1, 1],
-        [0, 2, 1, 1, 1, 1,  2, 1, 0],
-        [1, 2, 2, 6, 1, 1,  1, 0, 0],
-        [1, 2, 1, 2, 2, 2,  2, 0, 0],
-        [1, 1, 1, 1, 6, 2,  1, 0, 0],
-        [0, 2, 1, 1, 0, 1,  3, 1, 0],
-        [0, 0, 0, 0, 0, 0,  1, 0, 0],
+        [ 0,  0,  0,  0,  0,  0,  1,  4,  0],
+        [ 0,  0,  0,  0,  0,  11,  1,  1, 1],
+        [ 0,  0,  3,  1,  0,  6,  1,  2,  1],
+        [ 0,  2,  1,  1,  1,  5,  2,  1,  0],
+        [ 2,  1,  2,  6,  2,  1,  2,  0,  0],
+        [ 1,  2,  1,  2,  1,  2,  2,  0,  0],
+        [ 4,  1,  1,  2,  6,  1,  1,  0,  0],
+        [ 0,  2, 11,  1,  0,  1,  3,  1,  0],
+        [ 0,  0,  0,  0,  0,  0,  1,  0,  0],
         ],
         levelDescription: "Welcome to the DEFI DESERT, home of the.. OUCH.. Cact.. OUCH!!" +
         "\n\n" +
         "Tip: Gotchis that conga next to cactii lose points. Move them away from conga lines just to be safe fren :)",
         gridTexture: GRID_BG_SAND_STONE,
-        pos: [0.177, 0.145],
-        curveThisPos: [0.18, 0.111],
-        curvePrevPos: [0.23, 0.085],
-        actionsRemaining: 20,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        pos: [0.182, 0.141],
+        curveThisPos: [0.191, 0.117],
+        curvePrevPos: [0.203, 0.071],
+        actionsRemaining: 18,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
     {
         levelNumber: 10,
         gridObjectLayout: [
-        [ 0, 0, 0, 1, 2, 1, 0, 0, 0],
-        [ 0, 0, 1, 2, 2, 5, 1, 0, 0],
-        [ 0, 1, 2, 0, 1, 0, 1, 1, 0],
-        [ 0, 2, 1, 0, 5, 0, 2, 2, 0],
-        [ 0, 1, 4, 5, 3, 4, 1, 2, 0],
-        [ 0, 2, 1, 0, 0, 0, 1, 1, 0],
-        [ 1, 5, 2, 6, 1, 2, 2, 2, 1],
-        [ 0, 1, 2, 2, 2, 1, 2, 1, 0],
-        [ 0,11, 0, 2, 0, 4, 0, 1, 0],  
+        [ 0, 0, 0, 1, 3, 1, 0, 0, 0],
+        [ 0, 0, 5, 2, 1, 4, 1, 0, 0],
+        [ 0, 1, 2, 0, 1, 0, 1, 2, 0],
+        [ 0, 1, 2, 0, 2, 0, 4, 1, 0],
+        [ 0, 6, 1, 2, 1, 1, 5, 2, 0],
+        [ 0, 1, 2, 0, 0, 0, 6, 2, 0],
+        [ 3, 4, 1, 1, 2, 2, 2, 1, 3],
+        [ 0, 6, 2, 5, 2, 6, 1, 5, 0],
+        [ 0,11, 0, 1, 0, 4, 0, 11, 0],  
         ],
         levelDescription: "I swear to god... one more level with this smiling tree..." +
         "\n\n" +
         "Tip: Gotchis score points when they 'jump' in a conga line so make those lines as long as possible!",
         gridTexture: GRID_BG_DIRT,
-        pos: [0.167, 0.272],
-        curveThisPos: [0.19, 0.23],
-        curvePrevPos: [0.165, 0.185],
-        actionsRemaining: 35,
-        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-            redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+        pos: [0.163, 0.282],
+        curveThisPos: [0.190, 0.230],
+        curvePrevPos: [0.160, 0.182],
+        actionsRemaining: 39,
+        statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+            redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
 ];

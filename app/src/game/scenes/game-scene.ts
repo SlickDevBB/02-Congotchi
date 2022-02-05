@@ -238,6 +238,10 @@ export class GameScene extends Phaser.Scene {
     return this.gridLevel;
   }
 
+  public getWorldMap() {
+    return this.worldMap;
+  }
+
   public returnMainMenu() {
     this.saveCurrentLevel();
 

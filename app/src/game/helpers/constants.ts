@@ -31,4 +31,6 @@ export const DEPTH_GUI_SCORE = 100;
 
 export const DEPTH_MOVE_TIPS = 200;
 
+export const DEPTH_DEBUG_INFO = 10000;
+
 

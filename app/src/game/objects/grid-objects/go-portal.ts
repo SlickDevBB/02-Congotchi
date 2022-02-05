@@ -248,9 +248,6 @@ export class GO_Portal extends GridObject {
                 // First set leader status to ready
                 congaLeader.status = 'READY_TO_CONGA';
 
-                // make the congaleader a conga leader
-                // congaLeader.makeCongaLeader(true);
-
                 // for this pass lets aim at the portal
                 congaLeader.aimAtGridPosition(this.gridPosition.row, this.gridPosition.col);
 
@@ -325,9 +322,6 @@ export class GO_Portal extends GridObject {
             if (congaLeader &&  congaLeader.status !== 'BURNT') {
                 // First set leader status to ready
                 congaLeader.status = 'READY_TO_CONGA';
-
-                // make the congaleader a conga leader
-                // congaLeader.makeCongaLeader(true);
 
                 // calc up gotchi chain
                 congaLeader.getCongaChain(this.gotchiChains[i]);
@@ -414,7 +408,12 @@ export class GO_Portal extends GridObject {
             // if our conga counter is at 0 we've started to conga!
             if (this.jumpCounter === 0) {
                 this.gridLevel.congaLineStarted();
-                console.log('Conga started!');
+                
+                // score some points and animated the stat point
+                if (this.player) {
+                    this.gui?.adjustScoreWithAnim(this.player.getStat('CONGA_START'), this.x, this.y);
+                    this.player.animStat('CONGA_START');
+                }
             }
 
             // if this is first gotchi into the portal crank that conga music
@@ -430,7 +429,6 @@ export class GO_Portal extends GridObject {
         if (this.congaCounter > 0 && this.congaCounter === this.sumCongaGotchis) {
             // call the grid levels line finished function
             this.gridLevel.congaLineFinished();
-            console.log('Conga Finished!');
 
             // our line finished! lets reset conga counting variables
             this.congaCounter = 0;

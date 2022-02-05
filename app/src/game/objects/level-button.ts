@@ -3,8 +3,8 @@
 // an object placed in the world that our gotchi can traverse between
 
 import { GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, PINK_CIRCLE_SHADED, RED_CIRCLE_SHADED } from "game/assets";
-import { getGameWidth } from "game/helpers";
-import { DEPTH_LEVEL_BUTTON } from "game/helpers/constants";
+import { getGameHeight, getGameWidth } from "game/helpers";
+import { DEPTH_DEBUG_INFO, DEPTH_LEVEL_BUTTON } from "game/helpers/constants";
 
 
 interface Props {
@@ -13,21 +13,41 @@ interface Props {
     y: number;
     key: string;
     levelNumber: number;
+    worldWidth: number;
+    worldHeight: number;
 }
 
-export class LevelButton extends Phaser.GameObjects.Image {
+export class LevelButton extends Phaser.GameObjects.Sprite {
 
     private levelText: Phaser.GameObjects.Text;
-    private buttonLinks: LevelButton[] = [];
-    private buttonLinkCurves: Phaser.Curves.CubicBezier[] = [];
+    private prevButton?: LevelButton;
+    private nextButton?: LevelButton;
+    // private buttonLinkCurves: Phaser.Curves.CubicBezier[] = [];
+    private curveLinkToPreviousButton?: Phaser.Curves.CubicBezier;
+    private curveLinkFromPreviousButton?: Phaser.Curves.CubicBezier;
     private curveGraphics: Phaser.GameObjects.Graphics;
+
+    // need some control points visible for manipulation
+    private controlPointA?: Phaser.GameObjects.Image;
+    private controlPointB?: Phaser.GameObjects.Image;
+    private controlPointAtext?: Phaser.GameObjects.Text;
+    private controlPointBtext?: Phaser.GameObjects.Text;
+
     private levelNumber;
     private isSelected = false;
     private locked = true;  // note we start all buttons locked
 
+    private debugText?: Phaser.GameObjects.Text;
+    private worldWidth?;
+    private worldHeight?;
+
     // call constructor
-    constructor({ scene, x, y, key, levelNumber }: Props) {
+    constructor({ scene, x, y, key, levelNumber, worldWidth, worldHeight }: Props) {
         super(scene, x, y, key);
+
+        // add a pointer to the world
+        this.worldWidth = worldWidth;
+        this.worldHeight = worldHeight;
 
         // create a graphics object
         this.curveGraphics = this.scene.add.graphics();
@@ -50,45 +70,137 @@ export class LevelButton extends Phaser.GameObjects.Image {
                 .setShadow(0, 2, "#333333", 3, true, true);
 
         this.setInteractive();
+        
         this.on( 'pointerover', () => { if (!this.isSelected && !this.locked) this.setTexture(PINK_CIRCLE_SHADED) });
         this.on( 'pointerout', () => { if (!this.isSelected && !this.locked) this.setTexture(RED_CIRCLE_SHADED) });
         this.on( 'pointerdown', () => console.log(this.isSelected));
+        
+        this.scene.input.setDraggable(this);
+        this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+            this.x = dragX;
+            this.y = dragY;
+
+            // update curve to match
+            if (this.curveLinkToPreviousButton) {
+                this.curveLinkToPreviousButton.p0.x = dragX;
+                this.curveLinkToPreviousButton.p0.y = dragY;
+                this.redrawCurve();
+
+                if (this.nextButton?.curveLinkToPreviousButton) {
+                    this.nextButton.curveLinkToPreviousButton.p3.x = dragX;
+                    this.nextButton.curveLinkToPreviousButton.p3.y = dragY;
+                    this.nextButton.redrawCurve();
+                }
+                
+            }
+        });
 
         // last thing to do is set depth
         this.setDepth(DEPTH_LEVEL_BUTTON);
+        
+        // create our debug text
+        this.debugText = this.scene.add.text(this.x, this.y, 'level text!', 
+        { font: this.displayHeight*0.5+'px Courier', color: '#ff0000' })
+                .setOrigin(0.5,0.5)
+                .setStroke('#ffffff', 2)
+                .setShadow(0, 2, "#ffffff", 3, true, true)
+                .setDepth(DEPTH_DEBUG_INFO);
 
+        
     }
 
-    public createLink ( button: LevelButton, bezierControlPoint1: Phaser.Math.Vector2, bezierControlPoint2: Phaser.Math.Vector2) {
-        // check we don't already have a link to the button passed to this function
-        let alreadyLinked = false;
-        this.buttonLinks.map( bl => {
-            if (bl === button) alreadyLinked = true;
-        });
-        if (!alreadyLinked) { 
-            this.buttonLinks.push(button);
+    public redrawCurve() {
+        // clear our graphics
+        this.curveGraphics.clear();
+        this.curveGraphics.lineStyle(5, 0xff00ff, 0.5);
+        if (this.curveLinkToPreviousButton) this.curveLinkToPreviousButton.draw(this.curveGraphics);
+    }
 
-            // create a curve that goes to new button
-            const startPoint = new Phaser.Math.Vector2(this.x, this.y);
-            const controlPoint1 = bezierControlPoint1;
-            const controlPoint2 = bezierControlPoint2;
-            const endPoint = new Phaser.Math.Vector2(button.x, button.y);
-            
-            // add to our curves array
-            this.buttonLinkCurves.push(new Phaser.Curves.CubicBezier(
-                startPoint, controlPoint1, controlPoint2,endPoint,
-            ));
-            
-            this.curveGraphics.lineStyle(5, 0xff00ff, 0.5);
-            this.buttonLinkCurves[this.buttonLinkCurves.length-1].draw(this.curveGraphics);
+    public createLink ( prevButton: LevelButton, bezierControlPoint1: Phaser.Math.Vector2, bezierControlPoint2: Phaser.Math.Vector2) {
+        // set prevButton to prevButton
+        this.prevButton = prevButton;
 
-            // we also need to add this button to the new buttons links
-            button.buttonLinks.push(this);
-            // add another curve but reverse it (will be useful for animation). Don't need to draw it though.
-            button.buttonLinkCurves.push(new Phaser.Curves.CubicBezier(
-                endPoint, controlPoint2, controlPoint1,startPoint,
-            ));
-        }
+        // create a curve that goes to new button
+        const startPoint = new Phaser.Math.Vector2(this.x, this.y);
+        const controlPoint1 = bezierControlPoint1;
+        const controlPoint2 = bezierControlPoint2;
+        const endPoint = new Phaser.Math.Vector2(prevButton.x, prevButton.y);
+
+        // create curve back to previous button
+        this.curveLinkToPreviousButton = new Phaser.Curves.CubicBezier(
+            startPoint, controlPoint1, controlPoint2,endPoint,
+        );
+        
+        // draw curve
+        this.redrawCurve();
+
+        // we also need to set the previous buttons next button to this button
+        prevButton.nextButton = this;
+
+        // add another curve but reverse it (will be useful for animation). Don't need to draw it though.
+        this.curveLinkFromPreviousButton = new Phaser.Curves.CubicBezier(
+            endPoint, controlPoint2, controlPoint1,startPoint,
+        );
+
+        // create our control point images
+        this.controlPointA = this.scene.add.image(controlPoint1.x, controlPoint1.y, GREY_CIRCLE_SHADED)
+            .setDisplayOrigin(0.5, 0.5)
+            .setDisplaySize(getGameWidth(this.scene)*0.05, getGameWidth(this.scene)*0.05)
+            .setDepth(DEPTH_DEBUG_INFO)
+            .setVisible(process.env.NODE_ENV === 'development')
+            .setInteractive()
+            .on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+                if (this.controlPointA) {
+                    // reset our control point a
+                    this.controlPointA.x = dragX;
+                    this.controlPointA.y = dragY;
+        
+                    // update curve to match
+                    if (this.curveLinkToPreviousButton) {
+                        this.curveLinkToPreviousButton.p1.x = dragX;
+                        this.curveLinkToPreviousButton.p1.y = dragY;
+                        this.redrawCurve();
+                    }
+                }
+            });
+
+        this.controlPointB = this.scene.add.image(controlPoint2.x, controlPoint2.y, GREY_CIRCLE_SHADED)
+            .setDisplayOrigin(0.5, 0.5)
+            .setDisplaySize(getGameWidth(this.scene)*0.05, getGameWidth(this.scene)*0.05)
+            .setDepth(DEPTH_DEBUG_INFO)
+            .setVisible(process.env.NODE_ENV === 'development')
+            .setInteractive()
+            .on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+                if (this.controlPointB) {
+                    // reset our control point a
+                    this.controlPointB.x = dragX;
+                    this.controlPointB.y = dragY;
+        
+                    // update curve to match
+                    if (this.curveLinkToPreviousButton) {
+                        this.curveLinkToPreviousButton.p2.x = dragX;
+                        this.curveLinkToPreviousButton.p2.y = dragY;
+                        this.redrawCurve();
+                    }
+                }
+            });
+
+        this.scene.input.setDraggable([this.controlPointA, this.controlPointB])
+
+        // make some level text
+        this.controlPointAtext = this.scene.add.text(this.x, this.y, 'level text!', 
+        { font: this.displayHeight*0.5+'px Courier', color: '#ffffff' })
+                .setOrigin(0.5,0.5)
+                .setStroke('#000000', 2)
+                .setShadow(0, 2, "#333333", 3, true, true)
+                .setDepth(DEPTH_DEBUG_INFO);
+
+        this.controlPointBtext = this.scene.add.text(this.x, this.y, 'level text!', 
+        { font: this.displayHeight*0.5+'px Courier', color: '#ffffff' })
+                .setOrigin(0.5,0.5)
+                .setStroke('#000000', 2)
+                .setShadow(0, 2, "#333333", 3, true, true)
+                .setDepth(DEPTH_DEBUG_INFO);
     }
 
     setDepth(depth: number) {
@@ -120,18 +232,17 @@ export class LevelButton extends Phaser.GameObjects.Image {
     }
 
     public getBezierCurveLinkedTo(linkedButton: LevelButton) {
-        // go through all button links till we find the one attached to linkedButton
-        let bezier: Phaser.Curves.CubicBezier | 0 = 0;
-        for (let i = 0; i < this.buttonLinks.length; i++) {
-            if (this.buttonLinks[i] === linkedButton) {
-                bezier = this.buttonLinkCurves[i];
-            }
+        // return a curve that goes to the linked button
+        if (linkedButton === this.prevButton) {
+            return this.curveLinkToPreviousButton;
+        } else {
+            return this.nextButton?.curveLinkFromPreviousButton;
         }
-        return bezier;
     }
 
     public isNextToButton(button: LevelButton) {
-        return this.buttonLinks.find( bl => bl === button);
+        // return this.buttonLinks.find( bl => bl === button);
+        return this.prevButton === button || this.nextButton === button;
     }
 
     public setSelected(selected: boolean) {
@@ -144,11 +255,23 @@ export class LevelButton extends Phaser.GameObjects.Image {
 
     public getSelected() { return this.isSelected; }
 
-    // update() {
-    //     super.update();
-    //     if (!this.locked) {
-    //         if (this.isSelected) this.setTexture(GREEN_CIRCLE_SHADED);
-    //         else this.setTexture(RED_CIRCLE_SHADED);
-    //     }
-    // }
+    // our update function that runs every cycle
+    update() {
+        super.update();
+
+        // update level text position
+        this.levelText.setPosition(this.x, this.y-this.displayHeight*0.05);
+        
+        // update our debug text if in debug mode
+        if (process.env.NODE_ENV === 'development' && this.debugText && this.worldWidth && this.worldHeight && this.controlPointAtext && this.controlPointBtext && this.controlPointA && this.controlPointB) {
+            this.debugText.setPosition(this.x, this.y + getGameHeight(this.scene)*0.05)
+            this.debugText.text = 'X: ' + (this.x/this.worldWidth).toFixed(3).toString() + '\nY: ' + (this.y/this.worldHeight).toFixed(3).toString();
+        
+            this.controlPointAtext.setPosition(this.controlPointA.x, this.controlPointA.y + getGameHeight(this.scene)*0.05)
+            this.controlPointAtext.text = 'X: ' + (this.controlPointA.x/this.worldWidth).toFixed(3).toString() + '\nY: ' + (this.controlPointA.y/this.worldHeight).toFixed(3).toString();
+        
+            this.controlPointBtext.setPosition(this.controlPointB.x, this.controlPointB.y + getGameHeight(this.scene)*0.05)
+            this.controlPointBtext.text = 'X: ' + (this.controlPointB.x/this.worldWidth).toFixed(3).toString() + '\nY: ' + (this.controlPointB.y/this.worldHeight).toFixed(3).toString();
+        }
+    }
 }

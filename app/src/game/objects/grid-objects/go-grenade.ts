@@ -204,8 +204,8 @@ export class GO_Grenade extends GridObject {
 
             // score some points for exploding grenade
             if (this.player) {
-                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_ACTIVATE'), this.x, this.y);
-                this.player.animStat('RED_ACTIVATE');
+                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DESTROY'), this.x, this.y);
+                this.player.animStat('RED_DESTROY');
             }
 
             // create an explosion tween
@@ -242,9 +242,15 @@ export class GO_Grenade extends GridObject {
                     if (go !== 'OUT OF BOUNDS') {
                         if (go.getType() === 'GOTCHI' || go.getType() === 'ROFL') {
                             (go as GO_Gotchi).status = 'BURNT';
+
+                            // also do some red damage for negative points
+                            if (this.player) {
+                                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DAMAGE'), go.x, go.y);
+                                this.player.animStat('RED_DAMAGE');
+                            }
                         }
                         else if (go.getType() === 'GRENADE') {
-                            setTimeout(() => (go as GO_Grenade).explode(), 300);
+                            setTimeout(() => (go as GO_Grenade).explode(), 200);
                         }
                         else if (go.getType() === 'MILKSHAKE') {
                             // empty out the grid position with the milkshake ini it
@@ -256,6 +262,12 @@ export class GO_Grenade extends GridObject {
                         else if (go.getType() === 'CACTII') {
                             // empty out the grid position with the cactii ini it
                             this.gridLevel.setEmptyGridObject(go.getGridPosition().row, go.getGridPosition().col);
+
+                            // score some points for destroying the cactii
+                            if (this.player) {
+                                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DESTROY'), go.x, go.y);
+                                this.player.animStat('RED_DESTROY');
+                            }
 
                             // destroy the cactii
                             (go as GO_Cactii).destroy();

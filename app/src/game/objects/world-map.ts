@@ -53,7 +53,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
         this.cursorKeys = this.scene.input.keyboard.createCursorKeys();
 
         // create the debug text
-        const fontHeight = getGameHeight(this.scene)/50*1.25;
+        // const fontHeight = getGameHeight(this.scene)/50*1.25;
         // this.debugText = this.scene.add.text(10, 100, 'Debug Info', { font: fontHeight+'px Courier', color: '#ff0000' });
         // this.debugText.setScrollFactor(0);
         // this.debugText.setStroke("#ffffff", 4);
@@ -102,6 +102,8 @@ export class WorldMap extends Phaser.GameObjects.Image {
                 y: levels[i].pos[1]*this.displayHeight,
                 key: GREY_CIRCLE_SHADED,
                 levelNumber: levels[i].levelNumber,
+                worldWidth: this.worldWidth,
+                worldHeight: this.worldHeight,
             })
             .on('pointerdown', () => (this.scene as GameScene).selectLevel(i+1));
 
@@ -187,14 +189,26 @@ export class WorldMap extends Phaser.GameObjects.Image {
         // do level over screen stuff
       }
 
+    public getWorldWidth() {
+        return this.worldWidth;
+    }
+
+    public getWorldHeight() {
+        return this.worldHeight;
+    }
+
     destroy() {
         super.destroy();
         this.musicWorldMap?.stop();
     }
 
     update() {
+        // go through all buttons and update them
+        this.levelButtons.map( btn => {
+            btn.update();
+        })
 
-        // render some debug info
+        // // render some debug info
         // const pointer = this.scene.input.activePointer;
 
         // this.debugText.setText([

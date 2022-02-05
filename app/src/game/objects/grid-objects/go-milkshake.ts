@@ -112,6 +112,12 @@ export class GO_Milkshake extends GridObject {
         // play slurp
         this.soundInteract?.play();
 
+        // score some points for activating a milkshake
+        if (this.player) {
+            this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_ACTIVATE'), this.x, this.y);
+            this.player.animStat('GREEN_ACTIVATE');
+        }
+
         // Go through thirstY gotchis and give them all a drink
         thirstyGotchis.map( gotchi => {
             // score some points for feeding a gotchi or rofl

@@ -44,12 +44,12 @@ export class MoveTips {
             }
             case 4: {
                 // set position of our hand
-                setTimeout( () => this.clickDragAcrossLoop(3, 4, 3, 3), 250);
+                setTimeout( () => this.clickDragAcrossLoop(3, 1, 3, 2), 250);
                 break;
             }
             case 5: {
                 // set position of our hand
-                setTimeout( () => this.clickDragAcrossLoop(1, 3, 1, 2), 250);
+                setTimeout( () => this.clickDragAcrossLoop(6, 0, 6, 1), 250);
                 break;
             }
             case 6: {
@@ -59,7 +59,7 @@ export class MoveTips {
             }
             case 7: {
                 // set position of our hand
-                setTimeout( () => this.clickDragAcrossLoop(4, 5, 3, 5), 250);
+                setTimeout( () => this.clickDragAcrossLoop(8, 2, 7, 2), 250);
                 break;
             }
             case 9: {

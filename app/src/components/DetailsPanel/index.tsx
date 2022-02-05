@@ -51,11 +51,12 @@ export const DetailsPanel = ({ selectedGotchi }: Props) => {
                 </p>
                 <p>
                   <span className={styles.emoji}>⚡️</span>
-                  {selectedGotchi?.withSetsNumericTraits[0]}
+                  {selectedGotchi?.withSetsNumericTraits[i]}
                 </p>
               </div>
               {renderModifier('Spare Move: ' + gotchiStats.spareMove.toString() + ' Pts', calculatePercentage(100 -(selectedGotchi?.withSetsNumericTraits[i] as number)))}
-              {renderModifier('Conga Jump: ' + gotchiStats.congaJump.toString() + ' Pts', calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
+              {renderModifier('Gotchi Save: ' + gotchiStats.gotchiSave.toString() + ' Pts', calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
+              
             </>
           );
         }
@@ -69,11 +70,11 @@ export const DetailsPanel = ({ selectedGotchi }: Props) => {
                 </p>
                 <p>
                   <span className={styles.emoji}>👹</span>
-                  {selectedGotchi?.withSetsNumericTraits[1]}
+                  {selectedGotchi?.withSetsNumericTraits[i]}
                 </p>
               </div>
               {renderModifier('Green Activate: ' + gotchiStats.greenActivate.toString() + ' Pts', calculatePercentage(100 -(selectedGotchi?.withSetsNumericTraits[i] as number)))}
-              {renderModifier('Red Activate: ' + gotchiStats.redActivate.toString() + ' Pts', calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
+              {renderModifier('Red Destroy: ' + gotchiStats.redDestroy.toString() + ' Pts', calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
             </>
           );
         }
@@ -86,7 +87,7 @@ export const DetailsPanel = ({ selectedGotchi }: Props) => {
                 </p>
                 <p>
                   <span className={styles.emoji}>👻</span>
-                  {selectedGotchi?.withSetsNumericTraits[2]}
+                  {selectedGotchi?.withSetsNumericTraits[i]}
                 </p>
               </div>
               {renderModifier('Red Damage: ' + gotchiStats.redDamage.toString() + ' Pts', calculatePercentage(100 -(selectedGotchi?.withSetsNumericTraits[i] as number)))}
@@ -103,11 +104,11 @@ export const DetailsPanel = ({ selectedGotchi }: Props) => {
                 </p>
                 <p>
                   <span className={styles.emoji}>🧠</span>
-                  {selectedGotchi?.withSetsNumericTraits[3]}
+                  {selectedGotchi?.withSetsNumericTraits[i]}
                 </p>
               </div>
-              {renderModifier('Gotchi Save: ' + gotchiStats.gotchiSave.toString() + ' Pts', calculatePercentage(100 -(selectedGotchi?.withSetsNumericTraits[i] as number)))}
-              {renderModifier('Portal Open: ' + gotchiStats.portalOpen.toString() + ' Pts', calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
+              {renderModifier('Conga Start: ' + gotchiStats.congaStart.toString() + ' Pts', calculatePercentage(100 - (selectedGotchi?.withSetsNumericTraits[i] as number)))}
+              {renderModifier('Conga Jump: ' + gotchiStats.congaJump.toString() + ' Pts', calculatePercentage(selectedGotchi?.withSetsNumericTraits[i] as number))}
             </>
           );
         }

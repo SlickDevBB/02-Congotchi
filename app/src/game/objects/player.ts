@@ -2,7 +2,7 @@
 
 import { BLUE_CIRCLE_SHADED, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, MOVE_ICON, PARTICLE_CONFETTI, PINK_CIRCLE_SHADED, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
-import { DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
+import { DEPTH_DEBUG_INFO, DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { GameScene } from "game/scenes/game-scene";
 import { calcStats, StatPoints } from "helpers/stats";
 import { AavegotchiGameObject } from "types";
@@ -21,8 +21,8 @@ interface Props {
 }
 
 interface StatMask {
-  spareMove: number, congaJump: number, greenActivate: number, redActivate: number, 
-  redDamage: number, greenBuff: number, gotchiSave: number, portalOpen: number
+  spareMove: number, congaJump: number, greenActivate: number, redDestroy: number, 
+  redDamage: number, greenBuff: number, gotchiSave: number, congaStart: number
 }
 
 export class Player extends Phaser.GameObjects.Sprite {
@@ -37,13 +37,13 @@ export class Player extends Phaser.GameObjects.Sprite {
   public congaJumpIcon;
 
   public greenActivateIcon;
-  public redActivateIcon;
+  public redDestroyIcon;
 
   public redDamageIcon;
   public greenBuffIcon;
 
   public gotchiSaveIcon;
-  public portalOpenIcon;
+  public congaStartIcon;
 
   public gotchi;
 
@@ -54,6 +54,9 @@ export class Player extends Phaser.GameObjects.Sprite {
   private world;
   private levelNumber = 1;
 
+  private cameraAutoPan = true;
+  private cameraAutoPanText?: Phaser.GameObjects.Text;
+
   private particleStat?: Array<Phaser.GameObjects.Particles.ParticleEmitterManager> = [];
   private emitterStat?: Array<Phaser.GameObjects.Particles.ParticleEmitter> = [];
 
@@ -63,8 +66,8 @@ export class Player extends Phaser.GameObjects.Sprite {
   private direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT' = 'DOWN';
 
   // stat mask
-  private statMask: StatMask = {spareMove: 0, congaJump: 0, greenActivate: 0, redActivate: 0, 
-    redDamage: 0, greenBuff: 0, gotchiSave: 0, portalOpen: 0}
+  private statMask: StatMask = {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
+    redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
 
   constructor({ scene, x, y, key, world, width, height, gotchi }: Props) {
     super(scene, x, y, key);
@@ -164,7 +167,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     .setDepth(DEPTH_PLAYER_ICONS)
     .setScrollFactor(0);
 
-    this.redActivateIcon = new AarcIcon ({
+    this.redDestroyIcon = new AarcIcon ({
       scene: this.scene,
       x: posX - RADIUS * Math.cos(11.25 * 7 * Math.PI / 180),
       y: posY - RADIUS * Math.sin(11.25 * 7 * Math.PI / 180),
@@ -172,7 +175,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: "",
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.currentStats?.redActivate,
+      numBadge: this.currentStats?.redDestroy,
     })
     .setDepth(DEPTH_PLAYER_ICONS)
     .setScrollFactor(0);
@@ -216,7 +219,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     .setDepth(DEPTH_PLAYER_ICONS)
     .setScrollFactor(0);
 
-    this.portalOpenIcon = new AarcIcon ({
+    this.congaStartIcon = new AarcIcon ({
       scene: this.scene,
       x: posX + RADIUS * Math.cos(11.25 * 1 * Math.PI / 180),
       y: posY - RADIUS * Math.sin(11.25 * 1 * Math.PI / 180),
@@ -224,7 +227,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       keyIcon: "",
       radius: iconRadius,
       useBadge: true,
-      numBadge: this.currentStats?.portalOpen,
+      numBadge: this.currentStats?.congaStart,
     })
     .setDepth(DEPTH_PLAYER_ICONS)
     .setScrollFactor(0);
@@ -260,6 +263,30 @@ export class Player extends Phaser.GameObjects.Sprite {
     // start off with all stats invisible and ignore statmask
     this.setStatsVisible(false, true);
 
+
+    // i'd like to toggle auto camera scroll whenever space is hit
+    this.scene.input.keyboard.on("keydown-SPACE", () => {
+        this.cameraAutoPan = !this.cameraAutoPan;
+        if (this.cameraAutoPan) {
+          if (this.cameraAutoPanText) this.cameraAutoPanText.text = 'Camera Auto Pan: Enabled \n(Hit Space to Toggle)';
+        } else {
+          if (this.cameraAutoPanText) this.cameraAutoPanText.text = 'Camera Auto Pan: Disabled \n(Hit Space to Toggle)';
+        }
+    });
+
+    const fontHeight = getGameHeight(this.scene)*0.0285;
+    this.cameraAutoPanText = this.scene.add.text(
+        getGameWidth(this.scene)*0.5, 
+        getGameHeight(this.scene)*0.65,
+        'Camera Auto Pan: Enabled \n(Hit Space to Toggle)',
+        { font: fontHeight+'px Courier', color: '#ff0000' })
+        .setAlign('center')
+        .setDepth(DEPTH_DEBUG_INFO)
+        .setOrigin(0.5,0.5)
+        .setScrollFactor(0)
+        .setStroke('#ffffff', fontHeight*0.25)
+        .setVisible(process.env.NODE_ENV === 'development');
+
   }
 
   private initStats() {
@@ -273,18 +300,18 @@ export class Player extends Phaser.GameObjects.Sprite {
         gotchi.withSetsNumericTraits[3]);
       
       // set badge numbers for all icons
-      if (this.spareMoveIcon && this.congaJumpIcon && this.greenActivateIcon && this.redActivateIcon && this.redDamageIcon && this.greenBuffIcon && this.gotchiSaveIcon && this.portalOpenIcon) {
+      if (this.spareMoveIcon && this.congaJumpIcon && this.greenActivateIcon && this.redDestroyIcon && this.redDamageIcon && this.greenBuffIcon && this.gotchiSaveIcon && this.congaStartIcon) {
         this.spareMoveIcon.setBadge(this.currentStats.spareMove);
         this.congaJumpIcon.setBadge(this.currentStats.congaJump);
 
         this.greenActivateIcon.setBadge(this.currentStats.greenActivate);
-        this.redActivateIcon.setBadge(this.currentStats.redActivate);
+        this.redDestroyIcon.setBadge(this.currentStats.redDestroy);
         
         this.redDamageIcon.setBadge(this.currentStats.redDamage);
         this.greenBuffIcon.setBadge(this.currentStats.greenBuff);
 
         this.gotchiSaveIcon.setBadge(this.currentStats.gotchiSave);
-        this.portalOpenIcon.setBadge(this.currentStats.portalOpen);
+        this.congaStartIcon.setBadge(this.currentStats.congaStart);
       }
     }
     
@@ -296,22 +323,22 @@ export class Player extends Phaser.GameObjects.Sprite {
     if (this.statMask.spareMove > 0 || ignoreMask) this.spareMoveIcon.setVisible(visible);
     if (this.statMask.congaJump > 0 || ignoreMask) this.congaJumpIcon.setVisible(visible);
     if (this.statMask.greenActivate > 0 || ignoreMask) this.greenActivateIcon.setVisible(visible);
-    if (this.statMask.redActivate > 0 || ignoreMask) this.redActivateIcon.setVisible(visible);
+    if (this.statMask.redDestroy > 0 || ignoreMask) this.redDestroyIcon.setVisible(visible);
     if (this.statMask.redDamage > 0 || ignoreMask) this.redDamageIcon.setVisible(visible);
     if (this.statMask.greenBuff > 0 || ignoreMask) this.greenBuffIcon.setVisible(visible);
     if (this.statMask.gotchiSave > 0 || ignoreMask) this.gotchiSaveIcon.setVisible(visible);
-    if (this.statMask.portalOpen > 0 || ignoreMask) this.portalOpenIcon.setVisible(visible);
+    if (this.statMask.congaStart > 0 || ignoreMask) this.congaStartIcon.setVisible(visible);
   }
 
   public setStatsAlpha(alpha: number) {
     this.spareMoveIcon.setAlpha(alpha);
     this.congaJumpIcon.setAlpha(alpha);
     this.greenActivateIcon.setAlpha(alpha);
-    this.redActivateIcon.setAlpha(alpha);
+    this.redDestroyIcon.setAlpha(alpha);
     this.redDamageIcon.setAlpha(alpha);
     this.greenBuffIcon.setAlpha(alpha);
     this.gotchiSaveIcon.setAlpha(alpha);
-    this.portalOpenIcon.setAlpha(alpha);
+    this.congaStartIcon.setAlpha(alpha);
   }
 
   // setStatMask() hides certain stats 
@@ -320,8 +347,8 @@ export class Player extends Phaser.GameObjects.Sprite {
   }
 
   // this function will animate a given stat sphere if not masked
-  public animStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_ACTIVATE' | 
-  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'PORTAL_OPEN') {
+  public animStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_DESTROY' | 
+  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'CONGA_START') {
 
     const duration = 1500;
 
@@ -345,9 +372,9 @@ export class Player extends Phaser.GameObjects.Sprite {
           setTimeout(() => {if (this.emitterStat) this.emitterStat[2].stop()}, duration);
           break;
         }
-        case 'RED_ACTIVATE': {
-          if (this.statMask.redActivate === 0) break;
-          this.emitterStat[3].setPosition(this.redActivateIcon.x, this.redActivateIcon.y).start();
+        case 'RED_DESTROY': {
+          if (this.statMask.redDestroy === 0) break;
+          this.emitterStat[3].setPosition(this.redDestroyIcon.x, this.redDestroyIcon.y).start();
           setTimeout(() => {if (this.emitterStat) this.emitterStat[3].stop()}, duration);
           break;
         }
@@ -369,9 +396,9 @@ export class Player extends Phaser.GameObjects.Sprite {
           setTimeout(() => {if (this.emitterStat) this.emitterStat[6].stop()}, duration);
           break;
         }
-        case 'PORTAL_OPEN': {
-          if (this.statMask.portalOpen === 0) break;
-          this.emitterStat[7].setPosition(this.portalOpenIcon.x, this.portalOpenIcon.y).start();
+        case 'CONGA_START': {
+          if (this.statMask.congaStart === 0) break;
+          this.emitterStat[7].setPosition(this.congaStartIcon.x, this.congaStartIcon.y).start();
           setTimeout(() => {if (this.emitterStat) this.emitterStat[7].stop()}, duration);
           break;
         }
@@ -379,8 +406,8 @@ export class Player extends Phaser.GameObjects.Sprite {
     }
   }
 
-  public getStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_ACTIVATE' | 
-  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'PORTAL_OPEN'): number {
+  public getStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_DESTROY' | 
+  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'CONGA_START'): number {
     if (this.currentStats) {
       switch (stat) {
         case 'SPARE_MOVE': {
@@ -395,8 +422,8 @@ export class Player extends Phaser.GameObjects.Sprite {
           return this.currentStats?.greenActivate;
           break;
         }
-        case 'RED_ACTIVATE': {
-          return this.currentStats?.redActivate;
+        case 'RED_DESTROY': {
+          return this.currentStats?.redDestroy;
           break;
         }
         case 'RED_DAMAGE': {
@@ -411,8 +438,8 @@ export class Player extends Phaser.GameObjects.Sprite {
           return this.currentStats?.gotchiSave;
           break;
         }
-        case 'PORTAL_OPEN': {
-          return this.currentStats?.portalOpen;
+        case 'CONGA_START': {
+          return this.currentStats?.congaStart;
           break;
         }
       }
@@ -572,7 +599,7 @@ export class Player extends Phaser.GameObjects.Sprite {
                             this.setDirection('DOWN');
 
                             // tween camera to new position
-                            this.panCameraToPlayer();
+                            if (this.cameraAutoPan) this.panCameraToPlayer();
                         },
                         duration: 500,
                     });
@@ -582,7 +609,7 @@ export class Player extends Phaser.GameObjects.Sprite {
                 this.setPosition(selectedLevelButton?.x, selectedLevelButton.y-selectedLevelButton.displayHeight*OFFSET);
 
                 // tween camera to new position
-                this.panCameraToPlayer();
+                if (this.cameraAutoPan) this.panCameraToPlayer();
             }
 
         }
