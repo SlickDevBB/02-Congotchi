@@ -274,7 +274,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         }
     });
 
-    const fontHeight = getGameHeight(this.scene)*0.0285;
+    const fontHeight = getGameHeight(this.scene)*0.02;
     this.cameraAutoPanText = this.scene.add.text(
         getGameWidth(this.scene)*0.5, 
         getGameHeight(this.scene)*0.65,

@@ -4,7 +4,7 @@
 
 import { GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, PINK_CIRCLE_SHADED, RED_CIRCLE_SHADED } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
-import { DEPTH_DEBUG_INFO, DEPTH_LEVEL_BUTTON } from "game/helpers/constants";
+import { DEPTH_DEBUG_INFO, DEPTH_LEVEL_BUTTON, DEPTH_WORLD_MAP } from "game/helpers/constants";
 
 
 interface Props {
@@ -32,6 +32,8 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
     private controlPointB?: Phaser.GameObjects.Image;
     private controlPointAtext?: Phaser.GameObjects.Text;
     private controlPointBtext?: Phaser.GameObjects.Text;
+    private controlPointAline?: Phaser.Geom.Line;
+    private controlPointBline?: Phaser.Geom.Line;
 
     private levelNumber;
     private isSelected = false;
@@ -84,15 +86,26 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
             if (this.curveLinkToPreviousButton) {
                 this.curveLinkToPreviousButton.p0.x = dragX;
                 this.curveLinkToPreviousButton.p0.y = dragY;
-                this.redrawCurve();
-
+                
                 if (this.nextButton?.curveLinkToPreviousButton) {
                     this.nextButton.curveLinkToPreviousButton.p3.x = dragX;
                     this.nextButton.curveLinkToPreviousButton.p3.y = dragY;
-                    this.nextButton.redrawCurve();
-                }
-                
+                } 
             }
+
+            // update control lines to match
+            if (this.controlPointAline) {
+                this.controlPointAline.x1 = dragX;
+                this.controlPointAline.y1 = dragY;
+
+                if (this.nextButton?.controlPointBline) {
+                    this.nextButton.controlPointBline.x1 = dragX;
+                    this.nextButton.controlPointBline.y1 = dragY;
+                }
+            }
+
+            this.redrawCurve();
+            this.nextButton?.redrawCurve();
         });
 
         // last thing to do is set depth
@@ -104,7 +117,7 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
                 .setOrigin(0.5,0.5)
                 .setStroke('#ffffff', 2)
                 .setShadow(0, 2, "#ffffff", 3, true, true)
-                .setDepth(DEPTH_DEBUG_INFO);
+                .setDepth(DEPTH_WORLD_MAP+1);
 
         
     }
@@ -114,6 +127,12 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
         this.curveGraphics.clear();
         this.curveGraphics.lineStyle(5, 0xff00ff, 0.5);
         if (this.curveLinkToPreviousButton) this.curveLinkToPreviousButton.draw(this.curveGraphics);
+
+        if (this.controlPointAline && this.controlPointBline) {
+            this.curveGraphics.lineStyle(3, 0xdddddd, 0.9);
+            this.curveGraphics.strokeLineShape(this.controlPointAline);
+            this.curveGraphics.strokeLineShape(this.controlPointBline);
+        }
     }
 
     public createLink ( prevButton: LevelButton, bezierControlPoint1: Phaser.Math.Vector2, bezierControlPoint2: Phaser.Math.Vector2) {
@@ -130,6 +149,10 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
         this.curveLinkToPreviousButton = new Phaser.Curves.CubicBezier(
             startPoint, controlPoint1, controlPoint2,endPoint,
         );
+
+        // Create control point lines and draw them
+        this.controlPointAline = new Phaser.Geom.Line(startPoint.x, startPoint.y, controlPoint1.x, controlPoint1.y);
+        this.controlPointBline = new Phaser.Geom.Line(endPoint.x, endPoint.y, controlPoint2.x, controlPoint2.y);
         
         // draw curve
         this.redrawCurve();
@@ -144,9 +167,9 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
 
         // create our control point images
         this.controlPointA = this.scene.add.image(controlPoint1.x, controlPoint1.y, GREY_CIRCLE_SHADED)
-            .setDisplayOrigin(0.5, 0.5)
+            .setOrigin(0.5, 0.5)
             .setDisplaySize(getGameWidth(this.scene)*0.05, getGameWidth(this.scene)*0.05)
-            .setDepth(DEPTH_DEBUG_INFO)
+            .setDepth(DEPTH_WORLD_MAP+1)
             .setVisible(process.env.NODE_ENV === 'development')
             .setInteractive()
             .on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
@@ -161,13 +184,19 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
                         this.curveLinkToPreviousButton.p1.y = dragY;
                         this.redrawCurve();
                     }
+
+                    // update bezier lines to match
+                    if (this.controlPointAline) {
+                        this.controlPointAline.x2 = dragX;
+                        this.controlPointAline.y2 = dragY;
+                    }
                 }
             });
 
         this.controlPointB = this.scene.add.image(controlPoint2.x, controlPoint2.y, GREY_CIRCLE_SHADED)
-            .setDisplayOrigin(0.5, 0.5)
+            .setOrigin(0.5, 0.5)
             .setDisplaySize(getGameWidth(this.scene)*0.05, getGameWidth(this.scene)*0.05)
-            .setDepth(DEPTH_DEBUG_INFO)
+            .setDepth(DEPTH_WORLD_MAP+1)
             .setVisible(process.env.NODE_ENV === 'development')
             .setInteractive()
             .on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
@@ -182,6 +211,12 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
                         this.curveLinkToPreviousButton.p2.y = dragY;
                         this.redrawCurve();
                     }
+
+                    // update bezier lines to match
+                    if (this.controlPointBline) {
+                        this.controlPointBline.x2 = dragX;
+                        this.controlPointBline.y2 = dragY;
+                    }
                 }
             });
 
@@ -193,14 +228,14 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
                 .setOrigin(0.5,0.5)
                 .setStroke('#000000', 2)
                 .setShadow(0, 2, "#333333", 3, true, true)
-                .setDepth(DEPTH_DEBUG_INFO);
+                .setDepth(DEPTH_WORLD_MAP+1);
 
         this.controlPointBtext = this.scene.add.text(this.x, this.y, 'level text!', 
         { font: this.displayHeight*0.5+'px Courier', color: '#ffffff' })
                 .setOrigin(0.5,0.5)
                 .setStroke('#000000', 2)
                 .setShadow(0, 2, "#333333", 3, true, true)
-                .setDepth(DEPTH_DEBUG_INFO);
+                .setDepth(DEPTH_WORLD_MAP+1);
     }
 
     setDepth(depth: number) {
