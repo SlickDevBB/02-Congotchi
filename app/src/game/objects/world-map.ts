@@ -3,7 +3,7 @@
 
 import { GREY_CIRCLE_SHADED, MUSIC_WORLD_MAP } from "game/assets";
 import { getGameHeight, getGameWidth, } from "game/helpers";
-import { LevelButton, levels, } from ".";
+import { LevelButton, LevelConfig, } from ".";
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_WORLD_MASK } from "game/helpers/constants";
 
@@ -23,20 +23,21 @@ export class WorldMap extends Phaser.GameObjects.Image {
     private levelButtons: LevelButton[] = [];
     private worldHeight;
     private worldWidth;
-
-    // private socket: Socket;
     
     private backButton?: Phaser.GameObjects.Image;
     private backSound?: Phaser.Sound.BaseSound;
     private worldMask: Phaser.GameObjects.Rectangle;
 
     // create a music object
-  private musicWorldMap?: Phaser.Sound.HTML5AudioSound;
+    private musicWorldMap?: Phaser.Sound.HTML5AudioSound;
 
+    private levels?: Array<LevelConfig>;
 
     // call constructor
     constructor({ scene, x, y, key }: Props) {
         super(scene, x, y, key);
+
+        this.levels = (this.scene as GameScene).levels;
 
         // add the map to the scene and set its display size
         const zoom = 2;
@@ -93,29 +94,30 @@ export class WorldMap extends Phaser.GameObjects.Image {
     }
 
     private createLevelButtons() {
-        // loop through the levels level config object and create levels
-        for (let i = 0; i < levels.length; i++) {
-            // create a new level button
-            this.levelButtons[i] = new LevelButton({
-                scene: this.scene,
-                x: levels[i].pos[0]*this.displayWidth,
-                y: levels[i].pos[1]*this.displayHeight,
-                key: GREY_CIRCLE_SHADED,
-                levelNumber: levels[i].levelNumber,
-                worldWidth: this.worldWidth,
-                worldHeight: this.worldHeight,
-            })
-            .on('pointerdown', () => (this.scene as GameScene).selectLevel(i+1));
+        if (this.levels) {
+            // loop through the levels level config object and create levels
+            for (let i = 0; i < this.levels.length; i++) {
+                // create a new level button
+                this.levelButtons[i] = new LevelButton({
+                    scene: this.scene,
+                    x: this.levels[i].pos[0]*this.displayWidth,
+                    y: this.levels[i].pos[1]*this.displayHeight,
+                    key: GREY_CIRCLE_SHADED,
+                    levelNumber: this.levels[i].levelNumber,
+                    worldWidth: this.worldWidth,
+                    worldHeight: this.worldHeight,
+                })
+                .on('pointerdown', () => (this.scene as GameScene).selectLevel(i+1));
 
-            // if we have curve positions we can link back to last level
-            if (levels[i].curveThisPos.length > 0) {
-                    this.levelButtons[i].createLink(this.levelButtons[i-1], 
-                    new Phaser.Math.Vector2(levels[i].curveThisPos[0]*this.displayWidth, levels[i].curveThisPos[1]*this.displayHeight),
-                    new Phaser.Math.Vector2(levels[i].curvePrevPos[0]*this.displayWidth, levels[i].curvePrevPos[1]*this.displayHeight),
-                );
+                // if we have curve positions we can link back to last level
+                if (this.levels[i].curveThisPos.length > 0) {
+                        this.levelButtons[i].createLink(this.levelButtons[i-1], 
+                        new Phaser.Math.Vector2(this.levels[i].curveThisPos[0]*this.displayWidth, this.levels[i].curveThisPos[1]*this.displayHeight),
+                        new Phaser.Math.Vector2(this.levels[i].curvePrevPos[0]*this.displayWidth, this.levels[i].curvePrevPos[1]*this.displayHeight),
+                    );
+                }
             }
         }
-        
     }
 
     public getLevelButton(levelNumber: number) {
@@ -128,7 +130,6 @@ export class WorldMap extends Phaser.GameObjects.Image {
         const selectedLevelButton = this.getLevelButton(levelNumber);
         this.levelButtons.map( lb => { if (lb !== selectedLevelButton) lb.setSelected(false) });
         selectedLevelButton?.setSelected(true);
-        // this.selectedLevelNumber = levelNumber;
     }
 
     public onStartLevel() {

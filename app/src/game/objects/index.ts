@@ -3,7 +3,7 @@ export * from './grid-level';
 export * from './aarc-icon';
 export * from './world-map';
 export * from './level-button';
-export * from './level-configs';
+export * from './level-config';
 export * from './gui';
 export * from './gui-score-board';
 export * from './move-tips';

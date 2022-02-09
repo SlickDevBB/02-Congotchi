@@ -3,11 +3,10 @@
 
 import { getGameHeight, getGameWidth, } from "game/helpers";
 import { SOUND_CLICK, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, GUI_BUTTON_PLAY, GUI_BUTTON_CROSS, GUI_BUTTON_RESET, GUI_BUTTON_FAST_FORWARD, SOUND_SEND } from "game/assets";
-import { Player, levels, WorldMap, GuiScoreBoard, GridLevel } from ".";
+import { Player, WorldMap, GuiScoreBoard, LevelConfig } from ".";
 // import { Math } from "phaser";
 import { GameScene } from "game/scenes/game-scene";
-import { DEPTH_ACTIONS_REMAINING_TEXT, DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT, DEPTH_LEVEL_PATH } from "game/helpers/constants";
-import { defaultPath } from "ethers/lib/utils";
+import { DEPTH_ACTIONS_REMAINING_TEXT, DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT } from "game/helpers/constants";
 
 interface Props {
     scene: GameScene,
@@ -43,10 +42,13 @@ export class Gui {
 
     private tallyingSpareMoves = false;
 
+    private levels?: Array<LevelConfig>;
+
     constructor({ scene, player, world}: Props) {
         this.scene = scene;
         this.player = player;
         this.world = world;
+        this.levels = (this.scene as GameScene).levels;
 
         this.soundSend = this.scene.sound.add(SOUND_SEND, { loop: false }) as Phaser.Sound.HTML5AudioSound;
         this.soundSend.stop(); 
@@ -272,13 +274,13 @@ export class Gui {
     }
 
     public onSelectLevel(levelNumber: number) {
-        this.levelNumber = levelNumber;
-        this.text?.setText(levels[levelNumber-1].levelDescription);
+        if (this.levels) {
+            this.levelNumber = levelNumber;
+            this.text?.setText(this.levels[levelNumber-1].levelDescription);
 
-        // display the latest available score data
-        this.displayLevelHighScore(levelNumber);
-
-        console.log((this.scene as GameScene).levelScores);
+            // display the latest available score data
+            this.displayLevelHighScore(levelNumber);
+        }
     }
 
     public onStartLevel() {

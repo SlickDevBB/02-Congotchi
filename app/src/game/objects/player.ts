@@ -267,25 +267,25 @@ export class Player extends Phaser.GameObjects.Sprite {
     // i'd like to toggle auto camera scroll whenever space is hit
     this.scene.input.keyboard.on("keydown-SPACE", () => {
         this.cameraAutoPan = !this.cameraAutoPan;
-        if (this.cameraAutoPan) {
-          if (this.cameraAutoPanText) this.cameraAutoPanText.text = 'Camera Auto Pan: Enabled \n(Hit Space to Toggle)';
-        } else {
-          if (this.cameraAutoPanText) this.cameraAutoPanText.text = 'Camera Auto Pan: Disabled \n(Hit Space to Toggle)';
-        }
+        // if (this.cameraAutoPan) {
+        //   if (this.cameraAutoPanText) this.cameraAutoPanText.text = 'Camera Auto Pan: Enabled \n(Hit Space to Toggle)';
+        // } else {
+        //   if (this.cameraAutoPanText) this.cameraAutoPanText.text = 'Camera Auto Pan: Disabled \n(Hit Space to Toggle)';
+        // }
     });
 
-    const fontHeight = getGameHeight(this.scene)*0.02;
-    this.cameraAutoPanText = this.scene.add.text(
-        getGameWidth(this.scene)*0.5, 
-        getGameHeight(this.scene)*0.65,
-        'Camera Auto Pan: Enabled \n(Hit Space to Toggle)',
-        { font: fontHeight+'px Courier', color: '#ff0000' })
-        .setAlign('center')
-        .setDepth(DEPTH_DEBUG_INFO)
-        .setOrigin(0.5,0.5)
-        .setScrollFactor(0)
-        .setStroke('#ffffff', fontHeight*0.25)
-        .setVisible(process.env.NODE_ENV === 'development');
+    // const fontHeight = getGameHeight(this.scene)*0.02;
+    // this.cameraAutoPanText = this.scene.add.text(
+    //     getGameWidth(this.scene)*0.5, 
+    //     getGameHeight(this.scene)*0.65,
+    //     'Camera Auto Pan: Enabled \n(Hit Space to Toggle)',
+    //     { font: fontHeight+'px Courier', color: '#ff0000' })
+    //     .setAlign('center')
+    //     .setDepth(DEPTH_DEBUG_INFO)
+    //     .setOrigin(0.5,0.5)
+    //     .setScrollFactor(0)
+    //     .setStroke('#ffffff', fontHeight*0.25)
+    //     .setVisible(process.env.NODE_ENV === 'development');
 
   }
 

@@ -1,7 +1,15 @@
 // level-configs.ts
 // this file defines all the different levels
 
-import { GRID_BG_COBBLE_STONES_RECTANGLE, GRID_BG_DIRT, GRID_BG_DIRT_ROUNDED, GRID_BG_GRASS, GRID_BG_SAND_STONE } from "game/assets";
+//////////////////////////
+// WARNING: REQUIRE AN EXACT DUPLICATE OF CONSTS FOR GRID TEXTURES
+export const GRID_BG_COBBLE_STONES = 'grid_bg_cobble_stones';
+export const GRID_BG_COBBLE_STONES_RECTANGLE = 'grid_bg_cobble_stones_rectangle';
+export const GRID_BG_DIRT = 'grid_bg_dirt';
+export const GRID_BG_DIRT_ROUNDED = 'grid_bg_dirt_rounded';
+export const GRID_BG_GRASS = 'grid_bg_grass';
+export const GRID_BG_SAND_STONE = 'grid_bg_sand_stone';
+///////////////////////
 
 // upon creation, each grid level should be passed this "levels" config object that defines how to set all the levels up
 // the config will be a 2d matrix that defines what element will be in each grid cell initially

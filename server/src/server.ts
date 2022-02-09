@@ -3,6 +3,8 @@ require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 // require('dotenv').config();
 import { Socket } from 'socket.io';
 
+import { levels } from './levels';
+
 const server = require('express')();
 const http = require('http').createServer(server);
 const io = require('socket.io')(http, {
@@ -43,7 +45,7 @@ io.on('connection', function (socket: Socket) {
     console.log('A user connected: ' + userId);
     connectedGotchis[userId] = {id: userId};
 
-    console.log('And server running in ' + process.env.NODE_ENV);
+    console.log('Server running in "' + process.env.NODE_ENV + '" mode.');
 
     socket.on('handleDisconnect', () => {
       socket.disconnect();
@@ -245,6 +247,11 @@ io.on('connection', function (socket: Socket) {
           error: err,
         }
       }
+    })
+
+    // getLevelConfigs() returns the level config object to the client
+    socket.on('getLevelConfigs', () => {
+      socket.emit('getLevelConfigsResponse', levels);
     })
 
 });
