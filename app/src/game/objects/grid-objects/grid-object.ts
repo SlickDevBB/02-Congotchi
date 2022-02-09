@@ -6,6 +6,7 @@ import { Player } from '../player';
 import { GameScene } from 'game/scenes/game-scene';
 import { Gui } from '../gui';
 import { BLUE_BLOCK, GREEN_BLOCK, PINK_BLOCK, QUESTION_MARK_ICON, RED_BLOCK } from 'game/assets';
+import { Socket } from 'socket.io-client';
 
 export interface GO_Props {
     scene: Phaser.Scene;
@@ -29,12 +30,15 @@ export class GridObject extends Phaser.GameObjects.Sprite {
     public blockSprite?: Phaser.GameObjects.Sprite;
     protected player?: Player;
     protected gui?: Gui;
+    protected socket: Socket | null = null;
 
     constructor({ scene, gridLevel, gridRow, gridCol, key, gridSize, objectType }: GO_Props) {
       super(scene,
         gridLevel.x + (gridCol)*gridSize + 0.5*gridSize,
         gridLevel.y + (gridRow)*gridSize + 0.5*gridSize, 
         key);
+
+      this.socket = this.scene.game.registry.values.socket;
 
       // save our gridlevel
       this.gridLevel = gridLevel;  

@@ -28,7 +28,7 @@ export class GameScene extends Phaser.Scene {
   private worldMap?: WorldMap;
   private gui?: Gui;
   private gridLevel?: GridLevel;
-  private socket: Socket | null = null;
+  public socket: Socket | null = null;
 
   // the game scene needs the following game state variables
   public currentLevel = 1;
@@ -74,7 +74,7 @@ export class GameScene extends Phaser.Scene {
           y: 0,
           key: BG,
         }).setDepth(0)
-        this.worldMap.setUnlockedLevels(unlockedLevels);
+        this.worldMap.setUnlockedLevelButtons(unlockedLevels);
 
         // create our player
         this.player = new Player({
@@ -201,11 +201,8 @@ export class GameScene extends Phaser.Scene {
       // see if theres a new level to unlock
       if (this.levels && level < this.levels.length) {
         // tell the world map to enable button for next level
-        this.worldMap?.setUnlockedLevels(level+1);
+        this.worldMap?.setUnlockedLevelButtons(level+1);
         this.unlockedLevels = level + 1;
-
-        // tell database to increase number of unlocked levels for the user
-        this.socket?.emit('setUnlockedLevels', level+1);
       }
 
       // create a new level score locally

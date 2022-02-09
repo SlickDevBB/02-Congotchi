@@ -86,8 +86,7 @@ export class WorldMap extends Phaser.GameObjects.Image {
       this.musicWorldMap.play();
     }
 
-    public setUnlockedLevels(unlockedLevelNum: number) {
-        // this.maxUnlockedLevelNum = unlockedLevelNum;
+    public setUnlockedLevelButtons(unlockedLevelNum: number) {
         for (let i = 0; i < unlockedLevelNum; i++) {
             this.levelButtons[i].setLocked(false);
         }

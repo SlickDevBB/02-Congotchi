@@ -15,7 +15,6 @@ const io = require('socket.io')(http, {
 });
 const port = process.env.PORT || 8080;
 const connectedGotchis = {};
-const levelData = [];
 
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
 const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
@@ -40,11 +39,12 @@ interface ScoreSubmission {
 let isPreviewGotchi = false;
 
 io.on('connection', function (socket: Socket) {
+    // store userId and connected gotchi
     const userId = socket.id;
-
-    console.log('A user connected: ' + userId);
     connectedGotchis[userId] = {id: userId};
 
+    // output data to console
+    console.log('A user connected: ' + userId);
     console.log('Server running in "' + process.env.NODE_ENV + '" mode.');
 
     socket.on('handleDisconnect', () => {
@@ -100,12 +100,14 @@ io.on('connection', function (socket: Socket) {
           i++;
         });
 
+        const currentLevel = addressDoc.exists ? addressDoc.data().currentLevel : 1;
+        const unlockedLevels = addressDoc.exists ? addressDoc.data().unlockedLevels : 1;
+
         // emit our data
-        socket.emit('fetchProgressDataResponse', 
-          addressDoc.exists ? addressDoc.data().currentLevel : 1,
-          addressDoc.exists ? addressDoc.data().unlockedLevels : 1,
-          levelScores
-        );
+        socket.emit('fetchProgressDataResponse', currentLevel, unlockedLevels, levelScores);
+
+        // store data in our connected gotchi
+        connectedGotchis[userId].unlockedLevels = unlockedLevels;
 
         // output what we've sent out
         console.log("Current Level: " + addressDoc.exists ? addressDoc.data().currentLevel : 1);
@@ -152,7 +154,7 @@ io.on('connection', function (socket: Socket) {
     });
 
     // setUnlockedLevels() sets how many levels unlocked
-    socket.on('setUnlockedLevels', async (unlockedLevels) => {
+    const setUnlockedLevels = async (unlockedLevels) => {
       // if preview gotchi return
       if (isPreviewGotchi) return;
 
@@ -175,18 +177,36 @@ io.on('connection', function (socket: Socket) {
       } catch (err) {
         console.log(err);
       }
-    })
+    }
 
     // setHighScore() tries to update the high score when a level completes
     socket.on('setHighScore', async (level, score, stars) => {
-      // if preview gotchi return
+      // if preview gotchi return as we don't log scores
       if (isPreviewGotchi) return;
+
+      // if level being submitted is higher than what is unlocked, return and call out cheating
+      if (level > connectedGotchis[userId].unlockedLevels) {
+        alert("You haven't unlocked level " + level + " yet!");
+        return;
+      }
+
+      // if level is higher than what exists, call out cheating
+      if (level > levels.length) {
+        alert("Level " + level + " hasn't been created yet!");
+        return;
+      }
       
+      // ok output that level is complete and try submit new score
       console.log('Level complete, attempting to submit new score...')
 
       // construct a high score data object to be submitted
       const highScoreData = { tokenId: connectedGotchis[userId].gotchi.tokenId, name: connectedGotchis[userId].gotchi.name,
         level, score, stars, }
+
+      // if we are on the last level and stars > 0 we can unlock the next level
+      if (stars > 0 && level === connectedGotchis[userId].unlockedLevels) {
+        setUnlockedLevels(level+1);
+      }
       
       // try set the new highscore
       try {
@@ -230,8 +250,6 @@ io.on('connection', function (socket: Socket) {
             }
           }
 
-          
-
         } else {
           // we didn't beat high score so just send a note to the console and return.
           console.log('Previous score not beaten, no write to database.')
@@ -247,6 +265,9 @@ io.on('connection', function (socket: Socket) {
           error: err,
         }
       }
+
+      // finally do a check and see if we need to update the number of unlocked levels
+
     })
 
     // getLevelConfigs() returns the level config object to the client

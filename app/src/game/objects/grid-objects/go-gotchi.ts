@@ -7,6 +7,7 @@ import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI, DEPTH_GO_GOTCHI_BLOCK } from 'game/
 import { getGameHeight } from 'game/helpers';
 import { GO_Cactii } from './go-cactii';
 import { textChangeRangeIsUnchanged } from 'typescript';
+import { Socket } from 'socket.io-client';
 
 export interface GO_Gotchi_Props extends GO_Props {
     direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
