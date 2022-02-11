@@ -74,12 +74,15 @@ export const GREY_CIRCLE_SHADED = 'grey-circle-shaded';
 export const BLACK_SQUARE = 'black_square';
 export const WHITE_SQUARE = 'white_square';
 
+///////////////////////////////////////////
+// WARNING: THESE CONSTANTS MUST BE DUPLICATED IN constants.ts ON THE SERVER SIDE
 export const GRID_BG_COBBLE_STONES = 'grid_bg_cobble_stones';
 export const GRID_BG_COBBLE_STONES_RECTANGLE = 'grid_bg_cobble_stones_rectangle';
 export const GRID_BG_DIRT = 'grid_bg_dirt';
 export const GRID_BG_DIRT_ROUNDED = 'grid_bg_dirt_rounded';
 export const GRID_BG_GRASS = 'grid_bg_grass';
 export const GRID_BG_SAND_STONE = 'grid_bg_sand_stone';
+//////////////////////////////////////////
 
 export const BLUE_BLOCK = 'blue_block';
 export const RED_BLOCK = 'red_block';

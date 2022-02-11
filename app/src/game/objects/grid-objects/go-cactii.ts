@@ -4,8 +4,6 @@ import { GO_Props, GridObject, } from 'game/objects';
 import { PIXEL_EXPLOSION, SOUND_POP, UNCOMMON_CACTII } from 'game/assets';
   
 export class GO_Cactii extends GridObject {
-    private status: 'LIVE' | 'EXPLODED' = 'LIVE';
-
     // timer is for click events
     private timer = 0;
 
@@ -101,41 +99,6 @@ export class GO_Cactii extends GridObject {
                 this.soundMove?.play();
             }
         })
-    }
-
-    public explode() {
-        // check grenade hasn't already exploded
-        if (this.status === 'LIVE') {
-            // change status
-            this.status = 'EXPLODED';
-
-            // create an explosion tween
-            const explosionImage = this.scene.add.image(
-                this.x,
-                this.y,
-                PIXEL_EXPLOSION
-            )
-            .setDisplaySize(this.displayWidth, this.displayHeight)
-            .setDepth(this.depth+1)
-            .setOrigin(0.5, 0.5)
-            .setAlpha(1)
-            .setScrollFactor(0);
-
-            // hide the grenade
-            this.setVisible(false);
-            this.blockSprite?.setVisible(false);
-
-            this.scene.add.tween({
-                targets: explosionImage,
-                alpha: 0,
-                duration: 250,
-                onComplete: () => { 
-                    this.gridLevel.setEmptyGridObject(this.gridPosition.row, this.gridPosition.col)
-                    explosionImage.destroy() 
-                    this.destroy()
-                },
-            })
-        }
     }
 
     update(): void {

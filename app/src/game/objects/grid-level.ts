@@ -74,6 +74,8 @@ export class GridLevel {
     this.levelConfig = levelConfig;
     this.status = 'ACTIVE';
 
+    // send a message to the server that level has started
+
     // create the grid level
     this.numberRows = this.levelConfig.gridObjectLayout.length;
     this.numberCols = this.levelConfig.gridObjectLayout[0].length;
@@ -122,14 +124,11 @@ export class GridLevel {
         if (this.gridCells[i][j].gridRectangle !== 'INACTIVE') {
           this.gridSquares.push(this.scene.add.image(this.gridCells[i][j].gridObject.x, this.gridCells[i][j].gridObject.y,
             levelConfig.gridTexture)
-            // .setTintFill(0x000000, 0x252525, 0x252525, 0x4d4d4d)
-            // .setTint(0x505050)
             .setDepth(DEPTH_GRID_SQUARES)
             .setOrigin(0.5,0.5)
             .setDisplaySize(this.gridSize*.95, this.gridSize*.95)
             .setScrollFactor(0)
             )
-          
         }
       }
     }
