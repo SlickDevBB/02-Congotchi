@@ -77,7 +77,8 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
         this.on( 'pointerout', () => { if (!this.isSelected && !this.locked) this.setTexture(RED_CIRCLE_SHADED) });
         this.on( 'pointerdown', () => console.log(this.isSelected));
         
-        this.scene.input.setDraggable(this);
+        // if we're in development make levels draggable
+        if (process.env.NODE_ENV === 'development') this.scene.input.setDraggable(this);
         this.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
             this.x = dragX;
             this.y = dragY;
@@ -117,7 +118,8 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
                 .setOrigin(0.5,0.5)
                 .setStroke('#ffffff', 2)
                 .setShadow(0, 2, "#ffffff", 3, true, true)
-                .setDepth(DEPTH_WORLD_MAP+1);
+                .setDepth(DEPTH_WORLD_MAP+1)
+                .setVisible(process.env.NODE_ENV === 'development')
 
         
     }
@@ -128,7 +130,7 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
         this.curveGraphics.lineStyle(5, 0xff00ff, 0.5);
         if (this.curveLinkToPreviousButton) this.curveLinkToPreviousButton.draw(this.curveGraphics);
 
-        if (this.controlPointAline && this.controlPointBline) {
+        if (this.controlPointAline && this.controlPointBline && process.env.NODE_ENV === 'development') {
             this.curveGraphics.lineStyle(3, 0xdddddd, 0.9);
             this.curveGraphics.strokeLineShape(this.controlPointAline);
             this.curveGraphics.strokeLineShape(this.controlPointBline);
@@ -154,7 +156,7 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
         this.controlPointAline = new Phaser.Geom.Line(startPoint.x, startPoint.y, controlPoint1.x, controlPoint1.y);
         this.controlPointBline = new Phaser.Geom.Line(endPoint.x, endPoint.y, controlPoint2.x, controlPoint2.y);
         
-        // draw curve
+        // draw curve 
         this.redrawCurve();
 
         // we also need to set the previous buttons next button to this button
@@ -228,14 +230,16 @@ export class LevelButton extends Phaser.GameObjects.Sprite {
                 .setOrigin(0.5,0.5)
                 .setStroke('#000000', 2)
                 .setShadow(0, 2, "#333333", 3, true, true)
-                .setDepth(DEPTH_WORLD_MAP+1);
+                .setDepth(DEPTH_WORLD_MAP+1)
+                .setVisible(process.env.NODE_ENV === 'development')
 
         this.controlPointBtext = this.scene.add.text(this.x, this.y, 'level text!', 
         { font: this.displayHeight*0.5+'px Courier', color: '#ffffff' })
                 .setOrigin(0.5,0.5)
                 .setStroke('#000000', 2)
                 .setShadow(0, 2, "#333333", 3, true, true)
-                .setDepth(DEPTH_WORLD_MAP+1);
+                .setDepth(DEPTH_WORLD_MAP+1)
+                .setVisible(process.env.NODE_ENV === 'development')
     }
 
     setDepth(depth: number) {
