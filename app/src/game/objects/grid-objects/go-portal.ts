@@ -104,8 +104,11 @@ export class GO_Portal extends GridObject {
 
             // check we didn't just end up back in original position
             if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                // let the server know a grid object has been moved
+                (this.scene as GameScene).socket?.emit('gridObjectMoved');
+
                 // reduce actions remaining
-                this.gridLevel.adjustActionsRemaining(-1);
+                // this.gridLevel.adjustActionsRemaining(-1);
 
                 // play the move sound
                 this.soundMove?.play();

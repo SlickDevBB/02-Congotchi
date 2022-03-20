@@ -1,10 +1,8 @@
 // player.ts - the aavegotchi player chooses to solve puzzles with
 
-import { BLUE_CIRCLE_SHADED, GREEN_CIRCLE_SHADED, GREY_CIRCLE_SHADED, MOVE_ICON, PARTICLE_CONFETTI, PINK_CIRCLE_SHADED, QUESTION_MARK_ICON, RED_CIRCLE_SHADED, } from "game/assets";
 import { getGameHeight, getGameWidth } from "game/helpers";
 import { DEPTH_DEBUG_INFO, DEPTH_PLAYER, DEPTH_PLAYER_ICONS } from "game/helpers/constants";
 import { GameScene } from "game/scenes/game-scene";
-import { calcStats, StatPoints } from "helpers/stats";
 import { AavegotchiGameObject } from "types";
 import { AarcIcon, GridLevel, Gui, WorldMap } from ".";
 
@@ -28,22 +26,6 @@ interface StatMask {
 export class Player extends Phaser.GameObjects.Sprite {
   
   public speed = 200;
-
-  // object for current stats
-  public currentStats?: StatPoints;
-
-  // declare all our icons
-  public spareMoveIcon;
-  public congaJumpIcon;
-
-  public greenActivateIcon;
-  public redDestroyIcon;
-
-  public redDamageIcon;
-  public greenBuffIcon;
-
-  public gotchiSaveIcon;
-  public congaStartIcon;
 
   public gotchi;
 
@@ -79,7 +61,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.setOrigin(0.5, 0.5);
 
     // init stats
-    this.initStats();
+    // this.initStats();
 
     // a basic nothing anim
     this.anims.create({
@@ -120,148 +102,40 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.scene.add.existing(this);
     this.setDisplaySize(width, height);
 
-    // create locations for our stat icons in a nice semicircle above our gotchi
-    const RADIUS = getGameWidth(this.scene) * 0.31;
-    const posX = getGameWidth(this.scene) * 0.5;
-    const posY = getGameHeight(this.scene);
-    const iconRadius = getGameHeight(this.scene)*0.0225;
-
-    // create our icons
-    this.spareMoveIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX - RADIUS * Math.cos(11.25 * 1 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 1 * Math.PI / 180),
-      keyBg: BLUE_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.spareMove,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    this.congaJumpIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX - RADIUS * Math.cos(11.25 * 3 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 3 * Math.PI / 180),
-      keyBg: BLUE_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.congaJump,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    // left icon
-    this.greenActivateIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX - RADIUS * Math.cos(11.25 * 5 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 5 * Math.PI / 180),
-      keyBg: GREEN_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.greenActivate,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    this.redDestroyIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX - RADIUS * Math.cos(11.25 * 7 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 7 * Math.PI / 180),
-      keyBg: RED_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.redDestroy,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    this.redDamageIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX + RADIUS * Math.cos(11.25 * 7 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 7 * Math.PI / 180),
-      keyBg: RED_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.redDamage,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    this.greenBuffIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX + RADIUS * Math.cos(11.25 * 5 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 5 * Math.PI / 180),
-      keyBg: GREEN_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.greenBuff,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    this.gotchiSaveIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX + RADIUS * Math.cos(11.25 * 3 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 3 * Math.PI / 180),
-      keyBg: PINK_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.gotchiSave,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
-    this.congaStartIcon = new AarcIcon ({
-      scene: this.scene,
-      x: posX + RADIUS * Math.cos(11.25 * 1 * Math.PI / 180),
-      y: posY - RADIUS * Math.sin(11.25 * 1 * Math.PI / 180),
-      keyBg: PINK_CIRCLE_SHADED,
-      keyIcon: "",
-      radius: iconRadius,
-      useBadge: true,
-      numBadge: this.currentStats?.congaStart,
-    })
-    .setDepth(DEPTH_PLAYER_ICONS)
-    .setScrollFactor(0);
-
+    // // create locations for our stat icons in a nice semicircle above our gotchi
+    // const RADIUS = getGameWidth(this.scene) * 0.31;
+    // const posX = getGameWidth(this.scene) * 0.5;
+    // const posY = getGameHeight(this.scene);
+    // const iconRadius = getGameHeight(this.scene)*0.0225;
     
     
-    for (let i = 0; i < 8; i++) {
+    // for (let i = 0; i < 8; i++) {
+    //   // make some particles
+    //   this.particleStat?.push(this.scene.add.particles(PARTICLE_CONFETTI));
+    //   if (this.particleStat) {
+    //     this.particleStat[i].setDepth(10000);
+    //     const shape1 = new Phaser.Geom.Circle(0, 0, iconRadius*1.2);
 
-      // make some particles
-      this.particleStat?.push(this.scene.add.particles(PARTICLE_CONFETTI));
-      if (this.particleStat) {
-        this.particleStat[i].setDepth(10000);
-        const shape1 = new Phaser.Geom.Circle(0, 0, iconRadius*1.2);
+    //     this.emitterStat?.push(this.particleStat[i].createEmitter({
+    //       frame: { frames: [ 'red', 'green', 'blue', 'yellow' ], cycle: false },
+    //       x: 400,
+    //       y: 300,
+    //       scale: { start: getGameWidth(this.scene)*0.0003, end: 0 },
+    //       blendMode: 'ADD',
+    //       speed: 2,
+    //       lifespan: 1500,
+    //       quantity: 32,
+    //       frequency: 2000,
+    //       emitZone: { type: 'edge', source: shape1, quantity: 32, yoyo: false }
+    //     })
+    //     .setScrollFactor(0)
+    //     .stop()
+    //     )
+    //   }
+    // }
 
-        this.emitterStat?.push(this.particleStat[i].createEmitter({
-          frame: { frames: [ 'red', 'green', 'blue', 'yellow' ], cycle: false },
-          x: 400,
-          y: 300,
-          scale: { start: getGameWidth(this.scene)*0.0003, end: 0 },
-          blendMode: 'ADD',
-          speed: 2,
-          lifespan: 1500,
-          quantity: 32,
-          frequency: 2000,
-          emitZone: { type: 'edge', source: shape1, quantity: 32, yoyo: false }
-        })
-        .setScrollFactor(0)
-        .stop()
-        )
-      }
-    }
-
-    // start off with all stats invisible and ignore statmask
-    this.setStatsVisible(false, true);
+    // // start off with all stats invisible and ignore statmask
+    // this.setStatsVisible(false, true);
 
 
     // i'd like to toggle auto camera scroll whenever space is hit
@@ -289,164 +163,104 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   }
 
-  private initStats() {
-    const gotchi = this.gotchi;
-    // set all the stats
-    if (gotchi) {
-      // calc the gotchis base stats
-      this.currentStats = calcStats(gotchi.withSetsNumericTraits[0],
-        gotchi.withSetsNumericTraits[1],
-        gotchi.withSetsNumericTraits[2],
-        gotchi.withSetsNumericTraits[3]);
+  // private initStats() {
+  //   const gotchi = this.gotchi;
+  //   // set all the stats
+  //   if (gotchi) {
+  //     // calc the gotchis base stats
+  //     this.currentStats = calcStats(gotchi.withSetsNumericTraits[0],
+  //       gotchi.withSetsNumericTraits[1],
+  //       gotchi.withSetsNumericTraits[2],
+  //       gotchi.withSetsNumericTraits[3]);
       
-      // set badge numbers for all icons
-      if (this.spareMoveIcon && this.congaJumpIcon && this.greenActivateIcon && this.redDestroyIcon && this.redDamageIcon && this.greenBuffIcon && this.gotchiSaveIcon && this.congaStartIcon) {
-        this.spareMoveIcon.setBadge(this.currentStats.spareMove);
-        this.congaJumpIcon.setBadge(this.currentStats.congaJump);
+  //     // set badge numbers for all icons
+  //     if (this.spareMoveIcon && this.congaJumpIcon && this.greenActivateIcon && this.redDestroyIcon && this.redDamageIcon && this.greenBuffIcon && this.gotchiSaveIcon && this.congaStartIcon) {
+  //       this.spareMoveIcon.setBadge(this.currentStats.spareMove);
+  //       this.congaJumpIcon.setBadge(this.currentStats.congaJump);
 
-        this.greenActivateIcon.setBadge(this.currentStats.greenActivate);
-        this.redDestroyIcon.setBadge(this.currentStats.redDestroy);
+  //       this.greenActivateIcon.setBadge(this.currentStats.greenActivate);
+  //       this.redDestroyIcon.setBadge(this.currentStats.redDestroy);
         
-        this.redDamageIcon.setBadge(this.currentStats.redDamage);
-        this.greenBuffIcon.setBadge(this.currentStats.greenBuff);
+  //       this.redDamageIcon.setBadge(this.currentStats.redDamage);
+  //       this.greenBuffIcon.setBadge(this.currentStats.greenBuff);
 
-        this.gotchiSaveIcon.setBadge(this.currentStats.gotchiSave);
-        this.congaStartIcon.setBadge(this.currentStats.congaStart);
-      }
-    }
+  //       this.gotchiSaveIcon.setBadge(this.currentStats.gotchiSave);
+  //       this.congaStartIcon.setBadge(this.currentStats.congaStart);
+  //     }
+  //   }
     
-  }
+  // }
 
 
-  // setStatsVisible() depending on mask parameters
-  public setStatsVisible(visible: boolean, ignoreMask: boolean) {
-    if (this.statMask.spareMove > 0 || ignoreMask) this.spareMoveIcon.setVisible(visible);
-    if (this.statMask.congaJump > 0 || ignoreMask) this.congaJumpIcon.setVisible(visible);
-    if (this.statMask.greenActivate > 0 || ignoreMask) this.greenActivateIcon.setVisible(visible);
-    if (this.statMask.redDestroy > 0 || ignoreMask) this.redDestroyIcon.setVisible(visible);
-    if (this.statMask.redDamage > 0 || ignoreMask) this.redDamageIcon.setVisible(visible);
-    if (this.statMask.greenBuff > 0 || ignoreMask) this.greenBuffIcon.setVisible(visible);
-    if (this.statMask.gotchiSave > 0 || ignoreMask) this.gotchiSaveIcon.setVisible(visible);
-    if (this.statMask.congaStart > 0 || ignoreMask) this.congaStartIcon.setVisible(visible);
-  }
+  // // setStatsVisible() depending on mask parameters
+  // public setStatsVisible(visible: boolean, ignoreMask: boolean) {
+  //   if (this.statMask.spareMove > 0 || ignoreMask) this.spareMoveIcon.setVisible(visible);
+  //   if (this.statMask.congaJump > 0 || ignoreMask) this.congaJumpIcon.setVisible(visible);
+  //   if (this.statMask.greenActivate > 0 || ignoreMask) this.greenActivateIcon.setVisible(visible);
+  //   if (this.statMask.redDestroy > 0 || ignoreMask) this.redDestroyIcon.setVisible(visible);
+  //   if (this.statMask.redDamage > 0 || ignoreMask) this.redDamageIcon.setVisible(visible);
+  //   if (this.statMask.greenBuff > 0 || ignoreMask) this.greenBuffIcon.setVisible(visible);
+  //   if (this.statMask.gotchiSave > 0 || ignoreMask) this.gotchiSaveIcon.setVisible(visible);
+  //   if (this.statMask.congaStart > 0 || ignoreMask) this.congaStartIcon.setVisible(visible);
+  // }
 
-  public setStatsAlpha(alpha: number) {
-    this.spareMoveIcon.setAlpha(alpha);
-    this.congaJumpIcon.setAlpha(alpha);
-    this.greenActivateIcon.setAlpha(alpha);
-    this.redDestroyIcon.setAlpha(alpha);
-    this.redDamageIcon.setAlpha(alpha);
-    this.greenBuffIcon.setAlpha(alpha);
-    this.gotchiSaveIcon.setAlpha(alpha);
-    this.congaStartIcon.setAlpha(alpha);
-  }
+  // public setStatsAlpha(alpha: number) {
+  //   this.spareMoveIcon.setAlpha(alpha);
+  //   this.congaJumpIcon.setAlpha(alpha);
+  //   this.greenActivateIcon.setAlpha(alpha);
+  //   this.redDestroyIcon.setAlpha(alpha);
+  //   this.redDamageIcon.setAlpha(alpha);
+  //   this.greenBuffIcon.setAlpha(alpha);
+  //   this.gotchiSaveIcon.setAlpha(alpha);
+  //   this.congaStartIcon.setAlpha(alpha);
+  // }
 
-  // setStatMask() hides certain stats 
-  public setStatMask(statMask: StatMask) {
-    this.statMask = statMask;
-  }
+  // // setStatMask() hides certain stats 
+  // public setStatMask(statMask: StatMask) {
+  //   this.statMask = statMask;
+  // }
 
-  // this function will animate a given stat sphere if not masked
-  public animStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_DESTROY' | 
-  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'CONGA_START') {
-
-    const duration = 1500;
-
-    if (this.currentStats && this.emitterStat) {
-      switch (stat) {
-        case 'SPARE_MOVE': {
-          if (this.statMask.spareMove === 0) break;
-          this.emitterStat[0].setPosition(this.spareMoveIcon.x, this.spareMoveIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[0].stop()}, duration);
-          break;
-        }
-        case 'CONGA_JUMP': {
-          if (this.statMask.congaJump === 0) break;
-          this.emitterStat[1].setPosition(this.congaJumpIcon.x, this.congaJumpIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[1].stop()}, duration);
-          break;
-        }
-        case 'GREEN_ACTIVATE': {
-          if (this.statMask.greenActivate === 0) break;
-          this.emitterStat[2].setPosition(this.greenActivateIcon.x, this.greenActivateIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[2].stop()}, duration);
-          break;
-        }
-        case 'RED_DESTROY': {
-          if (this.statMask.redDestroy === 0) break;
-          this.emitterStat[3].setPosition(this.redDestroyIcon.x, this.redDestroyIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[3].stop()}, duration);
-          break;
-        }
-        case 'RED_DAMAGE': {
-          if (this.statMask.redDamage === 0) break;
-          this.emitterStat[4].setPosition(this.redDamageIcon.x, this.redDamageIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[4].stop()}, duration);
-          break;
-        }
-        case 'GREEN_BUFF': {
-          if (this.statMask.greenBuff === 0) break;
-          this.emitterStat[5].setPosition(this.greenBuffIcon.x, this.greenBuffIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[5].stop()}, duration);
-          break;
-        }
-        case 'GOTCHI_SAVE': {
-          if (this.statMask.gotchiSave === 0) break;
-          this.emitterStat[6].setPosition(this.gotchiSaveIcon.x, this.gotchiSaveIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[6].stop()}, duration);
-          break;
-        }
-        case 'CONGA_START': {
-          if (this.statMask.congaStart === 0) break;
-          this.emitterStat[7].setPosition(this.congaStartIcon.x, this.congaStartIcon.y).start();
-          setTimeout(() => {if (this.emitterStat) this.emitterStat[7].stop()}, duration);
-          break;
-        }
-      }
-    }
-  }
-
-  public getStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_DESTROY' | 
-  'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'CONGA_START'): number {
-    if (this.currentStats) {
-      switch (stat) {
-        case 'SPARE_MOVE': {
-          return this.currentStats?.spareMove;
-          break;
-        }
-        case 'CONGA_JUMP': {
-          return this.currentStats?.congaJump;
-          break;
-        }
-        case 'GREEN_ACTIVATE': {
-          return this.currentStats?.greenActivate;
-          break;
-        }
-        case 'RED_DESTROY': {
-          return this.currentStats?.redDestroy;
-          break;
-        }
-        case 'RED_DAMAGE': {
-          return this.currentStats?.redDamage;
-          break;
-        }
-        case 'GREEN_BUFF': {
-          return this.currentStats?.greenBuff;
-          break;
-        }
-        case 'GOTCHI_SAVE': {
-          return this.currentStats?.gotchiSave;
-          break;
-        }
-        case 'CONGA_START': {
-          return this.currentStats?.congaStart;
-          break;
-        }
-      }
-    } else {
-      return 0;
-    }
-  }
+  // public getStat(stat: 'SPARE_MOVE' | 'CONGA_JUMP' | 'GREEN_ACTIVATE' | 'RED_DESTROY' | 
+  // 'RED_DAMAGE' | 'GREEN_BUFF' | 'GOTCHI_SAVE' | 'CONGA_START'): number {
+  //   if (this.currentStats) {
+  //     switch (stat) {
+  //       case 'SPARE_MOVE': {
+  //         return this.currentStats?.spareMove;
+  //         break;
+  //       }
+  //       case 'CONGA_JUMP': {
+  //         return this.currentStats?.congaJump;
+  //         break;
+  //       }
+  //       case 'GREEN_ACTIVATE': {
+  //         return this.currentStats?.greenActivate;
+  //         break;
+  //       }
+  //       case 'RED_DESTROY': {
+  //         return this.currentStats?.redDestroy;
+  //         break;
+  //       }
+  //       case 'RED_DAMAGE': {
+  //         return this.currentStats?.redDamage;
+  //         break;
+  //       }
+  //       case 'GREEN_BUFF': {
+  //         return this.currentStats?.greenBuff;
+  //         break;
+  //       }
+  //       case 'GOTCHI_SAVE': {
+  //         return this.currentStats?.gotchiSave;
+  //         break;
+  //       }
+  //       case 'CONGA_START': {
+  //         return this.currentStats?.congaStart;
+  //         break;
+  //       }
+  //     }
+  //   } else {
+  //     return 0;
+  //   }
+  // }
 
   public setDirection(direction: 'UP' | 'LEFT' | 'DOWN' | 'RIGHT') {
     this.direction = direction;
@@ -467,7 +281,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.playerSavedScaleY = this.scaleY;
 
     // reset stats for new level
-    this.initStats();
+    // this.initStats();
 
     // tween the player into grid level gaming mode
     this.scene.add.tween({
@@ -488,23 +302,23 @@ export class Player extends Phaser.GameObjects.Sprite {
         }
     });
 
-    // tween the stats into visibility
-    this.setStatsVisible(true, false);
-    this.setStatsAlpha(0);
-    const dt = {t:0};
-    this.scene.add.tween({
-      targets: dt,
-      t: 1,
-      duration: 500,
-      onUpdate: () => {
-        this.setStatsAlpha(dt.t);
-      },
-    })
+    // // tween the stats into visibility
+    // this.setStatsVisible(true, false);
+    // this.setStatsAlpha(0);
+    // const dt = {t:0};
+    // this.scene.add.tween({
+    //   targets: dt,
+    //   t: 1,
+    //   duration: 500,
+    //   onUpdate: () => {
+    //     this.setStatsAlpha(dt.t);
+    //   },
+    // })
   }
 
   public onEndLevel() {
     // hide our stats
-    this.setStatsVisible(false, true);
+    // this.setStatsVisible(false, true);
 
     // tween the player back to the saved map position
     this.scene.add.tween({
@@ -537,7 +351,7 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   public onSoftResetLevel() {
     // call init stats again to re-evaluate base stats
-    this.initStats();
+    // this.initStats();
   }
 
   public panCameraToPlayer() {

@@ -3,8 +3,9 @@
 import { BG, SOUND_CLICK, } from 'game/assets';
 import { AavegotchiGameObject } from 'types';
 import { getGameWidth, getGameHeight, getRelative } from '../helpers';
-import { GridLevel, Gui, Player, WorldMap, levels, GridObject } from 'game/objects';
+import { GridLevel, Gui, Player, WorldMap, GridObject } from 'game/objects';
 import { Socket } from 'socket.io-client';
+import { LevelConfig } from 'types';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -28,7 +29,9 @@ export class GameScene extends Phaser.Scene {
   private worldMap?: WorldMap;
   private gui?: Gui;
   private gridLevel?: GridLevel;
-  private socket: Socket | null = null;
+  public socket: Socket | null = null;
+
+  public levels?: LevelConfig[];
 
   // the game scene needs the following game state variables
   public currentLevel = 1;
@@ -52,11 +55,13 @@ export class GameScene extends Phaser.Scene {
     // fetch progress data
     this.socket = this.game.registry.values.socket;
     this.socket?.emit('fetchProgressData');
-    this.socket?.on('fetchProgressDataResponse', (currentLevel, unlockedLevels, levelScores) => {
+    this.socket?.on('fetchProgressDataResponse', (currentLevel, unlockedLevels, levelScores, levelConfig: LevelConfig[]) => {
       // locally store previous game states from our database
       this.currentLevel = currentLevel;
       this.unlockedLevels = unlockedLevels;
       this.setLevelScores(levelScores, unlockedLevels);
+      this.levels = levelConfig;
+      console.log(this.levels);
 
       // create the world map
       this.worldMap = new WorldMap({
@@ -64,6 +69,7 @@ export class GameScene extends Phaser.Scene {
         x: 0,
         y: 0,
         key: BG,
+        levels: this.levels,
       }).setDepth(0)
       this.worldMap.setUnlockedLevels(unlockedLevels);
 
@@ -116,23 +122,24 @@ export class GameScene extends Phaser.Scene {
 
   public startLevel() {
     // create the grid level
-    if (this.randomGotchis) {
-      if (this.player) {
+    if (this.randomGotchis && this.player && this.levels) {
         this.gridLevel = new GridLevel({
           scene: this,
           player: this.player,
           randomGotchis: this.randomGotchis,
-          levelConfig: levels[this.currentLevel - 1],
-        })  
-      }
+          levelConfig: this.levels[this.currentLevel - 1],
+        });  
     } else {
-      alert('Random gotchis not available');
+      alert('Random gotchis or player or levels not available');
     }
 
     // call startLevel() for all our objects
     this.player?.onStartLevel();
     this.worldMap?.onStartLevel();
     this.gui?.onStartLevel();
+
+    // tell the server to start the level
+    this.socket?.emit('levelStarted', this.currentLevel);
   }
 
   public endLevel(moveToNextLevel: boolean) {
@@ -161,6 +168,9 @@ export class GameScene extends Phaser.Scene {
     this.gui?.onSoftResetLevel();
     this.gridLevel?.onSoftResetLevel();
     this.player?.onSoftResetLevel();
+
+    // tell the server to start the level
+    this.socket?.emit('levelStarted', this.currentLevel);
   }
 
   public setLevelScores(levelScores: Array<LevelScores>, unlockedLevels: number) {
@@ -185,9 +195,9 @@ export class GameScene extends Phaser.Scene {
 
   public handleLevelResults(level: number, score: number, stars: number) {
     // check if we can unlock a new level
-    if (level === this.unlockedLevels && stars > 0) {
+    if (level === this.unlockedLevels && stars > 0 && this.levels) {
       // see if theres a new level to unlock
-      if (level < levels.length) {
+      if (level < this.levels.length) {
         // tell the world map to enable button for next level
         this.worldMap?.setUnlockedLevels(level+1);
         this.unlockedLevels = level + 1;

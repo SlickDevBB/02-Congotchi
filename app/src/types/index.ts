@@ -88,3 +88,18 @@ export interface HighScore {
 export interface CustomError extends Error {
   status?: number;
 }
+
+// custom types for my game
+export interface LevelConfig {
+  levelNumber: number,
+  gridObjectLayout: Array<number[]>,
+  levelDescription: string,
+  gridTexture: string,
+  pos: number[],
+  curveThisPos: number[],
+  curvePrevPos: number[],
+  actionsRemaining: number,
+  maxPointsPossible: number,
+  statMask: {spareMove: number, congaJump: number, greenActivate: number, redDestroy: number, 
+      redDamage: number, greenBuff: number, gotchiSave: number, congaStart: number}
+}

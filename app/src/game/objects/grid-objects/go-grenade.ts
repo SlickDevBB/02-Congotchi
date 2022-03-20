@@ -6,6 +6,7 @@ import { GameScene } from 'game/scenes/game-scene';
 import { GO_Milkshake } from './go-milkshake';
 import { GO_Cactii } from './go-cactii';
 import { getGameHeight, getGameWidth } from 'game/helpers';
+import { POINTS_BURN_DAMAGE, POINTS_DESTROY_CACTII, POINTS_EXPLODE_GRENADE } from 'helpers/constants';
   
 export class GO_Grenade extends GridObject {
     // our bomb status
@@ -119,8 +120,11 @@ export class GO_Grenade extends GridObject {
 
             // check we didn't just end up back in original position
             if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                // let the server know a grid object has been moved
+                (this.scene as GameScene).socket?.emit('gridObjectMoved');
+
                 // reduce actions remaining
-                this.gridLevel.adjustActionsRemaining(-1);
+                // this.gridLevel.adjustActionsRemaining(-1);
 
                 // play the move sound
                 this.soundMove?.play();
@@ -202,10 +206,10 @@ export class GO_Grenade extends GridObject {
             // play explosion sound
             this.soundExplosion?.play();
 
-            // score some points for exploding grenade
+            // tell server and gui about exploding grenade
             if (this.player) {
-                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DESTROY'), this.x, this.y);
-                this.player.animStat('RED_DESTROY');
+                (this.scene as GameScene).socket?.emit('explodeGrenade');
+                this.gui?.adjustScoreWithAnim(POINTS_EXPLODE_GRENADE, this.x, this.y);
             }
 
             // create an explosion tween
@@ -243,10 +247,10 @@ export class GO_Grenade extends GridObject {
                         if (go.getType() === 'GOTCHI' || go.getType() === 'ROFL') {
                             (go as GO_Gotchi).status = 'BURNT';
 
-                            // also do some red damage for negative points
+                            // tell server and gui there was soem burn damage
                             if (this.player) {
-                                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DAMAGE'), go.x, go.y);
-                                this.player.animStat('RED_DAMAGE');
+                                (this.scene as GameScene).socket?.emit('burnDamage');
+                                this.gui?.adjustScoreWithAnim(POINTS_BURN_DAMAGE, go.x, go.y);
                             }
                         }
                         else if (go.getType() === 'GRENADE') {
@@ -263,10 +267,10 @@ export class GO_Grenade extends GridObject {
                             // empty out the grid position with the cactii ini it
                             this.gridLevel.setEmptyGridObject(go.getGridPosition().row, go.getGridPosition().col);
 
-                            // score some points for destroying the cactii
+                            // tell server and gui cactii was destroyed
                             if (this.player) {
-                                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DESTROY'), go.x, go.y);
-                                this.player.animStat('RED_DESTROY');
+                                (this.scene as GameScene).socket?.emit('destroyCactii');
+                                this.gui?.adjustScoreWithAnim(POINTS_DESTROY_CACTII, go.x, go.y);
                             }
 
                             // destroy the cactii

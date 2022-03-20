@@ -2,6 +2,7 @@
 
 import { GO_Props, GridObject, } from 'game/objects';
 import { PIXEL_EXPLOSION, SOUND_POP, UNCOMMON_CACTII } from 'game/assets';
+import { GameScene } from 'game/scenes/game-scene';
   
 export class GO_Cactii extends GridObject {
     private status: 'LIVE' | 'EXPLODED' = 'LIVE';
@@ -94,8 +95,11 @@ export class GO_Cactii extends GridObject {
 
             // check we didn't just end up back in original position
             if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
+                // let the server know a grid object has been moved
+                (this.scene as GameScene).socket?.emit('gridObjectMoved');
+
                 // reduce actions remaining
-                this.gridLevel.adjustActionsRemaining(-1);
+                // this.gridLevel.adjustActionsRemaining(-1);
 
                 // play the move sound
                 this.soundMove?.play();

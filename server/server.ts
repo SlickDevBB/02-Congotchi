@@ -3,6 +3,17 @@ require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 // require('dotenv').config();
 import { Socket } from 'socket.io';
 
+
+import { POINTS_SAVE_GOTCHI,
+  POINTS_SAVE_ROFL_COMMON,
+  POINTS_CONGA_JUMP,
+  POINTS_EXPLODE_GRENADE,
+  POINTS_DESTROY_CACTII,
+  POINTS_SLURP_MILKSHAKE,
+  POINTS_SPARE_MOVE, 
+  POINTS_BURN_DAMAGE} from './src/constants';
+
+
 const server = require('express')();
 const http = require('http').createServer(server);
 const io = require('socket.io')(http, {
@@ -14,6 +25,7 @@ const io = require('socket.io')(http, {
 const port = process.env.PORT || 8080;
 const connectedGotchis = {};
 const levelData = [];
+import { LevelConfig, levels } from './src/level-configs';
 
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
 const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
@@ -25,15 +37,6 @@ initializeApp({
 });
 
 const db = getFirestore();
-
-// create a level data score submission object
-interface ScoreSubmission {
-  tokenId: string,
-  name: string,
-  level: number,
-  score: number,
-  stars: number,
-}
 
 let isPreviewGotchi = false;
 
@@ -70,7 +73,7 @@ io.on('connection', function (socket: Socket) {
       // check if we're using a preview gotchi, if so respond with level 1, 1 and return
       if (isPreviewGotchi) {
         socket.emit('fetchProgressDataResponse', 
-          1, 1, [],
+          1, 1, [], levels,
         );
         return;
       }
@@ -102,7 +105,8 @@ io.on('connection', function (socket: Socket) {
         socket.emit('fetchProgressDataResponse', 
           addressDoc.exists ? addressDoc.data().currentLevel : 1,
           addressDoc.exists ? addressDoc.data().unlockedLevels : 1,
-          levelScores
+          levelScores,
+          levels
         );
 
         // output what we've sent out
@@ -245,11 +249,74 @@ io.on('connection', function (socket: Socket) {
           error: err,
         }
       }
+    });
+
+    // actions for tracking score
+    socket.on('gridObjectMoved', () => {
+      connectedGotchis[userId].actionsRemaining--;
+      console.log('Actions Remaining: ' + connectedGotchis[userId].actionsRemaining);
+      socket.emit('updateActionsRemaining', connectedGotchis[userId].actionsRemaining);
+    });
+
+    // on level start
+    socket.on('levelStarted', (levelNumber: number) => {
+      const level: LevelConfig = levels[levelNumber-1];
+
+      if (level) {
+        connectedGotchis[userId].actionsRemaining = level.actionsRemaining;
+        connectedGotchis[userId].score = 0;
+
+        // Output some level started data
+        console.log('Started Level: ' + levelNumber);
+        console.log('Action Points Allowed: ' + level.actionsRemaining);
+        console.log('Max Possible Score: ' + level.maxPointsPossible);
+
+        // tell the game about the new score and actions remaining
+        socket.emit('updateScore', connectedGotchis[userId].score);
+        socket.emit('updateActionsRemaining', connectedGotchis[userId].actionsRemaining);
+      }
+    });
+
+    socket.on('levelFinished', () => {
+      connectedGotchis[userId].score += POINTS_SPARE_MOVE * connectedGotchis[userId].actionsRemaining;
     })
+
+    // now go through all the functions that score points
+    socket.on('saveGotchi', () => {
+      connectedGotchis[userId].score += POINTS_SAVE_GOTCHI;
+      socket.emit('updateScore', connectedGotchis[userId].score);
+    });
+
+    socket.on('saveCommonRofl', () => {
+      connectedGotchis[userId].score += POINTS_SAVE_ROFL_COMMON;
+    });
+
+    socket.on('congaJump', () => {
+      connectedGotchis[userId].score += POINTS_CONGA_JUMP;
+    });
+
+    socket.on('explodeGrenade', () => {
+      connectedGotchis[userId].score += POINTS_EXPLODE_GRENADE;
+    });
+
+    socket.on('destroyCactii', () => {
+      connectedGotchis[userId].score += POINTS_DESTROY_CACTII;
+    });
+
+    socket.on('cactiiSpike', () => {
+      connectedGotchis[userId].score += POINTS_DESTROY_CACTII;
+    });
+
+    socket.on('burnDamage', () => {
+      connectedGotchis[userId].score += POINTS_BURN_DAMAGE;
+    });
+
+    socket.on('slurpMilkshake', () => {
+      connectedGotchis[userId].score += POINTS_SLURP_MILKSHAKE;
+    });
 
 });
 
 http.listen(port, function () {
     console.log(`Listening on - PORT:${port}`);
 });
-

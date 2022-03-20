@@ -1,7 +1,7 @@
 // level-configs.ts
 // this file defines all the different levels
 
-import { GRID_BG_COBBLE_STONES_RECTANGLE, GRID_BG_DIRT, GRID_BG_DIRT_ROUNDED, GRID_BG_GRASS, GRID_BG_SAND_STONE } from "game/assets";
+import { GRID_BG_COBBLE_STONES_RECTANGLE, GRID_BG_DIRT, GRID_BG_DIRT_ROUNDED, GRID_BG_GRASS, GRID_BG_SAND_STONE } from './types';
 
 // upon creation, each grid level should be passed this "levels" config object that defines how to set all the levels up
 // the config will be a 2d matrix that defines what element will be in each grid cell initially
@@ -35,6 +35,7 @@ export interface LevelConfig {
     curveThisPos: number[],
     curvePrevPos: number[],
     actionsRemaining: number,
+    maxPointsPossible: number,
     statMask: {spareMove: number, congaJump: number, greenActivate: number, redDestroy: number, 
         redDamage: number, greenBuff: number, gotchiSave: number, congaStart: number}
 }
@@ -82,6 +83,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [],
         curvePrevPos: [],
         actionsRemaining: 3,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -108,6 +110,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.259, 0.576],
         curvePrevPos: [0.258, 0.611],
         actionsRemaining: 10,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -134,6 +137,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.227, 0.427],
         curvePrevPos: [0.264, 0.371],
         actionsRemaining: 20,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -160,6 +164,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.123, 0.458],
         curvePrevPos: [0.161, 0.338],
         actionsRemaining: 20,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -185,6 +190,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.144, 0.323],
         curvePrevPos: [0.019, 0.348],
         actionsRemaining: 25,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -210,6 +216,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.026, 0.281],
         curvePrevPos: [0.081, 0.240],
         actionsRemaining: 17,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -235,6 +242,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.060, 0.087],
         curvePrevPos: [0.029, 0.131],
         actionsRemaining: 17,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -260,6 +268,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.095, 0.066],
         curvePrevPos: [0.120, 0.203],
         actionsRemaining: 33,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -285,6 +294,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.191, 0.117],
         curvePrevPos: [0.203, 0.071],
         actionsRemaining: 18,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },
@@ -309,6 +319,7 @@ export const levels: Array<LevelConfig> = [
         curveThisPos: [0.190, 0.230],
         curvePrevPos: [0.160, 0.182],
         actionsRemaining: 39,
+        maxPointsPossible: 100000,
         statMask: {spareMove: 0, congaJump: 0, greenActivate: 0, redDestroy: 0, 
             redDamage: 0, greenBuff: 0, gotchiSave: 0, congaStart: 0}
     },

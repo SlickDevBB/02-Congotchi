@@ -2,13 +2,14 @@
 // this object should focus solely on creating and handling input on a grid game board
 
 import { getGameHeight, getGameWidth, } from '../helpers';
-import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GO_Rofl, GO_Cactii, GridObject, LevelConfig, Player } from 'game/objects';
+import { GO_Empty, GO_Gotchi, GO_Grenade, GO_Inactive, GO_Milkshake, GO_Portal, GO_Rofl, GO_Cactii, GridObject, Player } from 'game/objects';
 import { BLACK_SQUARE, BLUE_BLOCK, COMMON_DOWN_ROFL, COMMON_LEFT_ROFL, COMMON_RIGHT_ROFL, COMMON_UP_ROFL, GREEN_BLOCK, GRID_BG_COBBLE_STONES, M67_GRENADE, MILKSHAKE, MUSIC_GRID_LEVEL_A, PARTICLE_CONFETTI, PINK_BLOCK, PORTAL_CLOSED, RED_BLOCK, SOUND_DEFEAT, SOUND_SOFT_RESET, SOUND_VICTORY, UNCOMMON_CACTII,} from 'game/assets';
 import '../helpers/constants';
 import { DEPTH_GRID_LEVEL, DEPTH_GRID_SQUARES } from '../helpers/constants';
 import { GameScene } from 'game/scenes/game-scene';
 import { AavegotchiGameObject } from 'types';
 import { MoveTips } from './move-tips';
+import { LevelConfig } from '../../types';
 
 interface Props {
   scene: Phaser.Scene;
@@ -135,7 +136,7 @@ export class GridLevel {
     }
 
     // set the players stat mask so our level only sees stat points as per its levelconfig
-    this.player.setStatMask(levelConfig.statMask);
+    // this.player.setStatMask(levelConfig.statMask);
 
     // create the movetips object
     this.moveTips = new MoveTips(this.scene, this, levelConfig.levelNumber);
@@ -349,14 +350,14 @@ export class GridLevel {
   }
 
   // set, adjust and get functions for action remaining number
-  public setActionsRemaining(value: number) {
-    this.actionsRemaining = value;
-  }
+  // public setActionsRemaining(value: number) {
+  //   this.actionsRemaining = value;
+  // }
 
-  public adjustActionsRemaining(delta: number) {
-    this.actionsRemaining += delta;
-    this.actionsRemaining < 0 ? 0 : this.actionsRemaining;
-  }
+  // public adjustActionsRemaining(delta: number) {
+  //   this.actionsRemaining += delta;
+  //   this.actionsRemaining < 0 ? 0 : this.actionsRemaining;
+  // }
 
   public getActionsRemaining() {
     return this.actionsRemaining;

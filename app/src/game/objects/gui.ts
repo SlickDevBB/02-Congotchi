@@ -3,7 +3,7 @@
 
 import { getGameHeight, getGameWidth, } from "game/helpers";
 import { SOUND_CLICK, GUI_LEVEL_SELECT_RIBBON, GUI_PANEL_5, GUI_BUTTON_PLAY, GUI_BUTTON_CROSS, GUI_BUTTON_RESET, GUI_BUTTON_FAST_FORWARD, SOUND_SEND } from "game/assets";
-import { Player, levels, WorldMap, GuiScoreBoard, GridLevel } from ".";
+import { Player, WorldMap, GuiScoreBoard, GridLevel } from ".";
 // import { Math } from "phaser";
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_ACTIONS_REMAINING_TEXT, DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT, DEPTH_LEVEL_PATH } from "game/helpers/constants";
@@ -272,13 +272,16 @@ export class Gui {
     }
 
     public onSelectLevel(levelNumber: number) {
-        this.levelNumber = levelNumber;
-        this.text?.setText(levels[levelNumber-1].levelDescription);
+        const levels = (this.scene as GameScene).levels;
+        if (levels) {
+            this.levelNumber = levelNumber;
+            this.text?.setText(levels[levelNumber-1].levelDescription);
 
-        // display the latest available score data
-        this.displayLevelHighScore(levelNumber);
+            // display the latest available score data
+            this.displayLevelHighScore(levelNumber);
 
-        console.log((this.scene as GameScene).levelScores);
+            console.log((this.scene as GameScene).levelScores);
+        }
     }
 
     public onStartLevel() {

@@ -7,6 +7,7 @@ import { DEPTH_GOTCHI_ICON, DEPTH_GO_GOTCHI, DEPTH_GO_GOTCHI_BLOCK } from 'game/
 import { getGameHeight } from 'game/helpers';
 import { GO_Cactii } from './go-cactii';
 import { textChangeRangeIsUnchanged } from 'typescript';
+import { POINTS_CACTII_SPIKE, POINTS_CONGA_JUMP, POINTS_SAVE_GOTCHI } from 'helpers/constants';
 
 export interface GO_Gotchi_Props extends GO_Props {
     direction: 'DOWN' | 'LEFT' | 'UP' | 'RIGHT';
@@ -174,8 +175,8 @@ export class GO_Gotchi extends GridObject {
             this.setGridPosition(finalGridPos.row, finalGridPos.col, () => {
                 // adjust the player stat if we're in different grid position from start of drag
                 if (!(finalGridPos.row === this.ogDragGridPosition.row && finalGridPos.col === this.ogDragGridPosition.col)) {
-                    // reduce actions remaining
-                    this.gridLevel.adjustActionsRemaining(-1);
+                    // let the server know a grid object has been moved
+                    (this.scene as GameScene).socket?.emit('gridObjectMoved');
 
                     // in case we were burnt change status back to 'WAITING'
                     this.status = 'WAITING';
@@ -439,10 +440,10 @@ export class GO_Gotchi extends GridObject {
         // change status to jumping
         this.status = 'JUMPING';
 
-        // score some points and animated the stat point
+        // tell the server and gui we're doing a conga jump
         if (this.player) {
-            this.gui?.adjustScoreWithAnim(this.player.getStat('CONGA_JUMP'), this.x, this.y);
-            this.player.animStat('CONGA_JUMP');
+            (this.scene as GameScene).socket?.emit('congaJump');
+            this.gui?.adjustScoreWithAnim(POINTS_CONGA_JUMP, this.x, this.y);
         }
 
         // tween a jump
@@ -497,11 +498,10 @@ export class GO_Gotchi extends GridObject {
     }
 
     public congaIntoPortal(row: number, col: number) {
-        // first lets score some points
+        // tell server and gui to save a gotchi
         if (this.player) {
-            // check
-            this.gui?.adjustScoreWithAnim(this.player.getStat('GOTCHI_SAVE')*this.teleportScoreMultiplier, this.x, this.y);
-            this.player.animStat('GOTCHI_SAVE');
+            (this.scene as GameScene).socket?.emit('saveGotchi');
+            this.gui?.adjustScoreWithAnim(POINTS_SAVE_GOTCHI, this.x, this.y);
         }
 
         // Let's get in that portal
@@ -592,8 +592,8 @@ export class GO_Gotchi extends GridObject {
         if (this.spiked) {
             // reduce our total score if spiked
             if (this.player) {
-                this.gui?.adjustScoreWithAnim(this.player.getStat('RED_DAMAGE'), this.x, this.y);
-                this.player.animStat('RED_DAMAGE');
+                (this.scene as GameScene).socket?.emit('cactiiSpike');
+                this.gui?.adjustScoreWithAnim(POINTS_CACTII_SPIKE, this.x, this.y);
             }
 
             // show a quick red tween for "damage"
