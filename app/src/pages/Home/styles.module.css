@@ -4,11 +4,13 @@
   display: grid;
   gap: 3.2rem;
   padding: 5.4rem 0;
+  border: 2px solid red;
 }
 
 .selectorContainer {
   display: flex;
   justify-content: center;
+  border: 2px solid green;
 }
 
 .gotchiContainer {
@@ -16,6 +18,7 @@
   display: flex;
   align-items: center;
   flex-direction: column;
+  border: 2px solid blue;
 }
 
 .rotateButton {
@@ -80,7 +83,7 @@
   line-height: 1.5;
 }
 
-@media only screen and (min-width: 768px) {
+/* @media only screen and (min-width: 768px) {
   .homeContainer {
     grid-template-columns: repeat(3, 1fr);
     gap: 0.8rem;
@@ -89,4 +92,4 @@
   .detailsPanelContainer {
     margin-top: 0;
   }
-}
+} */

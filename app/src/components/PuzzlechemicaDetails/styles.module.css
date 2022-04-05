@@ -1,0 +1,65 @@
+
+
+.container {
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+.row_1 {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.row_2 {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.alchemicaContainer {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    position: relative;
+}
+
+.alchemicaImg {
+    z-index: 10;
+    width: 50%;
+}
+
+.alchemicaGlow {
+    z-index: 9;
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+    border-radius: 50%;
+}
+
+.fud {
+    box-shadow: 0 0 10px 10px rgb(0, 76, 0);
+}
+
+.fomo {
+    box-shadow: 0 0 10px 10px rgb(124, 33, 0);
+}
+
+.alpha {
+    box-shadow: 0 0 10px 10px rgb(0, 82, 129);
+}
+
+.kek {
+    box-shadow: 0 0 10px 10px rgb(74, 0, 74);
+}
+
+.alchemicaStats {
+    font-family: Courier, monospace;
+    text-align: center;
+    font-size: 1.2rem;
+    margin-top: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+

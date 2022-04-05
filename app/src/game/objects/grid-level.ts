@@ -53,7 +53,7 @@ export class GridLevel {
 
   private gridSquares: Array<Phaser.GameObjects.Image> = [];
 
-  private actionsRemaining = 0;
+  // private actionsRemaining = 0;
 
   private congaRunning = false;
 
@@ -84,7 +84,7 @@ export class GridLevel {
     this.y = 3*this.gridSize;
 
     // assign initial actions remaining
-    this.actionsRemaining = this.levelConfig.actionsRemaining;
+    // this.actionsRemaining = this.levelConfig.actionsRemaining;
 
     // create a grid level music object and start playing
     this.musicGridLevel = this.scene.sound.add(MUSIC_GRID_LEVEL_A, { loop: true, }) as Phaser.Sound.HTML5AudioSound;
@@ -134,9 +134,6 @@ export class GridLevel {
         }
       }
     }
-
-    // set the players stat mask so our level only sees stat points as per its levelconfig
-    // this.player.setStatMask(levelConfig.statMask);
 
     // create the movetips object
     this.moveTips = new MoveTips(this.scene, this, levelConfig.levelNumber);
@@ -349,18 +346,10 @@ export class GridLevel {
       .setScrollFactor(0)
   }
 
-  // set, adjust and get functions for action remaining number
-  // public setActionsRemaining(value: number) {
-  //   this.actionsRemaining = value;
-  // }
-
-  // public adjustActionsRemaining(delta: number) {
-  //   this.actionsRemaining += delta;
-  //   this.actionsRemaining < 0 ? 0 : this.actionsRemaining;
-  // }
-
   public getActionsRemaining() {
-    return this.actionsRemaining;
+    const ar = (this.scene as GameScene).getGui()?.actionsRemaining;
+    if (ar) return ar;
+    else return 1;
   }
 
   public getNumberGotchis() {
@@ -563,9 +552,6 @@ export class GridLevel {
     // reset victory status
     this.victoryStatus = 'STILL_PLAYING';
 
-    // reset actions remaining
-    this.actionsRemaining = this.levelConfig.actionsRemaining;
-
     // reset level status to ACTIVE
     this.status = 'ACTIVE';
 
@@ -705,9 +691,10 @@ export class GridLevel {
         
         // Second check if we got through all our action points
         // NOTE: this needs to be on a timeout as some tweens are likely still resolving
-        if (this.actionsRemaining === 0) {
+        const ar = this.getActionsRemaining();
+        if (ar === 0) {
           setTimeout( () => {
-              if (this.actionsRemaining === 0 && !this.congaRunning) {
+              if (ar === 0 && !this.congaRunning) {
                 // if we got at least one star we can declare VICTORY
                 if (gui && gui.getStarScore() > 0) {
                   this.victoryStatus = 'VICTORY';

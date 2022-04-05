@@ -443,7 +443,7 @@ export class GO_Gotchi extends GridObject {
         // tell the server and gui we're doing a conga jump
         if (this.player) {
             (this.scene as GameScene).socket?.emit('congaJump');
-            this.gui?.adjustScoreWithAnim(POINTS_CONGA_JUMP, this.x, this.y);
+            this.gui?.animScorePoints(POINTS_CONGA_JUMP, this.x, this.y);
         }
 
         // tween a jump
@@ -501,7 +501,7 @@ export class GO_Gotchi extends GridObject {
         // tell server and gui to save a gotchi
         if (this.player) {
             (this.scene as GameScene).socket?.emit('saveGotchi');
-            this.gui?.adjustScoreWithAnim(POINTS_SAVE_GOTCHI, this.x, this.y);
+            this.gui?.animScorePoints(POINTS_SAVE_GOTCHI, this.x, this.y);
         }
 
         // Let's get in that portal
@@ -593,7 +593,7 @@ export class GO_Gotchi extends GridObject {
             // reduce our total score if spiked
             if (this.player) {
                 (this.scene as GameScene).socket?.emit('cactiiSpike');
-                this.gui?.adjustScoreWithAnim(POINTS_CACTII_SPIKE, this.x, this.y);
+                this.gui?.animScorePoints(POINTS_CACTII_SPIKE, this.x, this.y);
             }
 
             // show a quick red tween for "damage"

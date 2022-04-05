@@ -107,9 +107,6 @@ export class GO_Portal extends GridObject {
                 // let the server know a grid object has been moved
                 (this.scene as GameScene).socket?.emit('gridObjectMoved');
 
-                // reduce actions remaining
-                // this.gridLevel.adjustActionsRemaining(-1);
-
                 // play the move sound
                 this.soundMove?.play();
             }
@@ -411,12 +408,6 @@ export class GO_Portal extends GridObject {
             // if our conga counter is at 0 we've started to conga!
             if (this.jumpCounter === 0) {
                 this.gridLevel.congaLineStarted();
-                
-                // score some points and animated the stat point
-                if (this.player) {
-                    this.gui?.adjustScoreWithAnim(this.player.getStat('CONGA_START'), this.x, this.y);
-                    this.player.animStat('CONGA_START');
-                }
             }
 
             // if this is first gotchi into the portal crank that conga music

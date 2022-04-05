@@ -5,6 +5,7 @@ import {
   DetailsPanel,
   Modal,
   GotchiSVG,
+  Selector,
 } from "components";
 import { Link } from "react-router-dom";
 import globalStyles from "theme/globalStyles.module.css";
@@ -34,6 +35,7 @@ const Home = () => {
   const { highscores } = useServer();
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [gotchiSide, setGotchiSide] = useState<0 | 1 | 2 | 3>(0);
+  const [ foundRandomGotchis, setFoundRandomGotchis] = useState(false);
 
   // function for using a default gotchi
   const useDefaultGotchi = () => {
@@ -146,7 +148,15 @@ const Home = () => {
     }
   }
 
-  console.log(randomAavegotchis);
+  const haveFoundRandomGotchis = (): boolean | undefined => {
+    let count = 0;
+    if (randomAavegotchis) {
+      for (let i = 0; i < randomAavegotchis.length; i++) {
+        if (randomAavegotchis[i].svg) count++;
+      }
+    }
+    return (count === randomAavegotchis?.length && count !== 0);
+  }
 
   // create a useEffect() that runs when we get random gotchis to fill in our svgs
   useEffect( () => {  
@@ -158,18 +168,15 @@ const Home = () => {
       } catch (err) {
         console.error(err);
       }
+
+      // see if we've found random gotchis and if so change state
+      if (haveFoundRandomGotchis()) {
+        setFoundRandomGotchis(true);
+      }
     }
   }, [randomAavegotchis]);
 
-  const haveFoundRandomGotchis = () => {
-    let count = 0;
-    if (randomAavegotchis) {
-      for (let i = 0; i < randomAavegotchis.length; i++) {
-        if (randomAavegotchis[i].svg) count++;
-      }
-    }
-    return (count === randomAavegotchis?.length && count !== 0);
-  }
+  
 
   /////////////////
   // RENDER CODE //
@@ -233,7 +240,7 @@ const Home = () => {
         <Modal onHandleClose={() => setShowRulesModal(false)}>
           <div className={styles.modalContent}>
             <h1>Congotchi!!!</h1>
-            <p>Oh no frens! AAVEGOTCHIS from all over the REAALM are lost! It is up to you and your chosen gotchi to locate them and bring them back to the warm chambers of the Citaadel!</p>
+            <p>Oh no frens!! AAVEGOTCHIS from all throughout the REAALM have been blockified! It is up to you and your chosen gotchi to locate them and bring them back to the warm chambers of the Citaadel!</p>
             <p>Throughout the REAALM you and your gotchi will play many levels, and in each, you must MOVE and INTERACT with lost gotchis and grid objects to
               form gotchi conga lines that finish at portals. Open those portals to conga the gotchis home!</p>
             <p>Grid objects come in 4 colours. PINK, RED, GREEN and BLUE. Player gotchis with attributes closer to the left side of the normal
@@ -250,8 +257,15 @@ const Home = () => {
           </div>
         </Modal>
       )}
+
       <div className={globalStyles.container}>
         <div className={styles.homeContainer}>
+
+          <div className={styles.selectionPanelContainer}>
+            <Selector gotchis={usersAavegotchis} foundRandomGotchis={foundRandomGotchis} />
+          </div>
+
+
           <div className={styles.selectorContainer}>
             <GotchiSelector
               initialGotchiId={selectedAavegotchiId}
@@ -305,7 +319,8 @@ const Home = () => {
             <DetailsPanel
               selectedGotchi={usersAavegotchis?.find(
                 (gotchi) => gotchi.id === selectedAavegotchiId
-              )}
+              )} 
+              gotchis={usersAavegotchis}
             />
           </div>
         </div>

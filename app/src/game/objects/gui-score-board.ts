@@ -23,9 +23,6 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
     private yInit = 0;
     private scaleInit = 0;
 
-    // create a socket object for server scoreboard sends and retrieves
-    private socket?: Socket;
-
     constructor({ scene, x, y }: Props) {
         super(scene, x, y, GUI_SCORE_PANEL);
 
@@ -72,12 +69,6 @@ export class GuiScoreBoard extends Phaser.GameObjects.Image {
             .setScrollFactor(0)
             .setDepth(DEPTH_GUI_SCORE+1);
         
-    }
-
-    public adjustScore(delta: number) {
-        this.score += delta;
-        if (this.score < 0) this.score = 0;
-        this.scoreText.text = this.score.toString().padStart(10,'0');
     }
 
     public setScore(score: number) {

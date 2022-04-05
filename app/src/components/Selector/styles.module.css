@@ -1,0 +1,65 @@
+
+
+.mainContainer {
+    color: white;
+    border: 2px solid purple;
+}
+
+.header {
+    border: 2px solid pink;
+    font-family: Courier, monospace;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.gridContainer {
+    border: 2px solid yellow;
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.gotchiDetailsContainer {
+    border: 2px solid green;
+    width: 33%;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-between;
+    position: relative;
+}
+
+.gotchiDetailsInternalContainer {
+    border: 2px solid blue;
+    border-radius: 5%;
+    margin: 5%;
+}
+
+.gotchiSvgContainer {
+    padding: 5%;
+    border: red solid 1px;
+}
+
+.name {
+    text-align: center;
+    font-size: 1.6rem;
+    font-family: Courier, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 10px;
+    border: 1px solid green;
+}
+
+@media only screen and (min-width: 800px) {
+    .gotchiDetailsContainer {
+        width: 25%;
+    }
+}
+
+@media only screen and (min-width: 1000px) {
+    .gotchiDetailsContainer {
+      width: 20%;
+    }
+}

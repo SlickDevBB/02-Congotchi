@@ -8,6 +8,8 @@ import { Player, WorldMap, GuiScoreBoard, GridLevel } from ".";
 import { GameScene } from "game/scenes/game-scene";
 import { DEPTH_ACTIONS_REMAINING_TEXT, DEPTH_ACTION_TEXT, DEPTH_GUI_LEVEL_OVER, DEPTH_GUI_LEVEL_SELECT, DEPTH_LEVEL_PATH } from "game/helpers/constants";
 import { defaultPath } from "ethers/lib/utils";
+import { POINTS_SPARE_MOVE } from "helpers/constants";
+import { updateSourceFile } from "typescript";
 
 interface Props {
     scene: GameScene,
@@ -27,8 +29,6 @@ export class Gui {
 
     private resetButton: Phaser.GameObjects.Image;
     private nextLevelButton: Phaser.GameObjects.Image;
-
-    private actionsRemainingText?: Phaser.GameObjects.Text;
     
     private clickSound?: Phaser.Sound.BaseSound;
     private soundSend?: Phaser.Sound.HTML5AudioSound;
@@ -38,6 +38,8 @@ export class Gui {
     private levelNumber = 0;
 
     private graphics?: Phaser.GameObjects.Graphics;
+    public actionsRemaining = 0;
+    private actionsRemainingText?: Phaser.GameObjects.Text;
     private actionsRemainingBG?: Phaser.GameObjects.Graphics;
     private actionsRemainingBorder?: Phaser.GameObjects.Graphics;
 
@@ -98,7 +100,7 @@ export class Gui {
             .setScrollFactor(0)
             .setStroke('#000000', fontHeight*0.25)
             .setVisible(false);
-
+        
         this.actionsRemainingBG = this.scene.add.graphics();
         this.actionsRemainingBorder = this.scene.add.graphics();
 
@@ -220,26 +222,27 @@ export class Gui {
 
         // create the back button click sound
         this.clickSound = this.scene.sound.add(SOUND_CLICK, { loop: false });
+
+        // add the update score event listener
+        (this.scene as GameScene).socket?.on('updateGameState', (pointScore: number, starScore: number, actionsRemaining: number) => {
+            this.scoreBoard.setScore(pointScore);
+            this.scoreBoard.setStarScore(starScore);
+            this.actionsRemaining = actionsRemaining;
+        });
     }
 
     public getScoreboard() {
         return this.scoreBoard;
     }
 
-    public adjustScore(delta: number) {
-        this.scoreBoard.adjustScore(delta);
-    }
-
-    public adjustScoreWithAnim(delta: number, x: number, y: number) {
-        this.adjustScore(delta);
-
+    public animScorePoints(delta: number, x: number, y: number) {
         // create a temporary score text
         const fontHeight = getGameHeight(this.scene)*0.025;
         const preText = delta > 0 ? '+' : '-';
         const finalText = preText + delta.toString();
         const score = this.scene.add.text(x, y,
             finalText,
-            {fontFamily: 'Arial', fontSize: fontHeight.toString()+'px'})
+            {fontFamily: 'Courier', fontSize: fontHeight.toString()+'px'})
             .setDepth(10000)
             .setStroke('0x000000',fontHeight*0.1)
             .setScrollFactor(0)
@@ -410,7 +413,7 @@ export class Gui {
             getGameHeight(this.scene)*0.4, 
             text,
             {
-                fontFamily: 'Arial',
+                fontFamily: 'Courier',
                 fontSize: (getGameHeight(this.scene)*0.03).toString() + 'px',
                 color: '#fff',
                 stroke: '#f0f',
@@ -478,42 +481,37 @@ export class Gui {
             duration: 250,
         })
 
-        // as everything is tweening we want to start adding up move points
-        const gl = (this.scene as GameScene).getGridLevel();
+        // grab the actions remaining
+        const ar = this.actionsRemaining;
+        let timeStep = 150;
 
-        if (gl) {
-            // grab the actions remaining
-            const ar = gl.getActionsRemaining();
-            let timeStep = 150;
+        // we should only add remaining moves if we got 3 stars
+        if (this.scoreBoard.getStarScore() > 2) {
+            // let everyone know we're tallying
+            this.tallyingSpareMoves = true;
 
-            // we should only add remaining moves if we got 3 stars
-            if (this.scoreBoard.getStarScore() > 2) {
-                // let everyone know we're tallying
-                this.tallyingSpareMoves = true;
-
-                // go through and collect all our points
-                for (let i = ar; i > 0; i--) {
-                    setTimeout( () => {
-                        if (this.actionsRemainingText) {
-                            this.adjustScoreWithAnim(this.player.getStat('SPARE_MOVE'), this.actionsRemainingText.x + getGameWidth(this.scene)*.25, this.actionsRemainingText.y - getGameHeight(this.scene)*0.04);
-                            gl.adjustActionsRemaining(-1);
-                            this.soundSend?.stop();
-                            this.soundSend?.play();
-                        }
-                    }, timeStep * (ar - i));
-                }
-            } else {
-                timeStep = 0;
+            // go through and collect all our points
+            for (let i = ar; i > 0; i--) {
+                setTimeout( () => {
+                    if (this.actionsRemainingText) {
+                        this.animScorePoints(POINTS_SPARE_MOVE, this.actionsRemainingText.x + getGameWidth(this.scene)*.25, this.actionsRemainingText.y - getGameHeight(this.scene)*0.04);
+                        this.soundSend?.stop();
+                        this.soundSend?.play();
+                    }
+                }, timeStep * (ar - i));
             }
-
-            setTimeout( () => {
-                // no longer tallying spare moves
-                this.tallyingSpareMoves = false;
-
-                // call the main game scene and tell it the results of the finished level
-                (this.scene as GameScene).handleLevelResults(this.scoreBoard.getLevel(), this.scoreBoard.getScore(), this.scoreBoard.getStarScore());
-            }, timeStep * ar + 200)
+        } else {
+            timeStep = 0;
         }
+
+        setTimeout( () => {
+            // no longer tallying spare moves
+            this.tallyingSpareMoves = false;
+
+            // call the main game scene and tell it the results of the finished level
+            (this.scene as GameScene).handleLevelResults(this.scoreBoard.getLevel(), this.scoreBoard.getScore(), this.scoreBoard.getStarScore());
+        }, timeStep * ar + 200)
+        
     }
 
     public destroy() {
@@ -538,7 +536,7 @@ export class Gui {
         const glStatus = gl?.getStatus();
         if (gl && glStatus !== 'INACTIVE' && this.actionsRemainingText) {
             this.actionsRemainingText?.setVisible(true);
-            this.actionsRemainingText.text = 'Moves Remaining: ' + gl.getActionsRemaining().toString();
+            this.actionsRemainingText.text = 'Moves Remaining: ' + this.actionsRemaining;
         } 
     }
 

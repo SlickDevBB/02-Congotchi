@@ -3,6 +3,7 @@
 import { GO_Gotchi, GO_Props, GridObject, } from 'game/objects';
 import { MILKSHAKE, PIXEL_PINK_SPLASH, SOUND_POP, SOUND_SLURP } from 'game/assets';
 import { GameScene } from 'game/scenes/game-scene';
+import { POINTS_SLURP_MILKSHAKE } from 'helpers/constants';
   
 export class GO_Milkshake extends GridObject {
     // status of milkshake
@@ -112,18 +113,12 @@ export class GO_Milkshake extends GridObject {
         // play slurp
         this.soundInteract?.play();
 
-        // score some points for activating a milkshake
-        if (this.player) {
-            this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_ACTIVATE'), this.x, this.y);
-            this.player.animStat('GREEN_ACTIVATE');
-        }
-
         // Go through thirstY gotchis and give them all a drink
         thirstyGotchis.map( gotchi => {
-            // score some points for feeding a gotchi or rofl
+            // tell server and gui to slurp milkshakes
             if (this.player) {
-                this.gui?.adjustScoreWithAnim(this.player.getStat('GREEN_BUFF'), gotchi.x, gotchi.y);
-                this.player.animStat('GREEN_BUFF');
+                (this.scene as GameScene).socket?.emit('slurpMilkshake');
+                this.gui?.animScorePoints(POINTS_SLURP_MILKSHAKE, gotchi.x, gotchi.y);
             }
 
             // do a milkshake jump for the gotchi

@@ -182,7 +182,7 @@ export const levels: Array<LevelConfig> = [
         [0, 1, 2, 1, 1, 2, 1, 1, 0],
         [0, 9, 0, 4, 0, 9, 0, 4, 0],  
         ],
-        levelDescription: "The TREE OF FUD! Don't panic.. it looks.. friendly?" +
+        levelDescription: "The TREE OF FUD! Don't panic.. it looks.. grumpy?" +
         "\n\n" +
         "Tip: Some gotchis in this level have been out in the sun too long and are burnt. Move them to allow them to conga again.",
         gridTexture: GRID_BG_DIRT,
@@ -311,7 +311,7 @@ export const levels: Array<LevelConfig> = [
         [ 0, 6, 2, 5, 2, 6, 1, 5, 0],
         [ 0,11, 0, 1, 0, 4, 0, 11, 0],  
         ],
-        levelDescription: "I swear to god... one more level with this smiling tree..." +
+        levelDescription: "Hmm, lets see if the tree is less grumpy now..." +
         "\n\n" +
         "Tip: Gotchis score points when they 'jump' in a conga line so make those lines as long as possible!",
         gridTexture: GRID_BG_DIRT,

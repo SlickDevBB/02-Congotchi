@@ -255,7 +255,7 @@ io.on('connection', function (socket: Socket) {
     socket.on('gridObjectMoved', () => {
       connectedGotchis[userId].actionsRemaining--;
       console.log('Actions Remaining: ' + connectedGotchis[userId].actionsRemaining);
-      socket.emit('updateActionsRemaining', connectedGotchis[userId].actionsRemaining);
+      updateClientGameState();
     });
 
     // on level start
@@ -264,7 +264,8 @@ io.on('connection', function (socket: Socket) {
 
       if (level) {
         connectedGotchis[userId].actionsRemaining = level.actionsRemaining;
-        connectedGotchis[userId].score = 0;
+        connectedGotchis[userId].pointScore = 0;
+        connectedGotchis[userId].currentLevel = level.levelNumber;
 
         // Output some level started data
         console.log('Started Level: ' + levelNumber);
@@ -272,48 +273,78 @@ io.on('connection', function (socket: Socket) {
         console.log('Max Possible Score: ' + level.maxPointsPossible);
 
         // tell the game about the new score and actions remaining
-        socket.emit('updateScore', connectedGotchis[userId].score);
+        socket.emit('updateScore', connectedGotchis[userId].pointScore);
         socket.emit('updateActionsRemaining', connectedGotchis[userId].actionsRemaining);
       }
+
+      updateClientGameState();
     });
 
     socket.on('levelFinished', () => {
-      connectedGotchis[userId].score += POINTS_SPARE_MOVE * connectedGotchis[userId].actionsRemaining;
+      connectedGotchis[userId].pointScore += POINTS_SPARE_MOVE * connectedGotchis[userId].actionsRemaining;
     })
 
     // now go through all the functions that score points
     socket.on('saveGotchi', () => {
-      connectedGotchis[userId].score += POINTS_SAVE_GOTCHI;
-      socket.emit('updateScore', connectedGotchis[userId].score);
+      connectedGotchis[userId].pointScore += POINTS_SAVE_GOTCHI;
+      updateClientGameState();
     });
 
     socket.on('saveCommonRofl', () => {
-      connectedGotchis[userId].score += POINTS_SAVE_ROFL_COMMON;
+      connectedGotchis[userId].pointScore += POINTS_SAVE_ROFL_COMMON;
+      updateClientGameState();
     });
 
     socket.on('congaJump', () => {
-      connectedGotchis[userId].score += POINTS_CONGA_JUMP;
+      connectedGotchis[userId].pointScore += POINTS_CONGA_JUMP;
+      updateClientGameState();
     });
 
     socket.on('explodeGrenade', () => {
-      connectedGotchis[userId].score += POINTS_EXPLODE_GRENADE;
+      connectedGotchis[userId].pointScore += POINTS_EXPLODE_GRENADE;
+      updateClientGameState();
     });
 
     socket.on('destroyCactii', () => {
-      connectedGotchis[userId].score += POINTS_DESTROY_CACTII;
+      connectedGotchis[userId].pointScore += POINTS_DESTROY_CACTII;
+      updateClientGameState();
     });
 
     socket.on('cactiiSpike', () => {
-      connectedGotchis[userId].score += POINTS_DESTROY_CACTII;
+      connectedGotchis[userId].pointScore += POINTS_DESTROY_CACTII;
+      updateClientGameState();
     });
 
     socket.on('burnDamage', () => {
-      connectedGotchis[userId].score += POINTS_BURN_DAMAGE;
+      connectedGotchis[userId].pointScore += POINTS_BURN_DAMAGE;
+      updateClientGameState();
     });
 
     socket.on('slurpMilkshake', () => {
-      connectedGotchis[userId].score += POINTS_SLURP_MILKSHAKE;
+      connectedGotchis[userId].pointScore += POINTS_SLURP_MILKSHAKE;
+      updateClientGameState();
     });
+
+    const updateClientGameState = () => {
+      // calculate star score
+      const maxPointsPossible = levels[connectedGotchis[userId].currentLevel-1].maxPointsPossible;
+      const currentPoints = connectedGotchis[userId].pointScore;
+      const ratio = currentPoints / maxPointsPossible;
+
+      // see how many star points to award
+      if (ratio >=1) {
+        connectedGotchis[userId].starScore = 3;
+      } else if (ratio >= 0.666) {
+        connectedGotchis[userId].starScore = 2;
+      } else if (ratio >= 0.333) {
+        connectedGotchis[userId].starScore = 1;
+      } else {
+        connectedGotchis[userId].starScore = 0;
+      }
+
+      // update game state for client
+      socket.emit('updateGameState', connectedGotchis[userId].pointScore, connectedGotchis[userId].starScore, connectedGotchis[userId].actionsRemaining);
+    }
 
 });
 
